@@ -1,0 +1,24 @@
+{
+  "name": "fourty-four-sunsets",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "npx convex dev"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sebastianbrookes/fourty-four-sunsets.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/sebastianbrookes/fourty-four-sunsets/issues"
+  },
+  "homepage": "https://github.com/sebastianbrookes/fourty-four-sunsets#readme",
+  "dependencies": {
+    "convex": "^1.33.1"
+  }
+}

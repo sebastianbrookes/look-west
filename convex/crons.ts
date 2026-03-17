@@ -1,0 +1,18 @@
+import { cronJobs } from "convex/server";
+import { internal } from "./_generated/api";
+
+const crons = cronJobs();
+
+crons.interval(
+  "sunsetScoreCheck",
+  { minutes: 15 },
+  internal.cronActions.sunsetScoreCheck
+);
+
+crons.interval(
+  "sendPendingAlerts",
+  { minutes: 5 },
+  internal.cronActions.sendPendingAlerts
+);
+
+export default crons;
