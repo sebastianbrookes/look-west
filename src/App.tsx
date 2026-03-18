@@ -353,7 +353,11 @@ export default function App() {
           {submitError && <p className="field-error">{submitError}</p>}
 
           <button type="submit" className="submit-btn" disabled={submitting}>
-            {submitting ? "Signing up..." : "Sign me up"}
+            {submitting ? (
+              <><span className="spinner" /><span>Signing up...</span></>
+            ) : (
+              "Sign me up"
+            )}
           </button>
         </form>
       </div>
