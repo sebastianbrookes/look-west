@@ -1,0 +1,13 @@
+<svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="skyShow" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#C65A40" />
+      <stop offset="50%" stop-color="#E98044" />
+      <stop offset="100%" stop-color="#F7BA60" />
+    </linearGradient>
+  </defs>
+  <g fill="url(#skyShow)">
+    <circle cx="40" cy="60" r="35" />
+    <path d="M 75 5 Q 75 25 95 25 Q 75 25 75 45 Q 75 25 55 25 Q 75 25 75 5 Z" />
+  </g>
+</svg>
