@@ -80,6 +80,7 @@ export default function App() {
   const [submitted, setSubmitted] = useState(false);
   const [confirmedEmail, setConfirmedEmail] = useState("");
   const [confirmedLocation, setConfirmedLocation] = useState("");
+  const [copied, setCopied] = useState(false);
 
   const addUser = useMutation(api.users.addUser);
 
@@ -211,6 +212,8 @@ export default function App() {
   const copyLink = async () => {
     try {
       await navigator.clipboard.writeText(window.location.href);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
     } catch {
       /* clipboard may not be available — fail silently */
     }
@@ -233,7 +236,11 @@ export default function App() {
             Your first alert could come as early as tonight.
           </p>
           <button type="button" className="link-btn" onClick={copyLink}>
-            Tell a friend — copy link
+            {copied ? (
+              <><span className="copied-check">&#10003;</span> Copied!</>
+            ) : (
+              "Tell a friend \u2014 copy link"
+            )}
           </button>
         </div>
       </div>
@@ -340,7 +347,11 @@ export default function App() {
           {submitError && <p className="field-error">{submitError}</p>}
 
           <button type="submit" className="submit-btn" disabled={submitting}>
-            {submitting ? "Signing up..." : "Sign me up"}
+            {submitting ? (
+              <><span className="spinner" /><span>Signing up...</span></>
+            ) : (
+              "Sign me up"
+            )}
           </button>
         </form>
       </div>
