@@ -252,10 +252,10 @@ export default function App() {
   return (
     <div className="page">
       <div className="card">
-        <h1 className="headline">Fourty-Four Sunsets</h1>
-        <p className="quote">
+        <h1 className="headline">Go Look Up</h1>
+        {/* <p className="quote">
           "One day I watched the sunset forty-four times..."
-        </p>
+        </p> */}
         <p className="tagline">
           We'll email you when the sunset's worth watching.
         </p>
