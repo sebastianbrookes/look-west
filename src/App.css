@@ -338,8 +338,38 @@ body {
 }
 
 .confirmation .link-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
   margin-top: 2rem;
+  text-decoration: none;
   animation: text-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) 0.4s both;
+}
+
+.link-icon {
+  flex-shrink: 0;
+  opacity: 0.55;
+  transition: opacity 0.2s ease;
+}
+
+.link-btn:hover .link-icon {
+  opacity: 0.8;
+}
+
+.link-icon.copied-check {
+  opacity: 1;
+  animation: pop-in 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 /* ================================================================ */
