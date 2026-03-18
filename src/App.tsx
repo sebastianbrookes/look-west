@@ -223,7 +223,7 @@ export default function App() {
   if (submitted) {
     return (
       <div className="page">
-        <div className="card fade-in">
+        <div className="card confirmation">
           <h1 className="headline">You're in.</h1>
           <p className="body">
             We'll email you at <strong>{confirmedEmail}</strong> whenever the sky
@@ -252,7 +252,10 @@ export default function App() {
   return (
     <div className="page">
       <div className="card">
-        <h1 className="headline">Fourty-Four Sunsets</h1>
+        <h1 className="headline">Go Look Up</h1>
+        {/* <p className="quote">
+          "One day I watched the sunset forty-four times..."
+        </p> */}
         <p className="tagline">
           We'll email you when the sunset's worth watching.
         </p>
@@ -267,7 +270,10 @@ export default function App() {
             {location.status === "resolved" && !showManualInput && (
               <>
                 <p className="location-label">
-                  📍 {location.data.locationName}
+                  <span className="location-wrapper">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="#B46A46" aria-hidden="true"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+                    {location.data.locationName}
+                  </span>
                 </p>
                 <button
                   type="button"
