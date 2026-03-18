@@ -155,8 +155,8 @@ body {
 }
 
 .dim {
-  color: var(--text-muted);
-  font-size: 0.9375rem;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
 }
 
 /* ================================================================ */
@@ -323,15 +323,22 @@ body {
 /*  Confirmation                                                    */
 /* ================================================================ */
 
+.confirmation .headline {
+  margin-bottom: 0.25rem;
+}
+
 .confirmation .body {
   animation: text-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) 0.2s both;
 }
 
 .confirmation .dim {
+  margin-top: 1.125rem;
+  margin-bottom: 0;
   animation: text-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) 0.3s both;
 }
 
 .confirmation .link-btn {
+  margin-top: 2rem;
   animation: text-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) 0.4s both;
 }
 
