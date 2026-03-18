@@ -18,8 +18,8 @@
   --card-border: rgba(255, 255, 255, 0.5);
   --card-shadow: 0 8px 40px rgba(100, 60, 30, 0.1),
     0 1px 3px rgba(0, 0, 0, 0.04);
-  --input-bg: rgba(255, 252, 249, 0.8);
-  --input-border: rgba(180, 155, 130, 0.3);
+  --input-bg: #fcfaf8;
+  --input-border: #e6d5c3;
   --input-focus: rgba(193, 122, 74, 0.22);
   --accent: #b8704a;
   --accent-hover: #a35f3a;
