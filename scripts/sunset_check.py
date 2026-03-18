@@ -128,10 +128,14 @@ def get_owm_score(lat, lon, cache):
 
 
 def get_quality(lat, lon, cache):
-    """Get sunset quality using the configured scorer."""
+    """Get sunset quality using the configured scorer, with automatic fallback."""
     if SUNSET_SCORER == "openweathermap":
         return get_owm_score(lat, lon, cache)
-    return get_sunsetwx_score(lat, lon, cache)
+    try:
+        return get_sunsetwx_score(lat, lon, cache)
+    except Exception as e:
+        logger.warning(f"SunsetWx unavailable ({e}), falling back to OpenWeatherMap")
+        return get_owm_score(lat, lon, cache)
 
 
 # ---------------------------------------------------------------------------
@@ -173,7 +177,7 @@ def generate_message(quality_percent, quality_label, location_name, sunset_time_
             "Content-Type": "application/json",
         },
         json={
-            "model": "anthropic/claude-haiku-4-5-20251001",
+            "model": "openai/gpt-5.4-mini",
             "messages": [
                 {"role": "system", "content": SYSTEM_PROMPT},
                 {"role": "user", "content": user_prompt},
