@@ -303,6 +303,7 @@ body {
   margin-top: 0.75rem;
   text-decoration: underline;
   text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
   text-decoration-color: rgba(150, 122, 100, 0.35);
   transition: color 0.2s ease;
   text-align: left;
