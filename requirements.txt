@@ -1,5 +1,5 @@
 convex
-twilio
+resend
 astral
 requests
 python-dotenv

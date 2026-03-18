@@ -10,11 +10,11 @@ from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
 import requests
+import resend
 from astral import LocationInfo
 from astral.sun import sun
 from convex import ConvexClient
 from dotenv import load_dotenv
-from twilio.rest import Client as TwilioClient
 
 from fallback_scorer import calculate_owm_score
 
@@ -32,9 +32,8 @@ logger = logging.getLogger("sunset_check")
 CONVEX_URL = os.getenv("CONVEX_URL")
 SUNSETWX_API_KEY = os.getenv("SUNSETWX_API_KEY", "")
 OPENWEATHERMAP_API_KEY = os.getenv("OPENWEATHERMAP_API_KEY", "")
-TWILIO_ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID", "")
-TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN", "")
-TWILIO_FROM_NUMBER = os.getenv("TWILIO_FROM_NUMBER", "")
+RESEND_API_KEY = os.getenv("RESEND_API_KEY", "")
+RESEND_FROM_EMAIL = os.getenv("RESEND_FROM_EMAIL", "")
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
 SUNSET_QUALITY_THRESHOLD = int(os.getenv("SUNSET_QUALITY_THRESHOLD", "50"))
 SUNSET_SCORER = os.getenv("SUNSET_SCORER", "sunsetwx")
@@ -140,11 +139,11 @@ def get_quality(lat, lon, cache):
 # ---------------------------------------------------------------------------
 
 SYSTEM_PROMPT = (
-    'You write sunset alerts for a text message service called "Go Look Up." '
+    'You write sunset alerts for an email service called "Go Look Up." '
     "Each message should feel like it's from a friend, not a brand."
 )
 
-USER_PROMPT_TEMPLATE = """Write a single SMS (under 160 characters) motivating someone to go watch tonight's sunset.
+USER_PROMPT_TEMPLATE = """Write a short email body (under 280 characters) motivating someone to go watch tonight's sunset.
 
 Tonight's conditions:
 - Quality: {quality_percent}% ({quality_label})
@@ -155,11 +154,11 @@ Style rules:
 - Warm, poetic, or playful — vary it every time
 - Reference the specific conditions when you can
 - No hashtags. No emojis. Max one exclamation mark.
-- Under 160 characters, no exceptions"""
+- Under 280 characters, no exceptions"""
 
 
 def generate_message(quality_percent, quality_label, location_name, sunset_time_local):
-    """Generate an SMS message using Claude Haiku via OpenRouter."""
+    """Generate an email message using Claude Haiku via OpenRouter."""
     user_prompt = USER_PROMPT_TEMPLATE.format(
         quality_percent=quality_percent,
         quality_label=quality_label,
@@ -191,7 +190,7 @@ def generate_message(quality_percent, quality_label, location_name, sunset_time_
 # Phase 1 — Score Check & Queue
 # ---------------------------------------------------------------------------
 
-def phase_check(client, test_phone=None):
+def phase_check(client, test_email=None):
     """Check sunset quality for active users and queue alerts."""
     logger.info("=== Phase 1: Score Check & Queue ===")
 
@@ -212,8 +211,8 @@ def phase_check(client, test_phone=None):
             minutes_until = (sunset - now).total_seconds() / 60
 
             # Timing filter (bypassed in test mode)
-            if test_phone:
-                if user["phone"] != test_phone:
+            if test_email:
+                if user["email"] != test_email:
                     continue
                 logger.info(f"[{location}] Test mode — skipping timing filter (sunset in {minutes_until:.0f}m)")
             elif not (50 <= minutes_until <= 65):
@@ -288,7 +287,7 @@ def phase_send(client):
     users = client.query("users:getActiveUsers")
     user_map = {u["_id"]: u for u in users}
 
-    twilio_client = TwilioClient(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
+    resend.api_key = RESEND_API_KEY
 
     for alert in alerts:
         user = user_map.get(alert["userId"])
@@ -304,23 +303,24 @@ def phase_send(client):
             continue
 
         try:
-            def _send_sms(body=alert["messageSent"], to=user["phone"]):
-                return twilio_client.messages.create(
-                    body=body,
-                    from_=TWILIO_FROM_NUMBER,
-                    to=to,
-                )
+            def _send_email(body=alert["messageSent"], to=user["email"], loc=location):
+                return resend.Emails.send({
+                    "from": RESEND_FROM_EMAIL,
+                    "to": [to],
+                    "subject": f"Tonight's sunset in {loc}",
+                    "text": body,
+                })
 
-            retry(_send_sms, retries=1, delay=2.0, label=f"Twilio [{location}]")
+            retry(_send_email, retries=1, delay=2.0, label=f"Resend [{location}]")
 
             client.mutation("alerts:updateAlertStatus", {
                 "alertId": alert["_id"],
                 "status": "sent",
             })
-            logger.info(f"[{location}] SMS sent to {user['phone']}")
+            logger.info(f"[{location}] Email sent to {user['email']}")
 
         except Exception as e:
-            logger.error(f"[{location}] Failed to send SMS: {e}")
+            logger.error(f"[{location}] Failed to send email: {e}")
             client.mutation("alerts:updateAlertStatus", {
                 "alertId": alert["_id"],
                 "status": "error",
@@ -345,14 +345,14 @@ def main():
         "--test-user",
         type=str,
         default=None,
-        help="Phone number (E.164) to force-run for, bypassing sunset timing filter",
+        help="Email address to force-run for, bypassing sunset timing filter",
     )
     args = parser.parse_args()
 
     client = get_convex_client()
 
     if args.command in ("check", "run"):
-        phase_check(client, test_phone=args.test_user)
+        phase_check(client, test_email=args.test_user)
     if args.command in ("send", "run"):
         phase_send(client)
 

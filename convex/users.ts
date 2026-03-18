@@ -11,12 +11,12 @@ export const getActiveUsers = query({
   },
 });
 
-export const getUserByPhone = query({
-  args: { phone: v.string() },
+export const getUserByEmail = query({
+  args: { email: v.string() },
   handler: async (ctx, args) => {
     return await ctx.db
       .query("users")
-      .filter((q) => q.eq(q.field("phone"), args.phone))
+      .filter((q) => q.eq(q.field("email"), args.email))
       .first();
   },
 });
@@ -24,23 +24,21 @@ export const getUserByPhone = query({
 export const addUser = mutation({
   args: {
     name: v.string(),
-    phone: v.string(),
+    email: v.string(),
     latitude: v.number(),
     longitude: v.number(),
     locationName: v.string(),
     timezone: v.string(),
   },
   handler: async (ctx, args) => {
-    const e164Regex = /^\+[1-9]\d{1,14}$/;
-    if (!e164Regex.test(args.phone)) {
-      throw new Error(
-        "Phone number must be in E.164 format (e.g. +16175551234)"
-      );
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(args.email)) {
+      throw new Error("Please enter a valid email address.");
     }
 
     const existing = await ctx.db
       .query("users")
-      .filter((q) => q.eq(q.field("phone"), args.phone))
+      .filter((q) => q.eq(q.field("email"), args.email))
       .first();
 
     if (existing) {
