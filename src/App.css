@@ -314,7 +314,8 @@ body {
 
 .link-btn.small {
   font-size: 0.8125rem;
-  margin-top: 0.125rem;
+  margin-top: 0;
+  margin-bottom: 0.5rem;
 }
 
 /* ================================================================ */
