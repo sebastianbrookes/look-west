@@ -223,7 +223,7 @@ export default function App() {
   if (submitted) {
     return (
       <div className="page">
-        <div className="card fade-in">
+        <div className="card confirmation">
           <h1 className="headline">You're in.</h1>
           <p className="body">
             We'll email you at <strong>{confirmedEmail}</strong> whenever the sky
@@ -253,6 +253,9 @@ export default function App() {
     <div className="page">
       <div className="card">
         <h1 className="headline">Fourty-Four Sunsets</h1>
+        <p className="quote">
+          "One day I watched the sunset forty-four times..."
+        </p>
         <p className="tagline">
           We'll email you when the sunset's worth watching.
         </p>
