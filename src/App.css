@@ -90,6 +90,21 @@ body {
   animation: card-in 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
+.card.confirmation {
+  animation: confirm-in 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@keyframes confirm-in {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
 @keyframes card-in {
   from {
     opacity: 0;
@@ -167,7 +182,22 @@ body {
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  animation: text-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) 0.36s both;
+}
+
+.form > .field:nth-child(1) {
+  animation: text-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) 0.3s both;
+}
+.form > .field:nth-child(2) {
+  animation: text-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) 0.38s both;
+}
+.form > .field:nth-child(3) {
+  animation: text-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) 0.46s both;
+}
+.form > .field-error {
+  animation: shake 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+.form > .submit-btn {
+  animation: text-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) 0.54s both;
 }
 
 .field {
@@ -191,7 +221,8 @@ body {
   transition:
     border-color 0.2s ease,
     box-shadow 0.2s ease,
-    background 0.2s ease;
+    background 0.2s ease,
+    transform 0.2s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .input::placeholder {
@@ -202,6 +233,7 @@ body {
   border-color: var(--accent);
   box-shadow: 0 0 0 3px var(--input-focus);
   background: rgba(255, 253, 250, 0.95);
+  transform: translateY(-1px);
 }
 
 .input-error {
@@ -218,6 +250,16 @@ body {
   font-size: 0.8125rem;
   color: var(--error);
   padding-left: 0.125rem;
+  animation: shake 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+@keyframes shake {
+  0% { opacity: 0; transform: translateX(0); }
+  20% { opacity: 1; transform: translateX(-6px); }
+  40% { transform: translateX(5px); }
+  60% { transform: translateX(-3px); }
+  80% { transform: translateX(2px); }
+  100% { transform: translateX(0); }
 }
 
 /* ================================================================ */
@@ -246,12 +288,28 @@ body {
   font-weight: 500;
   color: var(--text);
   padding: 0.25rem 0;
+  animation: text-in 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .location-wrapper {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+}
+
+.location-wrapper svg {
+  animation: pin-drop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 0.1s both;
+}
+
+@keyframes pin-drop {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.6);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 /* ================================================================ */
@@ -288,6 +346,40 @@ body {
 .submit-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+/* Loading spinner inside submit button */
+.submit-btn .spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 250, 245, 0.35);
+  border-top-color: #fffaf5;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+  vertical-align: middle;
+  margin-right: 0.5rem;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Copy-link feedback */
+.link-btn .copied-check {
+  display: inline-block;
+  animation: pop-in 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 /* ---- Link-style button ---- */
@@ -333,6 +425,24 @@ body {
 
 .confirmation .link-btn {
   animation: text-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) 0.4s both;
+}
+
+/* ================================================================ */
+/*  Responsive                                                      */
+/* ================================================================ */
+
+/* ================================================================ */
+/*  Reduced motion                                                  */
+/* ================================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 /* ================================================================ */
