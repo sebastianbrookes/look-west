@@ -32,12 +32,7 @@ export const getAlertHistory = query({
 export const getTodaysAlertForUser = query({
   args: { userId: v.id("users") },
   handler: async (ctx, args) => {
-    const now = new Date();
-    const startOfDay = new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      now.getDate()
-    ).getTime();
+    const today = new Date().toISOString().slice(0, 10); // "YYYY-MM-DD" in UTC
 
     const alerts = await ctx.db
       .query("alerts")
@@ -45,7 +40,7 @@ export const getTodaysAlertForUser = query({
       .order("desc")
       .collect();
 
-    return alerts.find((a) => a.createdAt >= startOfDay) ?? null;
+    return alerts.find((a) => a.sunsetTime.slice(0, 10) === today) ?? null;
   },
 });
 
