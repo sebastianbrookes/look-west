@@ -138,6 +138,20 @@ def get_quality(lat, lon, cache):
         return get_owm_score(lat, lon, cache)
 
 
+def get_current_weather(lat, lon):
+    """Fetch current temperature (°F) and description from OpenWeatherMap."""
+    resp = requests.get(
+        "https://api.openweathermap.org/data/2.5/weather",
+        params={"lat": lat, "lon": lon, "appid": OPENWEATHERMAP_API_KEY, "units": "imperial"},
+        timeout=10,
+    )
+    resp.raise_for_status()
+    data = resp.json()
+    temp_f = round(data["main"]["temp"])
+    description = data["weather"][0]["description"]
+    return {"temp_f": temp_f, "description": description}
+
+
 # ---------------------------------------------------------------------------
 # Message generation
 # ---------------------------------------------------------------------------
@@ -151,6 +165,7 @@ SYSTEM_PROMPT = (
 USER_PROMPT_TEMPLATE = """Write a short email body (under 280 characters) motivating someone to go watch tonight's sunset.
 
 Tonight's conditions:
+- Current temperature: {temp_f}°F ({weather_description})
 - Quality: {quality_percent}% ({quality_label})
 - Location: {location_name}
 - Sunset at: {sunset_time_local}
@@ -158,18 +173,22 @@ Tonight's conditions:
 Style rules:
 - Warm, poetic, or playful — vary it every time
 - Reference the specific conditions when you can
+- Weave the current weather into the message naturally (e.g. if cold, suggest grabbing a coat; if warm, suggest sitting outside)
+- Include the temperature in the message
 - No hashtags. No emojis. Max one exclamation mark.
 - Don't use the phrase "putting on a show" or anything similar
 - Under 280 characters, no exceptions"""
 
 
-def generate_message(quality_percent, quality_label, location_name, sunset_time_local):
+def generate_message(quality_percent, quality_label, location_name, sunset_time_local, temp_f, weather_description):
     """Generate an email message using GPT 5.4 Mini via OpenRouter."""
     user_prompt = USER_PROMPT_TEMPLATE.format(
         quality_percent=quality_percent,
         quality_label=quality_label,
         location_name=location_name,
         sunset_time_local=sunset_time_local,
+        temp_f=temp_f,
+        weather_description=weather_description,
     )
 
     resp = requests.post(
@@ -184,7 +203,7 @@ def generate_message(quality_percent, quality_label, location_name, sunset_time_
                 {"role": "system", "content": SYSTEM_PROMPT},
                 {"role": "user", "content": user_prompt},
             ],
-            "max_tokens": 200,
+            "max_tokens": 500,
         },
         timeout=15,
     )
@@ -244,7 +263,19 @@ def phase_check(client, test_email=None):
 
             if score >= SUNSET_QUALITY_THRESHOLD:
                 sunset_local = sunset.strftime("%-I:%M %p")
-                message = generate_message(score, label, location, sunset_local)
+
+                # Fetch current weather for the message
+                try:
+                    weather = get_current_weather(user["latitude"], user["longitude"])
+                    temp_f = weather["temp_f"]
+                    weather_desc = weather["description"]
+                    logger.info(f"[{location}] Weather: {temp_f}°F, {weather_desc}")
+                except Exception as e:
+                    logger.warning(f"[{location}] Failed to fetch weather: {e}, using defaults")
+                    temp_f = "N/A"
+                    weather_desc = "unknown"
+
+                message = generate_message(score, label, location, sunset_local, temp_f, weather_desc)
                 logger.info(f"[{location}] Message: {message}")
 
                 client.mutation("alerts:logAlert", {
