@@ -145,6 +145,7 @@ def get_quality(lat, lon, cache):
 SYSTEM_PROMPT = (
     'You write sunset alerts for an email service called "Go Look Up." '
     "Each message should feel like it's from a friend, not a brand."
+    ""
 )
 
 USER_PROMPT_TEMPLATE = """Write a short email body (under 280 characters) motivating someone to go watch tonight's sunset.
@@ -158,11 +159,12 @@ Style rules:
 - Warm, poetic, or playful — vary it every time
 - Reference the specific conditions when you can
 - No hashtags. No emojis. Max one exclamation mark.
+- Don't use the phrase "putting on a show" or anything similar
 - Under 280 characters, no exceptions"""
 
 
 def generate_message(quality_percent, quality_label, location_name, sunset_time_local):
-    """Generate an email message using Claude Haiku via OpenRouter."""
+    """Generate an email message using GPT 5.4 Mini via OpenRouter."""
     user_prompt = USER_PROMPT_TEMPLATE.format(
         quality_percent=quality_percent,
         quality_label=quality_label,
@@ -177,7 +179,7 @@ def generate_message(quality_percent, quality_label, location_name, sunset_time_
             "Content-Type": "application/json",
         },
         json={
-            "model": "openai/gpt-5.4-mini",
+            "model": "google/gemini-3-flash-preview",
             "messages": [
                 {"role": "system", "content": SYSTEM_PROMPT},
                 {"role": "user", "content": user_prompt},
@@ -311,7 +313,7 @@ def phase_send(client):
                 return resend.Emails.send({
                     "from": RESEND_FROM_EMAIL,
                     "to": [to],
-                    "subject": f"Tonight's sunset in {loc}",
+                    "subject": f"Tonight's sunset in {loc} 🌅",
                     "text": body,
                 })
 
