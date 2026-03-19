@@ -173,13 +173,14 @@ Style rules:
 - Reference the specific conditions
 - Weave the current weather into the message naturally (e.g. if cold, suggest grabbing a coat; if warm, suggest sitting outside)
 - Include the temperature in the message
+- Include something like a "get outside by {get_outside_by_time}" phrase
 - Don't mention the location - it's already indicated in the email subject.
 - Don't use the phrase "Look West"
 - No hashtags. No emojis. Max one exclamation mark.
 - Don't use the phrase "putting on a show" or anything similar
 - Avoid flowery adjectives and 'inspirational' language. Do not try to sell the sunset; just report it. Use plain, direct vocabulary.
 - When mentioning the quality, treat it as a score (e.g. "the sunset this evening has a 92% quality score")
-- Under 350 characters, no exceptions
+- Under 320 characters, no exceptions
 
 Information ordering:
 - First mention the sunset score ({quality_percent}) and when the sun will be gone ({sunset_time_local})
@@ -188,11 +189,15 @@ Information ordering:
 
 def generate_message(quality_percent, quality_label, location_name, sunset_time_local, temp_f, weather_description):
     """Generate an email message using GPT 5.4 Mini via OpenRouter."""
+    sunset_dt = datetime.strptime(sunset_time_local, "%I:%M %p")
+    get_outside_by_time = (sunset_dt - timedelta(minutes=30)).strftime("%-I:%M %p")
+
     user_prompt = USER_PROMPT_TEMPLATE.format(
         quality_percent=quality_percent,
         quality_label=quality_label,
         location_name=location_name,
         sunset_time_local=sunset_time_local,
+        get_outside_by_time=get_outside_by_time,
         temp_f=temp_f,
         weather_description=weather_description,
     )
