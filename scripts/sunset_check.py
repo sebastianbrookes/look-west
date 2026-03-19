@@ -265,7 +265,7 @@ def phase_check(client, test_email=None):
             logger.info(f"[{location}] Quality: {score}% ({label})")
 
             sunset_iso = sunset.isoformat()
-            send_time = (sunset - timedelta(minutes=25)).isoformat()
+            send_time = now.isoformat() if test_email else (sunset - timedelta(minutes=25)).isoformat()
 
             if score >= SUNSET_QUALITY_THRESHOLD:
                 sunset_local = sunset.strftime("%-I:%M %p")
@@ -396,7 +396,7 @@ def main():
 
     if args.command in ("check", "run"):
         phase_check(client, test_email=args.test_user)
-    if args.command in ("send", "run"):
+    if args.command in ("send", "run") or args.test_user:
         phase_send(client)
 
     logger.info("Done.")
