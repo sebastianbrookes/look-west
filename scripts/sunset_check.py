@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Go Look Up — sunset alert checker and sender."""
+"""Look West — sunset alert checker and sender."""
 
 import argparse
 import logging
@@ -157,7 +157,7 @@ def get_current_weather(lat, lon):
 # ---------------------------------------------------------------------------
 
 SYSTEM_PROMPT = (
-    'You write sunset alerts for an email service called "Go Look Up." '
+    'You write sunset alerts for an email service called "Look West." '
     "Each message should feel like it's from a friend, not a brand."
 )
 
@@ -174,7 +174,7 @@ Style rules:
 - Weave the current weather into the message naturally (e.g. if cold, suggest grabbing a coat; if warm, suggest sitting outside)
 - Include the temperature in the message
 - Don't mention the location - it's already indicated in the email subject.
-- Don't use the phrase "Go Look Up"
+- Don't use the phrase "Look West"
 - No hashtags. No emojis. Max one exclamation mark.
 - Don't use the phrase "putting on a show" or anything similar
 - Avoid flowery adjectives and 'inspirational' language. Do not try to sell the sunset; just report it. Use plain, direct vocabulary.
