@@ -159,10 +159,9 @@ def get_current_weather(lat, lon):
 SYSTEM_PROMPT = (
     'You write sunset alerts for an email service called "Go Look Up." '
     "Each message should feel like it's from a friend, not a brand."
-    ""
 )
 
-USER_PROMPT_TEMPLATE = """Write a short email body (under 280 characters) motivating someone to go watch tonight's sunset.
+USER_PROMPT_TEMPLATE = """Write a short email body (under 320 characters) motivating someone to go watch tonight's sunset.
 
 Tonight's conditions:
 - Current temperature: {temp_f}°F ({weather_description})
@@ -171,13 +170,20 @@ Tonight's conditions:
 - Sunset at: {sunset_time_local}
 
 Style rules:
-- Warm, poetic, or playful — vary it every time
-- Reference the specific conditions when you can
+- Reference the specific conditions
 - Weave the current weather into the message naturally (e.g. if cold, suggest grabbing a coat; if warm, suggest sitting outside)
 - Include the temperature in the message
+- Don't mention the location - it's already indicated in the email subject.
+- Don't use the phrase "Go Look Up"
 - No hashtags. No emojis. Max one exclamation mark.
 - Don't use the phrase "putting on a show" or anything similar
-- Under 280 characters, no exceptions"""
+- Avoid flowery adjectives and 'inspirational' language. Do not try to sell the sunset; just report it. Use plain, direct vocabulary.
+- When mentioning the quality, treat it as a score (e.g. "the sunset this evening has a 92% quality score")
+- Under 350 characters, no exceptions
+
+Information ordering:
+- First mention the sunset score ({quality_percent}) and when the sun will be gone ({sunset_time_local})
+- Then the current weather conditions (temp and description)"""
 
 
 def generate_message(quality_percent, quality_label, location_name, sunset_time_local, temp_f, weather_description):
@@ -203,7 +209,7 @@ def generate_message(quality_percent, quality_label, location_name, sunset_time_
                 {"role": "system", "content": SYSTEM_PROMPT},
                 {"role": "user", "content": user_prompt},
             ],
-            "max_tokens": 500,
+            "max_tokens": 1000,
         },
         timeout=15,
     )
@@ -344,7 +350,7 @@ def phase_send(client):
                 return resend.Emails.send({
                     "from": RESEND_FROM_EMAIL,
                     "to": [to],
-                    "subject": f"Tonight's sunset in {loc} 🌅",
+                    "subject": f"Beautiful sunset alert in {loc} 🌅",
                     "text": body,
                 })
 
