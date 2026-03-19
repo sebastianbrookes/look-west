@@ -252,11 +252,12 @@ def phase_check(client, test_email=None):
             else:
                 logger.info(f"[{location}] Sunset in {minutes_until:.0f}m — within window")
 
-            # Idempotency check
-            existing = client.query("alerts:getTodaysAlertForUser", {"userId": user["_id"]})
-            if existing:
-                logger.info(f"[{location}] Alert already exists for today, skipping")
-                continue
+            # Idempotency check (bypassed in test mode)
+            if not test_email:
+                existing = client.query("alerts:getTodaysAlertForUser", {"userId": user["_id"]})
+                if existing:
+                    logger.info(f"[{location}] Alert already exists for today, skipping")
+                    continue
 
             # Quality score
             quality = get_quality(user["latitude"], user["longitude"], score_cache)
