@@ -24,7 +24,7 @@ type LocationState =
 /*  Helpers                                                            */
 /* ------------------------------------------------------------------ */
 
-const NOMINATIM_HEADERS = { "User-Agent": "GoLookUp/1.0" };
+const NOMINATIM_HEADERS = { "User-Agent": "LookWest/1.0" };
 
 function parseAddress(
   addr: Record<string, string>,
@@ -229,8 +229,7 @@ export default function App() {
         <div className="card confirmation">
           <h1 className="headline">You're in.</h1>
           <p className="body">
-            We'll email you at <strong>{confirmedEmail}</strong> whenever the sky
-            above <strong>{confirmedLocation}</strong> is about to put on a show.
+            We'll email you at <strong>{confirmedEmail}</strong> whenever the sunset in <strong>{confirmedLocation}</strong> will be beautiful.
           </p>
           <p className="body dim">
             Your first alert could come as early as tonight.
@@ -265,7 +264,7 @@ export default function App() {
   return (
     <div className="page">
       <div className="card">
-        <h1 className="headline">Go Look Up</h1>
+        <h1 className="headline">Look West</h1>
         {/* <p className="quote">
           "One day I watched the sunset forty-four times..."
         </p> */}

@@ -1,5 +1,5 @@
 {
-  "name": "fourty-four-sunsets",
+  "name": "look-west",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -11,16 +11,16 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/sebastianbrookes/fourty-four-sunsets.git"
+    "url": "git+https://github.com/sebastianbrookes/look-west.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
   "bugs": {
-    "url": "https://github.com/sebastianbrookes/fourty-four-sunsets/issues"
+    "url": "https://github.com/sebastianbrookes/look-west/issues"
   },
-  "homepage": "https://github.com/sebastianbrookes/fourty-four-sunsets#readme",
+  "homepage": "https://github.com/sebastianbrookes/look-west#readme",
   "dependencies": {
     "convex": "^1.33.1",
     "react": "^19.2.4",

@@ -1,6 +1,6 @@
-# fourty-four-sunsets
+# Look West
 
-A sunset alert service that texts you a motivating message to go watch the sunset — but only when it's predicted to be beautiful. Inspired by *The Little Prince*.
+A sunset alert service that texts you a motivating message to go watch the sunset — but only when it's predicted to be beautiful.
 
 ## Setup
 
