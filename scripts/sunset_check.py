@@ -17,6 +17,7 @@ from convex import ConvexClient
 from dotenv import load_dotenv
 
 from fallback_scorer import calculate_owm_score
+from prompts import SYSTEM_PROMPT, USER_PROMPT_TEMPLATE
 
 # Load .env from project root
 load_dotenv(os.path.join(os.path.dirname(__file__), "..", ".env"))
@@ -155,57 +156,28 @@ def get_current_weather(lat, lon):
     data = resp.json()
     temp_f = round(data["main"]["temp"])
     description = data["weather"][0]["description"]
-    return {"temp_f": temp_f, "description": description}
+    cloud_cover = data.get("clouds", {}).get("all", 0)
+    return {"temp_f": temp_f, "description": description, "cloud_cover": cloud_cover}
 
 
 # ---------------------------------------------------------------------------
 # Message generation
 # ---------------------------------------------------------------------------
 
-SYSTEM_PROMPT = (
-    'You write sunset alerts for an email service called "Look West." '
-    "Each message should feel like it's from a friend, not a brand."
-)
 
-USER_PROMPT_TEMPLATE = """Write a short email body (under 320 characters) motivating someone to go watch tonight's sunset.
-
-Tonight's conditions:
-- Current temperature: {temp_f}°F ({weather_description})
-- Quality: {quality_percent}% ({quality_label})
-- Location: {location_name}
-- Sunset at: {sunset_time_local}
-
-Style rules:
-- Reference the specific conditions
-- Weave the current weather into the message naturally (e.g. if cold, suggest grabbing a coat; if warm, suggest sitting outside)
-- Include the temperature in the message
-- Include something like a "get outside by {get_outside_by_time}" phrase
-- Don't mention the location - it's already indicated in the email subject.
-- Don't use the phrase "Look West"
-- No hashtags. No emojis. Max one exclamation mark.
-- Don't use the phrase "putting on a show" or anything similar
-- Avoid flowery adjectives and 'inspirational' language. Do not try to sell the sunset; just report it. Use plain, direct vocabulary.
-- When mentioning the quality, treat it as a score (e.g. "the sunset this evening has a 92% quality score")
-- Under 320 characters, no exceptions
-
-Information ordering:
-- First mention the sunset score ({quality_percent}) and when the sun will be gone ({sunset_time_local})
-- Then the current weather conditions (temp and description)"""
-
-
-def generate_message(quality_percent, quality_label, location_name, sunset_time_local, temp_f, weather_description):
+def generate_message(quality_percent, quality_label, location_name, sunset_time_local, temp_f, weather_description, cloud_cover=0):
     """Generate an email message using GPT 5.4 Mini via OpenRouter."""
     sunset_dt = datetime.strptime(sunset_time_local, "%I:%M %p")
-    get_outside_by_time = (sunset_dt - timedelta(minutes=30)).strftime("%-I:%M %p")
+    viewing_time = (sunset_dt - timedelta(minutes=30)).strftime("%-I:%M %p")
 
     user_prompt = USER_PROMPT_TEMPLATE.format(
-        quality_percent=quality_percent,
-        quality_label=quality_label,
-        location_name=location_name,
-        sunset_time_local=sunset_time_local,
-        get_outside_by_time=get_outside_by_time,
-        temp_f=temp_f,
+        location=location_name,
+        sunset_time=sunset_time_local,
+        viewing_time=viewing_time,
         weather_description=weather_description,
+        temperature=temp_f,
+        cloud_cover=cloud_cover,
+        quality_score=quality_percent,
     )
 
     resp = requests.post(
@@ -287,13 +259,15 @@ def phase_check(client, test_email=None):
                     weather = get_current_weather(user["latitude"], user["longitude"])
                     temp_f = weather["temp_f"]
                     weather_desc = weather["description"]
-                    logger.info(f"[{location}] Weather: {temp_f}°F, {weather_desc}")
+                    cloud_cover = weather["cloud_cover"]
+                    logger.info(f"[{location}] Weather: {temp_f}°F, {weather_desc}, {cloud_cover}% clouds")
                 except Exception as e:
                     logger.warning(f"[{location}] Failed to fetch weather: {e}, using defaults")
                     temp_f = "N/A"
                     weather_desc = "unknown"
+                    cloud_cover = 0
 
-                message = generate_message(score, label, location, sunset_local, temp_f, weather_desc)
+                message = generate_message(score, label, location, sunset_local, temp_f, weather_desc, cloud_cover)
                 logger.info(f"[{location}] Message: {message}")
 
                 client.mutation("alerts:logAlert", {
