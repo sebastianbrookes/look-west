@@ -7,6 +7,7 @@ import os
 import sys
 import time
 from datetime import datetime, timedelta
+from pathlib import Path
 from zoneinfo import ZoneInfo
 
 import requests
@@ -38,6 +39,38 @@ RESEND_FROM_EMAIL = os.getenv("RESEND_FROM_EMAIL", "")
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
 SUNSET_QUALITY_THRESHOLD = int(os.getenv("SUNSET_QUALITY_THRESHOLD", "50"))
 SUNSET_SCORER = os.getenv("SUNSET_SCORER", "sunsethue")
+
+# Email template
+BACKGROUND_IMAGE_URL = os.getenv(
+    "EMAIL_BACKGROUND_URL",
+    "https://golookwest.com/background.webp",
+)
+_TEMPLATE_PATH = Path(__file__).parent / "email_template.html"
+_EMAIL_TEMPLATE: str | None = None
+
+
+def _load_email_template() -> str:
+    """Load and cache the HTML email template from disk."""
+    global _EMAIL_TEMPLATE
+    if _EMAIL_TEMPLATE is None:
+        _EMAIL_TEMPLATE = _TEMPLATE_PATH.read_text(encoding="utf-8")
+    return _EMAIL_TEMPLATE
+
+
+def render_email_html(
+    message: str,
+    location: str,
+    sunset_time: str,
+    unsubscribe_url: str = "",
+) -> str:
+    """Render the HTML email by substituting template variables."""
+    html = _load_email_template()
+    html = html.replace("{{message}}", message)
+    html = html.replace("{{location}}", location)
+    html = html.replace("{{sunset_time}}", sunset_time)
+    html = html.replace("{{unsubscribe_url}}", unsubscribe_url or "#")
+    html = html.replace("{{background_url}}", BACKGROUND_IMAGE_URL)
+    return html
 
 
 def get_convex_client():
@@ -332,12 +365,27 @@ def phase_send(client):
             continue
 
         try:
-            def _send_email(body=alert["messageSent"], to=user["email"], loc=location):
+            # Parse sunset time from ISO string for display
+            try:
+                sunset_dt = datetime.fromisoformat(alert["sunsetTime"])
+                user_tz = ZoneInfo(user.get("timezone", "UTC"))
+                sunset_local = sunset_dt.astimezone(user_tz).strftime("%-I:%M %p")
+            except Exception:
+                sunset_local = ""
+
+            html_body = render_email_html(
+                message=alert["messageSent"],
+                location=location,
+                sunset_time=sunset_local,
+            )
+
+            def _send_email(body=alert["messageSent"], html=html_body, to=user["email"], loc=location):
                 return resend.Emails.send({
                     "from": RESEND_FROM_EMAIL,
                     "to": [to],
                     "subject": f"Beautiful sunset alert in {loc} 🌅",
                     "text": body,
+                    "html": html,
                 })
 
             retry(_send_email, retries=1, delay=2.0, label=f"Resend [{location}]")
