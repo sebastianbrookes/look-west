@@ -42,7 +42,7 @@ python scripts/sunset_check.py check --test-user "+16175551234"
 
 Set `SUNSET_SCORER` in `.env`:
 
-- `sunsetwx` (default) — uses the SunsetWx API for professional sunset forecasts
+- `sunsethue` (default) — uses the SunsetHue API for professional sunset forecasts
 - `openweathermap` — fallback heuristic based on cloud cover, humidity, visibility, and AQI
 
 ### Wiring up cron triggers
@@ -74,11 +74,11 @@ See `.env.example` for all required variables. Key ones:
 | Variable | Description |
 |---|---|
 | `CONVEX_URL` | Your Convex deployment URL |
-| `SUNSETWX_API_KEY` | SunsetWx API key (if using sunsetwx scorer) |
+| `SUNSETHUE_API_KEY` | SunsetHue API key (if using sunsethue scorer) |
 | `OPENWEATHERMAP_API_KEY` | OpenWeatherMap API key (if using owm scorer) |
 | `TWILIO_ACCOUNT_SID` | Twilio account SID |
 | `TWILIO_AUTH_TOKEN` | Twilio auth token |
 | `TWILIO_FROM_NUMBER` | Twilio phone number (E.164) |
 | `OPENROUTER_API_KEY` | OpenRouter API key for Claude Haiku message generation |
 | `SUNSET_QUALITY_THRESHOLD` | Minimum score (0-100) to send an alert (default: 50) |
-| `SUNSET_SCORER` | `sunsetwx` or `openweathermap` (default: sunsetwx) |
+| `SUNSET_SCORER` | `sunsethue` or `openweathermap` (default: sunsethue) |

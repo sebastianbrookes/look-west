@@ -30,13 +30,13 @@ logger = logging.getLogger("sunset_check")
 
 # Environment
 CONVEX_URL = os.getenv("CONVEX_URL")
-SUNSETWX_API_KEY = os.getenv("SUNSETWX_API_KEY", "")
+SUNSETHUE_API_KEY = os.getenv("SUNSETHUE_API_KEY", "")
 OPENWEATHERMAP_API_KEY = os.getenv("OPENWEATHERMAP_API_KEY", "")
 RESEND_API_KEY = os.getenv("RESEND_API_KEY", "")
 RESEND_FROM_EMAIL = os.getenv("RESEND_FROM_EMAIL", "")
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
 SUNSET_QUALITY_THRESHOLD = int(os.getenv("SUNSET_QUALITY_THRESHOLD", "50"))
-SUNSET_SCORER = os.getenv("SUNSET_SCORER", "sunsetwx")
+SUNSET_SCORER = os.getenv("SUNSET_SCORER", "sunsethue")
 
 
 def get_convex_client():
@@ -80,32 +80,38 @@ def get_sunset_time(lat, lon, tz_name):
 # Sunset quality scorers
 # ---------------------------------------------------------------------------
 
-def get_sunsetwx_score(lat, lon, cache):
-    """Fetch sunset quality from SunsetWx API with geo-caching."""
+def get_sunsethue_score(lat, lon, cache):
+    """Fetch sunset quality from SunsetHue API with geo-caching."""
     cache_key = (round(lat, 2), round(lon, 2))
     if cache_key in cache:
         return cache[cache_key]
 
+    today = datetime.now().strftime("%Y-%m-%d")
+
     def _fetch():
         resp = requests.get(
-            "https://sunburst.sunsetwx.com/v1/quality",
-            params={"geo": f"{lat},{lon}", "type": "sunset"},
-            headers={"Authorization": f"Bearer {SUNSETWX_API_KEY}"},
+            "https://api.sunsethue.com/event",
+            params={
+                "latitude": lat,
+                "longitude": lon,
+                "date": today,
+                "type": "sunset",
+            },
+            headers={"x-api-key": SUNSETHUE_API_KEY},
             timeout=10,
         )
         resp.raise_for_status()
         return resp.json()
 
-    data = retry(_fetch, retries=1, delay=2.0, label="SunsetWx")
+    data = retry(_fetch, retries=1, delay=2.0, label="SunsetHue")
 
-    features = data.get("features", [])
-    if not features:
-        raise ValueError("No quality data returned from SunsetWx")
+    event_data = data.get("data")
+    if not event_data:
+        raise ValueError("No quality data returned from SunsetHue")
 
-    props = features[0].get("properties", {})
     result = {
-        "score": props.get("quality_percent", 0),
-        "label": props.get("quality", "Poor"),
+        "score": round(event_data.get("quality", 0) * 100),
+        "label": event_data.get("quality_text", "Poor"),
     }
     cache[cache_key] = result
     return result
@@ -132,9 +138,9 @@ def get_quality(lat, lon, cache):
     if SUNSET_SCORER == "openweathermap":
         return get_owm_score(lat, lon, cache)
     try:
-        return get_sunsetwx_score(lat, lon, cache)
+        return get_sunsethue_score(lat, lon, cache)
     except Exception as e:
-        logger.warning(f"SunsetWx unavailable ({e}), falling back to OpenWeatherMap")
+        logger.warning(f"SunsetHue unavailable ({e}), falling back to OpenWeatherMap")
         return get_owm_score(lat, lon, cache)
 
 
