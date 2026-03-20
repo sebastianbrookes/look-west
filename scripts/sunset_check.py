@@ -43,7 +43,7 @@ SUNSET_SCORER = os.getenv("SUNSET_SCORER", "sunsethue")
 # Email template
 BACKGROUND_IMAGE_URL = os.getenv(
     "EMAIL_BACKGROUND_URL",
-    "https://golookwest.com/background.webp",
+    "https://look-west.vercel.app/background.webp",
 )
 _TEMPLATE_PATH = Path(__file__).parent / "email_template.html"
 _EMAIL_TEMPLATE: str | None = None
