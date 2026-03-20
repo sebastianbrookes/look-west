@@ -257,7 +257,7 @@ def phase_check(client, test_email=None):
                 if user["email"] != test_email:
                     continue
                 logger.info(f"[{location}] Test mode — skipping timing filter (sunset in {minutes_until:.0f}m)")
-            elif not (50 <= minutes_until <= 65):
+            elif not (60 <= minutes_until <= 75):
                 logger.info(f"[{location}] Sunset in {minutes_until:.0f}m — outside window, skipping")
                 continue
             else:
@@ -277,7 +277,7 @@ def phase_check(client, test_email=None):
             logger.info(f"[{location}] Quality: {score}% ({label})")
 
             sunset_iso = sunset.isoformat()
-            send_time = now.isoformat() if test_email else (sunset - timedelta(minutes=25)).isoformat()
+            send_time = now.isoformat() if test_email else (sunset - timedelta(minutes=60)).isoformat()
 
             if score >= SUNSET_QUALITY_THRESHOLD:
                 sunset_local = sunset.strftime("%-I:%M %p")
