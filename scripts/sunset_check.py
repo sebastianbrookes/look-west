@@ -80,13 +80,13 @@ def get_sunset_time(lat, lon, tz_name):
 # Sunset quality scorers
 # ---------------------------------------------------------------------------
 
-def get_sunsethue_score(lat, lon, cache):
+def get_sunsethue_score(lat, lon, cache, tz_name="UTC"):
     """Fetch sunset quality from SunsetHue API with geo-caching."""
     cache_key = (round(lat, 2), round(lon, 2))
     if cache_key in cache:
         return cache[cache_key]
 
-    today = datetime.now().strftime("%Y-%m-%d")
+    today = datetime.now(ZoneInfo(tz_name)).strftime("%Y-%m-%d")
 
     def _fetch():
         resp = requests.get(
@@ -133,12 +133,12 @@ def get_owm_score(lat, lon, cache):
     return result
 
 
-def get_quality(lat, lon, cache):
+def get_quality(lat, lon, cache, tz_name="UTC"):
     """Get sunset quality using the configured scorer, with automatic fallback."""
     if SUNSET_SCORER == "openweathermap":
         return get_owm_score(lat, lon, cache)
     try:
-        return get_sunsethue_score(lat, lon, cache)
+        return get_sunsethue_score(lat, lon, cache, tz_name=tz_name)
     except Exception as e:
         logger.warning(f"SunsetHue unavailable ({e}), falling back to OpenWeatherMap")
         return get_owm_score(lat, lon, cache)
@@ -271,7 +271,7 @@ def phase_check(client, test_email=None):
                     continue
 
             # Quality score
-            quality = get_quality(user["latitude"], user["longitude"], score_cache)
+            quality = get_quality(user["latitude"], user["longitude"], score_cache, tz_name=user["timezone"])
             score = quality["score"]
             label = quality["label"]
             logger.info(f"[{location}] Quality: {score}% ({label})")
