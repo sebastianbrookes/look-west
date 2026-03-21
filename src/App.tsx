@@ -67,6 +67,21 @@ function validateEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
 }
 
+function CheckIcon() {
+  return (
+    <svg className="input-check" viewBox="0 0 18 18" fill="none" aria-hidden>
+      <circle cx="9" cy="9" r="9" fill="#F9DE8E" />
+      <path
+        d="M5.5 9.2L8 11.7L12.5 6.5"
+        stroke="#5c4030"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 /* ------------------------------------------------------------------ */
 /*  Component                                                          */
 /* ------------------------------------------------------------------ */
@@ -339,12 +354,7 @@ export default function App() {
                 aria-describedby={geocodeError ? "location-geocode-error" : undefined}
               />
               {geocoding && <span className="input-spinner" aria-hidden />}
-              {!geocoding && locationData && (
-                <svg className="input-check" viewBox="0 0 18 18" fill="none" aria-hidden>
-                  <circle cx="9" cy="9" r="9" fill="#F9DE8E" />
-                  <path d="M5.5 9.2L8 11.7L12.5 6.5" stroke="#5c4030" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              )}
+              {!geocoding && locationData && <CheckIcon />}
             </div>
             {geocodeError && (
               <p className="field-error" id="location-geocode-error">{geocodeError}</p>
@@ -385,12 +395,7 @@ export default function App() {
                 onBlur={() => { if (name.trim().length >= 3) setNameConfirmed(true); }}
                 autoComplete="given-name"
               />
-              {nameConfirmed && (
-                <svg className="input-check" viewBox="0 0 18 18" fill="none" aria-hidden>
-                  <circle cx="9" cy="9" r="9" fill="#F9DE8E" />
-                  <path d="M5.5 9.2L8 11.7L12.5 6.5" stroke="#5c4030" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              )}
+              {nameConfirmed && <CheckIcon />}
             </div>
           </div>
 
@@ -407,12 +412,7 @@ export default function App() {
                 }}
                 autoComplete="email"
               />
-              {!emailError && validateEmail(email) && (
-                <svg className="input-check" viewBox="0 0 18 18" fill="none" aria-hidden>
-                  <circle cx="9" cy="9" r="9" fill="#F9DE8E" />
-                  <path d="M5.5 9.2L8 11.7L12.5 6.5" stroke="#5c4030" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              )}
+              {!emailError && validateEmail(email) && <CheckIcon />}
             </div>
             {emailError && <p className="field-error">{emailError}</p>}
           </div>
