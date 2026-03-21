@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useMutation } from "convex/react";
+import tzLookup from "tz-lookup";
 import { api } from "../convex/_generated/api";
 import "./App.css";
 
@@ -21,6 +22,14 @@ type BrowserGeoStatus = "idle" | "requesting" | "denied" | "unsupported";
 /* ------------------------------------------------------------------ */
 
 const NOMINATIM_HEADERS = { "User-Agent": "LookWest/1.0" };
+
+function resolveTimezone(lat: number, lon: number): string {
+  try {
+    return tzLookup(lat, lon);
+  } catch {
+    return "UTC";
+  }
+}
 
 function parseAddress(
   addr: Record<string, string>,
@@ -59,7 +68,7 @@ async function reverseGeocode(lat: number, lon: number): Promise<LocationData> {
     latitude: lat,
     longitude: lon,
     locationName: parseAddress(data.address || {}, data.display_name),
-    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    timezone: resolveTimezone(lat, lon),
   };
 }
 
@@ -189,11 +198,13 @@ export default function App() {
         return;
       }
       const r = results[0];
+      const latitude = parseFloat(r.lat);
+      const longitude = parseFloat(r.lon);
       const data: LocationData = {
-        latitude: parseFloat(r.lat),
-        longitude: parseFloat(r.lon),
+        latitude,
+        longitude,
         locationName: parseAddress(r.address || {}, r.display_name),
-        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        timezone: resolveTimezone(latitude, longitude),
       };
       setLocationData(data);
       setLocationInput(data.locationName);
@@ -206,31 +217,42 @@ export default function App() {
     }
   }, []);
 
-  useEffect(() => {
-    if (name.trim().length < 2) {
-      setNameConfirmed(false);
-      return;
-    }
+useEffect(() => {
+  if (name.trim().length < 2) {
+    setNameConfirmed(false);
+    return;
+  }
 
-    const timeoutId = window.setTimeout(() => {
-      setNameConfirmed(true);
-    }, 500);
+  const timeoutId = window.setTimeout(() => {
+    setNameConfirmed(true);
+  }, 500);
 
-    return () => window.clearTimeout(timeoutId);
-  }, [name]);
+  return () => window.clearTimeout(timeoutId);
+}, [name]);
 
-  useEffect(() => {
-    if (!email.trim() || !validateEmail(email)) {
-      setEmailConfirmed(false);
-      return;
-    }
+useEffect(() => {
+  if (!email.trim() || !validateEmail(email)) {
+    setEmailConfirmed(false);
+    return;
+  }
 
-    const timeoutId = window.setTimeout(() => {
-      setEmailConfirmed(true);
-    }, 500);
+  const timeoutId = window.setTimeout(() => {
+    setEmailConfirmed(true);
+  }, 500);
 
-    return () => window.clearTimeout(timeoutId);
-  }, [email]);
+  return () => window.clearTimeout(timeoutId);
+}, [email]);
+
+const resolveManualLocation = useCallback(() => {
+  const trimmed = locationInput.trim();
+  if (!trimmed) {
+    setLocationData(null);
+    setGeocodeError(null);
+    return;
+  }
+  if (locationData?.locationName === trimmed) return;
+  geocodeManual(trimmed);
+}, [geocodeManual, locationData, locationInput]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -371,27 +393,10 @@ export default function App() {
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
                     e.preventDefault();
-                    if (!locationInput.trim()) {
-                      setLocationData(null);
-                      return;
-                    }
-                    if (!hasLocationChangedSinceLastGeocode(locationInput)) {
-                      return;
-                    }
-                    geocodeManual(locationInput);
+                    resolveManualLocation();
                   }
                 }}
-                onBlur={() => {
-                  if (!locationInput.trim()) {
-                    setLocationData(null);
-                    setGeocodeError(null);
-                    return;
-                  }
-                  if (!hasLocationChangedSinceLastGeocode(locationInput)) {
-                    return;
-                  }
-                  geocodeManual(locationInput);
-                }}
+                onBlur={resolveManualLocation}
                 disabled={geocoding || browserGeoStatus === "requesting"}
                 autoComplete="address-level2"
                 aria-invalid={!!geocodeError}
