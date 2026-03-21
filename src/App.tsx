@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback } from "react";
 import { useMutation } from "convex/react";
 import { api } from "../convex/_generated/api";
 import "./App.css";
@@ -81,7 +81,6 @@ export default function App() {
 
   const [name, setName] = useState("");
   const [nameConfirmed, setNameConfirmed] = useState(false);
-  const nameTimer = useRef<ReturnType<typeof setTimeout>>(null);
   const [email, setEmail] = useState("");
   const [emailError, setEmailError] = useState("");
   const [submitError, setSubmitError] = useState("");
@@ -91,17 +90,6 @@ export default function App() {
   const [confirmedEmail, setConfirmedEmail] = useState("");
   const [confirmedLocation, setConfirmedLocation] = useState("");
   const [copied, setCopied] = useState(false);
-
-  // Confirm the name check after 1s of inactivity or on blur
-  useEffect(() => {
-    if (nameTimer.current) clearTimeout(nameTimer.current);
-    if (!name.trim()) {
-      setNameConfirmed(false);
-      return;
-    }
-    nameTimer.current = setTimeout(() => setNameConfirmed(true), 1000);
-    return () => { if (nameTimer.current) clearTimeout(nameTimer.current); };
-  }, [name]);
 
   const addUser = useMutation(api.users.addUser);
 
@@ -200,8 +188,8 @@ export default function App() {
       setSubmitError("Please set your location first.");
       return;
     }
-    if (!name.trim()) {
-      setSubmitError("We'll need your name.");
+    if (name.trim().length < 3) {
+      setSubmitError("Name must be at least 3 characters.");
       return;
     }
     if (!validateEmail(email)) {
@@ -394,7 +382,7 @@ export default function App() {
                   setName(e.target.value);
                   setNameConfirmed(false);
                 }}
-                onBlur={() => { if (name.trim()) setNameConfirmed(true); }}
+                onBlur={() => { if (name.trim().length >= 3) setNameConfirmed(true); }}
                 autoComplete="given-name"
               />
               {nameConfirmed && (
