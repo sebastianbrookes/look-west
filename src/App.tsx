@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useMutation } from "convex/react";
 import { api } from "../convex/_generated/api";
 import "./App.css";
@@ -106,8 +106,16 @@ export default function App() {
   const [confirmedEmail, setConfirmedEmail] = useState("");
   const [confirmedLocation, setConfirmedLocation] = useState("");
   const [copied, setCopied] = useState(false);
+  const manualGeocodeInFlightRef = useRef(false);
 
   const addUser = useMutation(api.users.addUser);
+  const hasLocationChangedSinceLastGeocode = (value: string) => {
+    const normalizedInput = value.trim().toLowerCase();
+    const normalizedGeocodedLocation =
+      locationData?.locationName.trim().toLowerCase() ?? "";
+
+    return !!normalizedInput && normalizedInput !== normalizedGeocodedLocation;
+  };
 
   const requestBrowserLocation = useCallback(async () => {
     setGeocodeError(null);
@@ -152,7 +160,9 @@ export default function App() {
   }, []);
 
   const geocodeManual = useCallback(async (q: string) => {
-    if (!q.trim()) return;
+    if (!q.trim() || manualGeocodeInFlightRef.current) return;
+
+    manualGeocodeInFlightRef.current = true;
     setGeocoding(true);
     setGeocodeError(null);
     try {
@@ -191,6 +201,7 @@ export default function App() {
       setGeocodeError("Something went wrong looking up that location.");
       setLocationData(null);
     } finally {
+      manualGeocodeInFlightRef.current = false;
       setGeocoding(false);
     }
   }, []);
@@ -364,6 +375,9 @@ export default function App() {
                       setLocationData(null);
                       return;
                     }
+                    if (!hasLocationChangedSinceLastGeocode(locationInput)) {
+                      return;
+                    }
                     geocodeManual(locationInput);
                   }
                 }}
@@ -371,6 +385,9 @@ export default function App() {
                   if (!locationInput.trim()) {
                     setLocationData(null);
                     setGeocodeError(null);
+                    return;
+                  }
+                  if (!hasLocationChangedSinceLastGeocode(locationInput)) {
                     return;
                   }
                   geocodeManual(locationInput);
