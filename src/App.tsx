@@ -1,5 +1,6 @@
 import { useState, useCallback } from "react";
 import { useMutation } from "convex/react";
+import tzLookup from "tz-lookup";
 import { api } from "../convex/_generated/api";
 import "./App.css";
 
@@ -21,6 +22,14 @@ type BrowserGeoStatus = "idle" | "requesting" | "denied" | "unsupported";
 /* ------------------------------------------------------------------ */
 
 const NOMINATIM_HEADERS = { "User-Agent": "LookWest/1.0" };
+
+function resolveTimezone(lat: number, lon: number): string {
+  try {
+    return tzLookup(lat, lon);
+  } catch {
+    return "UTC";
+  }
+}
 
 function parseAddress(
   addr: Record<string, string>,
@@ -59,7 +68,7 @@ async function reverseGeocode(lat: number, lon: number): Promise<LocationData> {
     latitude: lat,
     longitude: lon,
     locationName: parseAddress(data.address || {}, data.display_name),
-    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    timezone: resolveTimezone(lat, lon),
   };
 }
 
@@ -162,11 +171,13 @@ export default function App() {
         return;
       }
       const r = results[0];
+      const latitude = parseFloat(r.lat);
+      const longitude = parseFloat(r.lon);
       const data: LocationData = {
-        latitude: parseFloat(r.lat),
-        longitude: parseFloat(r.lon),
+        latitude,
+        longitude,
         locationName: parseAddress(r.address || {}, r.display_name),
-        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        timezone: resolveTimezone(latitude, longitude),
       };
       setLocationData(data);
       setLocationInput(data.locationName);
