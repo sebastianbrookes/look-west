@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useMutation } from "convex/react";
 import { api } from "../convex/_generated/api";
 import "./App.css";
@@ -97,6 +97,7 @@ export default function App() {
   const [name, setName] = useState("");
   const [nameConfirmed, setNameConfirmed] = useState(false);
   const [email, setEmail] = useState("");
+  const [emailConfirmed, setEmailConfirmed] = useState(false);
   const [emailError, setEmailError] = useState("");
   const [submitError, setSubmitError] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -193,6 +194,32 @@ export default function App() {
       setGeocoding(false);
     }
   }, []);
+
+  useEffect(() => {
+    if (name.trim().length < 2) {
+      setNameConfirmed(false);
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setNameConfirmed(true);
+    }, 500);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [name]);
+
+  useEffect(() => {
+    if (!email.trim() || !validateEmail(email)) {
+      setEmailConfirmed(false);
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setEmailConfirmed(true);
+    }, 500);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [email]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -392,7 +419,9 @@ export default function App() {
                   setName(e.target.value);
                   setNameConfirmed(false);
                 }}
-                onBlur={() => { if (name.trim().length >= 2) setNameConfirmed(true); }}
+                onBlur={() => {
+                  setNameConfirmed(name.trim().length >= 2);
+                }}
                 autoComplete="given-name"
               />
               {nameConfirmed && <CheckIcon />}
@@ -408,11 +437,15 @@ export default function App() {
                 value={email}
                 onChange={(e) => {
                   setEmail(e.target.value);
+                  setEmailConfirmed(false);
                   setEmailError("");
+                }}
+                onBlur={() => {
+                  setEmailConfirmed(validateEmail(email));
                 }}
                 autoComplete="email"
               />
-              {!emailError && validateEmail(email) && <CheckIcon />}
+              {!emailError && emailConfirmed && <CheckIcon />}
             </div>
             {emailError && <p className="field-error">{emailError}</p>}
           </div>
