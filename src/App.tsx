@@ -22,6 +22,8 @@ type BrowserGeoStatus = "idle" | "requesting" | "denied" | "unsupported";
 /* ------------------------------------------------------------------ */
 
 const NOMINATIM_HEADERS = { "User-Agent": "LookWest/1.0" };
+const DUPLICATE_EMAIL_ERROR = "Email already registered";
+const GENERIC_SUBMIT_ERROR = "Something went wrong. Please try again.";
 
 function resolveTimezone(lat: number, lon: number): string {
   try {
@@ -76,6 +78,16 @@ function validateEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
 }
 
+function getReadableErrorMessage(err: unknown): string {
+  if (!(err instanceof Error)) return GENERIC_SUBMIT_ERROR;
+
+  const convexMessageMatch = err.message.match(
+    /Uncaught Error:\s*(.+?)(?:\s+at handler|\s+Called by client|$)/s
+  );
+
+  return convexMessageMatch?.[1].trim() || err.message || GENERIC_SUBMIT_ERROR;
+}
+
 function CheckIcon() {
   return (
     <svg className="input-check" viewBox="0 0 18 18" fill="none" aria-hidden>
@@ -109,6 +121,7 @@ export default function App() {
   const [emailConfirmed, setEmailConfirmed] = useState(false);
   const [emailError, setEmailError] = useState("");
   const [submitError, setSubmitError] = useState("");
+  const [duplicateEmailModalOpen, setDuplicateEmailModalOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   const [submitted, setSubmitted] = useState(false);
@@ -254,10 +267,15 @@ const resolveManualLocation = useCallback(() => {
   geocodeManual(trimmed);
 }, [geocodeManual, locationData, locationInput]);
 
+  const closeDuplicateEmailModal = useCallback(() => {
+    setDuplicateEmailModalOpen(false);
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitError("");
     setEmailError("");
+    setDuplicateEmailModalOpen(false);
 
     if (!locationData) {
       setSubmitError("Please set your location first.");
@@ -283,11 +301,14 @@ const resolveManualLocation = useCallback(() => {
       setConfirmedLocation(locationData.locationName);
       setSubmitted(true);
     } catch (err: unknown) {
-      setSubmitError(
-        err instanceof Error
-          ? err.message
-          : "Something went wrong. Please try again."
-      );
+      const readableError = getReadableErrorMessage(err);
+
+      if (readableError === DUPLICATE_EMAIL_ERROR) {
+        setDuplicateEmailModalOpen(true);
+        return;
+      }
+
+      setSubmitError(readableError);
     } finally {
       setSubmitting(false);
     }
@@ -486,6 +507,36 @@ const resolveManualLocation = useCallback(() => {
           </button>
         </form>
       </div>
+
+      {duplicateEmailModalOpen && (
+        <div
+          className="modal-overlay"
+          role="presentation"
+          onClick={closeDuplicateEmailModal}
+        >
+          <div
+            className="modal-card"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="duplicate-email-title"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="modal-title" id="duplicate-email-title">
+              Email already registered
+            </h2>
+            <p className="modal-body">
+              That email is already registered with an active account.
+            </p>
+            <button
+              type="button"
+              className="modal-btn"
+              onClick={closeDuplicateEmailModal}
+            >
+              OK
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
