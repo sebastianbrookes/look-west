@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { useMutation } from "convex/react";
 import { api } from "../convex/_generated/api";
 import "./App.css";
@@ -14,11 +14,7 @@ type LocationData = {
   timezone: string;
 };
 
-type LocationState =
-  | { status: "loading" }
-  | { status: "resolved"; data: LocationData }
-  | { status: "denied" }
-  | { status: "error"; message: string };
+type BrowserGeoStatus = "idle" | "requesting" | "denied" | "unsupported";
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                            */
@@ -41,7 +37,6 @@ function parseAddress(
     addr.county;
 
   if (!city) {
-    // Last resort: grab the first meaningful part of display_name
     if (displayName) {
       const parts = displayName.split(", ");
       return parts.length >= 2 ? `${parts[0]}, ${parts[1]}` : parts[0];
@@ -54,6 +49,20 @@ function parseAddress(
   return state ? `${city}, ${state}` : city;
 }
 
+async function reverseGeocode(lat: number, lon: number): Promise<LocationData> {
+  const res = await fetch(
+    `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&addressdetails=1`,
+    { headers: NOMINATIM_HEADERS }
+  );
+  const data = await res.json();
+  return {
+    latitude: lat,
+    longitude: lon,
+    locationName: parseAddress(data.address || {}, data.display_name),
+    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+  };
+}
+
 function validateEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
 }
@@ -63,12 +72,11 @@ function validateEmail(email: string): boolean {
 /* ------------------------------------------------------------------ */
 
 export default function App() {
-  /* ---- state ---- */
-  const [location, setLocation] = useState<LocationState>({
-    status: "loading",
-  });
-  const [showManualInput, setShowManualInput] = useState(false);
-  const [manualQuery, setManualQuery] = useState("");
+  const [locationData, setLocationData] = useState<LocationData | null>(null);
+  const [locationInput, setLocationInput] = useState("");
+  const [browserGeoStatus, setBrowserGeoStatus] =
+    useState<BrowserGeoStatus>("idle");
+  const [geocodeError, setGeocodeError] = useState<string | null>(null);
   const [geocoding, setGeocoding] = useState(false);
 
   const [name, setName] = useState("");
@@ -84,46 +92,37 @@ export default function App() {
 
   const addUser = useMutation(api.users.addUser);
 
-  /* ---- geolocation on mount ---- */
-  useEffect(() => {
+  const requestBrowserLocation = useCallback(() => {
+    setGeocodeError(null);
     if (!navigator.geolocation) {
-      setLocation({ status: "denied" });
+      setBrowserGeoStatus("unsupported");
       return;
     }
+    setBrowserGeoStatus("requesting");
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
         try {
           const { latitude, longitude } = pos.coords;
-          const res = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&addressdetails=1`,
-            { headers: NOMINATIM_HEADERS }
-          );
-          const data = await res.json();
-          setLocation({
-            status: "resolved",
-            data: {
-              latitude,
-              longitude,
-              locationName: parseAddress(data.address || {}, data.display_name),
-              timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-            },
-          });
+          const data = await reverseGeocode(latitude, longitude);
+          setLocationData(data);
+          setLocationInput(data.locationName);
+          setBrowserGeoStatus("idle");
         } catch {
-          setLocation({
-            status: "error",
-            message: "Couldn't determine your location.",
-          });
+          setGeocodeError("Couldn't determine your location.");
+          setBrowserGeoStatus("idle");
         }
       },
-      () => setLocation({ status: "denied" }),
+      () => {
+        setBrowserGeoStatus("denied");
+      },
       { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
     );
   }, []);
 
-  /* ---- manual geocode ---- */
   const geocodeManual = useCallback(async (q: string) => {
     if (!q.trim()) return;
     setGeocoding(true);
+    setGeocodeError(null);
     try {
       const trimmed = q.trim();
       const isZip = /^\d{5}(-\d{4})?$/.test(trimmed);
@@ -141,40 +140,35 @@ export default function App() {
       );
       const results = await res.json();
       if (!results.length) {
-        setLocation({
-          status: "error",
-          message: "Couldn't find that location. Try a city name or zip code.",
-        });
+        setGeocodeError(
+          "Couldn't find that location. Try a city name or zip code."
+        );
+        setLocationData(null);
         return;
       }
       const r = results[0];
-      setLocation({
-        status: "resolved",
-        data: {
-          latitude: parseFloat(r.lat),
-          longitude: parseFloat(r.lon),
-          locationName: parseAddress(r.address || {}, r.display_name),
-          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-        },
-      });
-      setShowManualInput(false);
+      const data: LocationData = {
+        latitude: parseFloat(r.lat),
+        longitude: parseFloat(r.lon),
+        locationName: parseAddress(r.address || {}, r.display_name),
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      };
+      setLocationData(data);
+      setLocationInput(data.locationName);
     } catch {
-      setLocation({
-        status: "error",
-        message: "Something went wrong looking up that location.",
-      });
+      setGeocodeError("Something went wrong looking up that location.");
+      setLocationData(null);
     } finally {
       setGeocoding(false);
     }
   }, []);
 
-  /* ---- submit ---- */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitError("");
     setEmailError("");
 
-    if (location.status !== "resolved") {
+    if (!locationData) {
       setSubmitError("Please set your location first.");
       return;
     }
@@ -192,10 +186,10 @@ export default function App() {
       await addUser({
         name: name.trim(),
         email: email.trim(),
-        ...location.data,
+        ...locationData,
       });
       setConfirmedEmail(email.trim());
-      setConfirmedLocation(location.data.locationName);
+      setConfirmedLocation(locationData.locationName);
       setSubmitted(true);
     } catch (err: unknown) {
       setSubmitError(
@@ -208,7 +202,6 @@ export default function App() {
     }
   };
 
-  /* ---- copy link ---- */
   const copyLink = async () => {
     try {
       await navigator.clipboard.writeText(window.location.href);
@@ -229,7 +222,8 @@ export default function App() {
         <div className="card confirmation">
           <h1 className="headline">You're in.</h1>
           <p className="body">
-            We'll email you at <strong>{confirmedEmail}</strong> whenever the sunset in <strong>{confirmedLocation}</strong> will be beautiful.
+            We'll email you at <strong>{confirmedEmail}</strong> whenever the
+            sunset in <strong>{confirmedLocation}</strong> will be beautiful.
           </p>
           <p className="body dim">
             Your first alert could come as early as tonight.
@@ -237,13 +231,38 @@ export default function App() {
           <button type="button" className="link-btn" onClick={copyLink}>
             {copied ? (
               <>
-                <svg className="link-icon copied-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                <svg
+                  className="link-icon copied-check"
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
                 Copied!
               </>
             ) : (
               <>
                 Tell a friend
-                <svg className="link-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" /></svg>
+                <svg
+                  className="link-icon"
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+                  <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+                </svg>
               </>
             )}
           </button>
@@ -256,72 +275,80 @@ export default function App() {
   /*  Sign-up form                                                     */
   /* ================================================================ */
 
-  const showManual =
-    showManualInput ||
-    location.status === "denied" ||
-    location.status === "error";
-
   return (
     <div className="page">
       <div className="card">
         <h1 className="headline">Look West</h1>
-        {/* <p className="quote">
-          "One day I watched the sunset forty-four times..."
-        </p> */}
         <p className="tagline">
           We'll email you when the sunset's worth watching.
         </p>
 
         <form onSubmit={handleSubmit} className="form">
           {/* ---------- location ---------- */}
-          <div className="field">
-            {location.status === "loading" && (
-              <p className="finding">Finding you...</p>
-            )}
-
-            {location.status === "resolved" && !showManualInput && (
-              <>
-                <p className="location-label">
-                  <span className="location-wrapper">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="#B46A46" aria-hidden="true"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
-                    {location.data.locationName}
-                  </span>
-                </p>
-                <button
-                  type="button"
-                  className="link-btn small"
-                  onClick={() => setShowManualInput(true)}
-                >
-                  Not right? Change location
-                </button>
-              </>
-            )}
-
-            {showManual && (
-              <>
-                {location.status === "error" && (
-                  <p className="field-error">{location.message}</p>
-                )}
-                <input
-                  type="text"
-                  className="input"
-                  placeholder="Enter your city or zip code"
-                  value={manualQuery}
-                  onChange={(e) => setManualQuery(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      geocodeManual(manualQuery);
+          <div className="field field-location">
+            <div className="input-with-icon">
+              <input
+                id="location-input"
+                type="text"
+                className="input"
+                placeholder="City or zip code"
+                value={locationInput}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setLocationInput(v);
+                  setGeocodeError(null);
+                  if (!v.trim()) setLocationData(null);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    if (!locationInput.trim()) {
+                      setLocationData(null);
+                      return;
                     }
-                  }}
-                  onBlur={() => geocodeManual(manualQuery)}
-                  disabled={geocoding}
-                />
-              </>
+                    geocodeManual(locationInput);
+                  }
+                }}
+                onBlur={() => {
+                  if (!locationInput.trim()) {
+                    setLocationData(null);
+                    setGeocodeError(null);
+                    return;
+                  }
+                  geocodeManual(locationInput);
+                }}
+                disabled={geocoding || browserGeoStatus === "requesting"}
+                autoComplete="address-level2"
+                aria-invalid={!!geocodeError}
+                aria-describedby={geocodeError ? "location-geocode-error" : undefined}
+              />
+              {geocoding && <span className="input-spinner" aria-hidden />}
+            </div>
+            {geocodeError && (
+              <p className="field-error" id="location-geocode-error">{geocodeError}</p>
+            )}
+            {browserGeoStatus === "denied" && (
+              <p className="field-hint">Location access denied — enter your city above instead.</p>
+            )}
+            {browserGeoStatus !== "unsupported" && !locationData && (
+              <button
+                type="button"
+                className="geo-link"
+                onClick={requestBrowserLocation}
+                disabled={browserGeoStatus === "requesting" || geocoding}
+              >
+                {browserGeoStatus === "requesting" ? (
+                  <>
+                    <span className="geo-link-spinner" aria-hidden />
+                    Finding you…
+                  </>
+                ) : (
+                  "Use my current location"
+                )}
+              </button>
             )}
           </div>
 
-          {/* ---------- name ---------- */}
           <div className="field">
             <input
               type="text"
@@ -333,7 +360,6 @@ export default function App() {
             />
           </div>
 
-          {/* ---------- email ---------- */}
           <div className="field">
             <input
               type="email"
@@ -353,7 +379,10 @@ export default function App() {
 
           <button type="submit" className="submit-btn" disabled={submitting}>
             {submitting ? (
-              <><span className="spinner" /><span>Signing up...</span></>
+              <>
+                <span className="spinner" />
+                <span>Signing up...</span>
+              </>
             ) : (
               "Sign me up"
             )}
