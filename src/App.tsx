@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useMutation } from "convex/react";
 import tzLookup from "tz-lookup";
 import { api } from "../convex/_generated/api";
@@ -76,6 +76,21 @@ function validateEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
 }
 
+function CheckIcon() {
+  return (
+    <svg className="input-check" viewBox="0 0 18 18" fill="none" aria-hidden>
+      <circle cx="9" cy="9" r="9" fill="#F9DE8E" />
+      <path
+        d="M5.5 9.2L8 11.7L12.5 6.5"
+        stroke="#5c4030"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 /* ------------------------------------------------------------------ */
 /*  Component                                                          */
 /* ------------------------------------------------------------------ */
@@ -89,7 +104,9 @@ export default function App() {
   const [geocoding, setGeocoding] = useState(false);
 
   const [name, setName] = useState("");
+  const [nameConfirmed, setNameConfirmed] = useState(false);
   const [email, setEmail] = useState("");
+  const [emailConfirmed, setEmailConfirmed] = useState(false);
   const [emailError, setEmailError] = useState("");
   const [submitError, setSubmitError] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -98,8 +115,16 @@ export default function App() {
   const [confirmedEmail, setConfirmedEmail] = useState("");
   const [confirmedLocation, setConfirmedLocation] = useState("");
   const [copied, setCopied] = useState(false);
+  const manualGeocodeInFlightRef = useRef(false);
 
   const addUser = useMutation(api.users.addUser);
+  const hasLocationChangedSinceLastGeocode = (value: string) => {
+    const normalizedInput = value.trim().toLowerCase();
+    const normalizedGeocodedLocation =
+      locationData?.locationName.trim().toLowerCase() ?? "";
+
+    return !!normalizedInput && normalizedInput !== normalizedGeocodedLocation;
+  };
 
   const requestBrowserLocation = useCallback(async () => {
     setGeocodeError(null);
@@ -144,7 +169,9 @@ export default function App() {
   }, []);
 
   const geocodeManual = useCallback(async (q: string) => {
-    if (!q.trim()) return;
+    if (!q.trim() || manualGeocodeInFlightRef.current) return;
+
+    manualGeocodeInFlightRef.current = true;
     setGeocoding(true);
     setGeocodeError(null);
     try {
@@ -185,20 +212,47 @@ export default function App() {
       setGeocodeError("Something went wrong looking up that location.");
       setLocationData(null);
     } finally {
+      manualGeocodeInFlightRef.current = false;
       setGeocoding(false);
     }
   }, []);
 
-  const resolveManualLocation = useCallback(() => {
-    const trimmed = locationInput.trim();
-    if (!trimmed) {
-      setLocationData(null);
-      setGeocodeError(null);
-      return;
-    }
-    if (locationData?.locationName === trimmed) return;
-    geocodeManual(trimmed);
-  }, [geocodeManual, locationData, locationInput]);
+useEffect(() => {
+  if (name.trim().length < 2) {
+    setNameConfirmed(false);
+    return;
+  }
+
+  const timeoutId = window.setTimeout(() => {
+    setNameConfirmed(true);
+  }, 500);
+
+  return () => window.clearTimeout(timeoutId);
+}, [name]);
+
+useEffect(() => {
+  if (!email.trim() || !validateEmail(email)) {
+    setEmailConfirmed(false);
+    return;
+  }
+
+  const timeoutId = window.setTimeout(() => {
+    setEmailConfirmed(true);
+  }, 500);
+
+  return () => window.clearTimeout(timeoutId);
+}, [email]);
+
+const resolveManualLocation = useCallback(() => {
+  const trimmed = locationInput.trim();
+  if (!trimmed) {
+    setLocationData(null);
+    setGeocodeError(null);
+    return;
+  }
+  if (locationData?.locationName === trimmed) return;
+  geocodeManual(trimmed);
+}, [geocodeManual, locationData, locationInput]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -209,8 +263,8 @@ export default function App() {
       setSubmitError("Please set your location first.");
       return;
     }
-    if (!name.trim()) {
-      setSubmitError("We'll need your name.");
+    if (name.trim().length < 2) {
+      setSubmitError("Name must be at least 2 characters.");
       return;
     }
     if (!validateEmail(email)) {
@@ -349,6 +403,7 @@ export default function App() {
                 aria-describedby={geocodeError ? "location-geocode-error" : undefined}
               />
               {geocoding && <span className="input-spinner" aria-hidden />}
+              {!geocoding && locationData && <CheckIcon />}
             </div>
             {geocodeError && (
               <p className="field-error" id="location-geocode-error">{geocodeError}</p>
@@ -376,28 +431,44 @@ export default function App() {
           </div>
 
           <div className="field">
-            <input
-              type="text"
-              className="input"
-              placeholder="Your first name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              autoComplete="given-name"
-            />
+            <div className="input-with-icon">
+              <input
+                type="text"
+                className="input"
+                placeholder="Your first name"
+                value={name}
+                onChange={(e) => {
+                  setName(e.target.value);
+                  setNameConfirmed(false);
+                }}
+                onBlur={() => {
+                  setNameConfirmed(name.trim().length >= 2);
+                }}
+                autoComplete="given-name"
+              />
+              {nameConfirmed && <CheckIcon />}
+            </div>
           </div>
 
           <div className="field">
-            <input
-              type="email"
-              className={`input${emailError ? " input-error" : ""}`}
-              placeholder="Email address"
-              value={email}
-              onChange={(e) => {
-                setEmail(e.target.value);
-                setEmailError("");
-              }}
-              autoComplete="email"
-            />
+            <div className="input-with-icon">
+              <input
+                type="email"
+                className={`input${emailError ? " input-error" : ""}`}
+                placeholder="Email address"
+                value={email}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  setEmailConfirmed(false);
+                  setEmailError("");
+                }}
+                onBlur={() => {
+                  setEmailConfirmed(validateEmail(email));
+                }}
+                autoComplete="email"
+              />
+              {!emailError && emailConfirmed && <CheckIcon />}
+            </div>
             {emailError && <p className="field-error">{emailError}</p>}
           </div>
 
