@@ -178,6 +178,17 @@ export default function App() {
     }
   }, []);
 
+  const resolveManualLocation = useCallback(() => {
+    const trimmed = locationInput.trim();
+    if (!trimmed) {
+      setLocationData(null);
+      setGeocodeError(null);
+      return;
+    }
+    if (locationData?.locationName === trimmed) return;
+    geocodeManual(trimmed);
+  }, [geocodeManual, locationData, locationInput]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitError("");
@@ -317,21 +328,10 @@ export default function App() {
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
                     e.preventDefault();
-                    if (!locationInput.trim()) {
-                      setLocationData(null);
-                      return;
-                    }
-                    geocodeManual(locationInput);
+                    resolveManualLocation();
                   }
                 }}
-                onBlur={() => {
-                  if (!locationInput.trim()) {
-                    setLocationData(null);
-                    setGeocodeError(null);
-                    return;
-                  }
-                  geocodeManual(locationInput);
-                }}
+                onBlur={resolveManualLocation}
                 disabled={geocoding || browserGeoStatus === "requesting"}
                 autoComplete="address-level2"
                 aria-invalid={!!geocodeError}
