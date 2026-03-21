@@ -92,12 +92,27 @@ export default function App() {
 
   const addUser = useMutation(api.users.addUser);
 
-  const requestBrowserLocation = useCallback(() => {
+  const requestBrowserLocation = useCallback(async () => {
     setGeocodeError(null);
     if (!navigator.geolocation) {
       setBrowserGeoStatus("unsupported");
       return;
     }
+
+    // Check permission state first so we can show a helpful message
+    // instead of letting Chrome silently block the request.
+    if (navigator.permissions) {
+      try {
+        const perm = await navigator.permissions.query({ name: "geolocation" });
+        if (perm.state === "denied") {
+          setBrowserGeoStatus("denied");
+          return;
+        }
+      } catch {
+        // permissions.query not supported — fall through to getCurrentPosition
+      }
+    }
+
     setBrowserGeoStatus("requesting");
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
@@ -327,10 +342,10 @@ export default function App() {
             {geocodeError && (
               <p className="field-error" id="location-geocode-error">{geocodeError}</p>
             )}
-            {browserGeoStatus === "denied" && (
-              <p className="field-hint">Location access denied — enter your city above instead.</p>
+            {browserGeoStatus === "denied" && !locationData && (
+              <p className="field-hint">Location permission denied. Enter your city or ZIP code above instead.</p>
             )}
-            {browserGeoStatus !== "unsupported" && !locationData && (
+            {browserGeoStatus !== "unsupported" && browserGeoStatus !== "denied" && !locationData && (
               <button
                 type="button"
                 className="geo-link"
