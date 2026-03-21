@@ -203,8 +203,8 @@ export default function App() {
       setSubmitError("Please set your location first.");
       return;
     }
-    if (name.trim().length < 3) {
-      setSubmitError("Name must be at least 3 characters.");
+    if (name.trim().length < 2) {
+      setSubmitError("Name must be at least 2 characters.");
       return;
     }
     if (!validateEmail(email)) {
@@ -392,7 +392,7 @@ export default function App() {
                   setName(e.target.value);
                   setNameConfirmed(false);
                 }}
-                onBlur={() => { if (name.trim().length >= 3) setNameConfirmed(true); }}
+                onBlur={() => { if (name.trim().length >= 2) setNameConfirmed(true); }}
                 autoComplete="given-name"
               />
               {nameConfirmed && <CheckIcon />}
