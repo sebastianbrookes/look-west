@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useMutation } from "convex/react";
 import { api } from "../convex/_generated/api";
 import "./App.css";
@@ -80,6 +80,8 @@ export default function App() {
   const [geocoding, setGeocoding] = useState(false);
 
   const [name, setName] = useState("");
+  const [nameConfirmed, setNameConfirmed] = useState(false);
+  const nameTimer = useRef<ReturnType<typeof setTimeout>>(null);
   const [email, setEmail] = useState("");
   const [emailError, setEmailError] = useState("");
   const [submitError, setSubmitError] = useState("");
@@ -89,6 +91,17 @@ export default function App() {
   const [confirmedEmail, setConfirmedEmail] = useState("");
   const [confirmedLocation, setConfirmedLocation] = useState("");
   const [copied, setCopied] = useState(false);
+
+  // Confirm the name check after 1s of inactivity or on blur
+  useEffect(() => {
+    if (nameTimer.current) clearTimeout(nameTimer.current);
+    if (!name.trim()) {
+      setNameConfirmed(false);
+      return;
+    }
+    nameTimer.current = setTimeout(() => setNameConfirmed(true), 1000);
+    return () => { if (nameTimer.current) clearTimeout(nameTimer.current); };
+  }, [name]);
 
   const addUser = useMutation(api.users.addUser);
 
@@ -338,6 +351,12 @@ export default function App() {
                 aria-describedby={geocodeError ? "location-geocode-error" : undefined}
               />
               {geocoding && <span className="input-spinner" aria-hidden />}
+              {!geocoding && locationData && (
+                <svg className="input-check" viewBox="0 0 18 18" fill="none" aria-hidden>
+                  <circle cx="9" cy="9" r="9" fill="#F9DE8E" />
+                  <path d="M5.5 9.2L8 11.7L12.5 6.5" stroke="#5c4030" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              )}
             </div>
             {geocodeError && (
               <p className="field-error" id="location-geocode-error">{geocodeError}</p>
@@ -365,28 +384,48 @@ export default function App() {
           </div>
 
           <div className="field">
-            <input
-              type="text"
-              className="input"
-              placeholder="Your first name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              autoComplete="given-name"
-            />
+            <div className="input-with-icon">
+              <input
+                type="text"
+                className="input"
+                placeholder="Your first name"
+                value={name}
+                onChange={(e) => {
+                  setName(e.target.value);
+                  setNameConfirmed(false);
+                }}
+                onBlur={() => { if (name.trim()) setNameConfirmed(true); }}
+                autoComplete="given-name"
+              />
+              {nameConfirmed && (
+                <svg className="input-check" viewBox="0 0 18 18" fill="none" aria-hidden>
+                  <circle cx="9" cy="9" r="9" fill="#F9DE8E" />
+                  <path d="M5.5 9.2L8 11.7L12.5 6.5" stroke="#5c4030" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              )}
+            </div>
           </div>
 
           <div className="field">
-            <input
-              type="email"
-              className={`input${emailError ? " input-error" : ""}`}
-              placeholder="Email address"
-              value={email}
-              onChange={(e) => {
-                setEmail(e.target.value);
-                setEmailError("");
-              }}
-              autoComplete="email"
-            />
+            <div className="input-with-icon">
+              <input
+                type="email"
+                className={`input${emailError ? " input-error" : ""}`}
+                placeholder="Email address"
+                value={email}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  setEmailError("");
+                }}
+                autoComplete="email"
+              />
+              {!emailError && validateEmail(email) && (
+                <svg className="input-check" viewBox="0 0 18 18" fill="none" aria-hidden>
+                  <circle cx="9" cy="9" r="9" fill="#F9DE8E" />
+                  <path d="M5.5 9.2L8 11.7L12.5 6.5" stroke="#5c4030" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              )}
+            </div>
             {emailError && <p className="field-error">{emailError}</p>}
           </div>
 
