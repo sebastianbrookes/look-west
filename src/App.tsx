@@ -420,6 +420,7 @@ const resolveManualLocation = useCallback(() => {
                 onBlur={resolveManualLocation}
                 disabled={geocoding || browserGeoStatus === "requesting"}
                 autoComplete="address-level2"
+                enterKeyHint="search"
                 aria-invalid={!!geocodeError}
                 aria-describedby={geocodeError ? "location-geocode-error" : undefined}
               />
@@ -466,6 +467,7 @@ const resolveManualLocation = useCallback(() => {
                   setNameConfirmed(name.trim().length >= 2);
                 }}
                 autoComplete="given-name"
+                enterKeyHint="next"
               />
               {nameConfirmed && <CheckIcon />}
             </div>
@@ -487,6 +489,7 @@ const resolveManualLocation = useCallback(() => {
                   setEmailConfirmed(validateEmail(email));
                 }}
                 autoComplete="email"
+                enterKeyHint="done"
               />
               {!emailError && emailConfirmed && <CheckIcon />}
             </div>

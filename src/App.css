@@ -687,24 +687,130 @@ h6 {
 
 @media (max-width: 480px) {
   .page {
-    padding: 2rem 1rem;
+    padding: 1.25rem 0.75rem;
+    padding-top: max(1.25rem, env(safe-area-inset-top));
+    padding-bottom: max(1.25rem, env(safe-area-inset-bottom));
+    /* On mobile, nudge the card toward upper-third so the background
+       artwork peeks out below and the keyboard doesn't obscure it */
+    align-items: flex-start;
+    padding-top: max(12vh, env(safe-area-inset-top));
   }
 
   .card {
-    padding: 2.25rem 1.75rem 2rem;
+    padding: 2rem 1.5rem 1.75rem;
     border-radius: 18px;
+    /* Let the card breathe — full width minus a slim gutter */
+    max-width: 100%;
   }
 
+  .card.confirmation {
+    /* Re-center confirmation on mobile */
+    margin-top: auto;
+    margin-bottom: auto;
+  }
+
+  /* Typography */
   .headline {
     font-size: 28px;
   }
 
   .tagline {
+    font-size: 0.9375rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .body {
     font-size: 1rem;
-    margin-bottom: 1.75rem;
+  }
+
+  /* Form */
+  .form {
+    gap: 0.875rem;
+    margin-left: -0.25rem;
+    margin-right: -0.25rem;
+  }
+
+  /* Inputs — 16px prevents iOS zoom on focus */
+  .input {
+    font-size: 1rem;
+    padding: 0.875rem 1rem;
+    border-radius: 12px;
+  }
+
+  /* Submit button — bigger touch target */
+  .submit-btn {
+    font-size: 1rem;
+    padding: 1rem;
+    border-radius: 12px;
+    margin-top: 0.375rem;
+    /* Subtle touch feedback */
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Geo link — slightly larger tap zone */
+  .geo-link {
+    font-size: 0.8125rem;
+    padding: 0.25rem 0.375rem;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Link button */
+  .link-btn {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Modal — bottom sheet style on mobile */
+  .modal-overlay {
+    align-items: flex-end;
+    padding: 0;
+    padding-bottom: env(safe-area-inset-bottom);
   }
 
   .modal-card {
-    padding: 1.25rem;
+    width: 100%;
+    max-width: 100%;
+    border-radius: 20px 20px 0 0;
+    padding: 1.75rem 1.5rem calc(1.75rem + env(safe-area-inset-bottom));
+    animation: slide-up 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .modal-title {
+    font-size: 22px;
+  }
+
+  .modal-btn {
+    padding: 0.9375rem 1rem;
+    border-radius: 12px;
+  }
+}
+
+/* Very small screens (iPhone SE, etc.) */
+@media (max-width: 375px) {
+  .page {
+    padding-top: max(8vh, env(safe-area-inset-top));
+  }
+
+  .card {
+    padding: 1.75rem 1.25rem 1.5rem;
+  }
+
+  .headline {
+    font-size: 26px;
+  }
+
+  .tagline {
+    font-size: 0.875rem;
+  }
+}
+
+/* Bottom-sheet slide-up animation for mobile modal */
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
