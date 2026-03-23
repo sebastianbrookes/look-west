@@ -39,7 +39,7 @@ body {
   color: var(--text);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background: #f0d4b8;
+  background: #f0d4b8 url("/background.webp") center 40% / cover no-repeat fixed;
 }
 
 /* ================================================================ */
