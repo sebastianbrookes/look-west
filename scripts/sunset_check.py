@@ -199,7 +199,7 @@ def get_current_weather(lat, lon):
 
 
 def generate_message(quality_percent, quality_label, location_name, sunset_time_local, temp_f, weather_description, cloud_cover=0):
-    """Generate an email message using GPT 5.4 Mini via OpenRouter."""
+    """Generate an email message using Kimi K2 via OpenRouter."""
     sunset_dt = datetime.strptime(sunset_time_local, "%I:%M %p")
     viewing_time = (sunset_dt - timedelta(minutes=30)).strftime("%-I:%M %p")
 
@@ -220,7 +220,7 @@ def generate_message(quality_percent, quality_label, location_name, sunset_time_
             "Content-Type": "application/json",
         },
         json={
-            "model": "google/gemini-3-flash-preview",
+            "model": "moonshotai/kimi-k2-0905",
             "messages": [
                 {"role": "system", "content": SYSTEM_PROMPT},
                 {"role": "user", "content": user_prompt},
