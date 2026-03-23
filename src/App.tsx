@@ -340,44 +340,54 @@ const resolveManualLocation = useCallback(() => {
           <p className="body dim">
             Your first alert could come as early as tonight.
           </p>
-          <button type="button" className="link-btn" onClick={copyLink}>
-            {copied ? (
-              <>
-                <svg
-                  className="link-icon copied-check"
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <polyline points="20 6 9 17 4 12" />
-                </svg>
-                Copied!
-              </>
-            ) : (
-              <>
-                Tell a friend
-                <svg
-                  className="link-icon"
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
-                  <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
-                </svg>
-              </>
-            )}
-          </button>
+          <div className="confirmation-links">
+            <button type="button" className="link-btn" onClick={copyLink}>
+              {copied ? (
+                <>
+                  <svg
+                    className="link-icon copied-check"
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                  Copied!
+                </>
+              ) : (
+                <>
+                  Tell a friend
+                  <svg
+                    className="link-icon"
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+                  </svg>
+                </>
+              )}
+            </button>
+            <a
+              href="https://buymeacoffee.com/sebastianbrookes"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="link-btn"
+            >
+              Buy me a coffee
+            </a>
+          </div>
         </div>
       </div>
     );
@@ -420,6 +430,7 @@ const resolveManualLocation = useCallback(() => {
                 onBlur={resolveManualLocation}
                 disabled={geocoding || browserGeoStatus === "requesting"}
                 autoComplete="address-level2"
+                enterKeyHint="search"
                 aria-invalid={!!geocodeError}
                 aria-describedby={geocodeError ? "location-geocode-error" : undefined}
               />
@@ -466,6 +477,7 @@ const resolveManualLocation = useCallback(() => {
                   setNameConfirmed(name.trim().length >= 2);
                 }}
                 autoComplete="given-name"
+                enterKeyHint="next"
               />
               {nameConfirmed && <CheckIcon />}
             </div>
@@ -487,6 +499,7 @@ const resolveManualLocation = useCallback(() => {
                   setEmailConfirmed(validateEmail(email));
                 }}
                 autoComplete="email"
+                enterKeyHint="done"
               />
               {!emailError && emailConfirmed && <CheckIcon />}
             </div>
