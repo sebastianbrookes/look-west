@@ -340,6 +340,15 @@ const resolveManualLocation = useCallback(() => {
           <p className="body dim">
             Your first alert could come as early as tonight.
           </p>
+          <a
+            href="https://buymeacoffee.com/sebastianbrookes"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="link-btn"
+          >
+            Buy me a coffee
+          </a>
+
           <button type="button" className="link-btn" onClick={copyLink}>
             {copied ? (
               <>
