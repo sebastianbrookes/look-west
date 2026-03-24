@@ -3,11 +3,10 @@
 
 import argparse
 import logging
-import os
 import sys
+import os
 import time
 from datetime import datetime, timedelta
-from pathlib import Path
 from zoneinfo import ZoneInfo
 
 import requests
@@ -17,6 +16,7 @@ from astral.sun import sun
 from convex import ConvexClient
 from dotenv import load_dotenv
 
+from email_renderer import render_email_html
 from fallback_scorer import calculate_owm_score
 from prompts import SYSTEM_PROMPT, USER_PROMPT_TEMPLATE
 
@@ -39,39 +39,6 @@ RESEND_FROM_EMAIL = os.getenv("RESEND_FROM_EMAIL", "")
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
 SUNSET_QUALITY_THRESHOLD = int(os.getenv("SUNSET_QUALITY_THRESHOLD", "40"))
 SUNSET_SCORER = os.getenv("SUNSET_SCORER", "sunsethue")
-
-# Email template
-BACKGROUND_IMAGE_URL = os.getenv(
-    "EMAIL_BACKGROUND_URL",
-    "https://look-west.vercel.app/background.webp",
-)
-_TEMPLATE_PATH = Path(__file__).parent / "email_template.html"
-_EMAIL_TEMPLATE: str | None = None
-
-
-def _load_email_template() -> str:
-    """Load and cache the HTML email template from disk."""
-    global _EMAIL_TEMPLATE
-    if _EMAIL_TEMPLATE is None:
-        _EMAIL_TEMPLATE = _TEMPLATE_PATH.read_text(encoding="utf-8")
-    return _EMAIL_TEMPLATE
-
-
-def render_email_html(
-    message: str,
-    location: str,
-    sunset_time: str,
-    unsubscribe_url: str = "",
-) -> str:
-    """Render the HTML email by substituting template variables."""
-    html = _load_email_template()
-    html = html.replace("{{message}}", message)
-    html = html.replace("{{location}}", location)
-    html = html.replace("{{sunset_time}}", sunset_time)
-    html = html.replace("{{unsubscribe_url}}", unsubscribe_url or "#")
-    html = html.replace("{{background_url}}", BACKGROUND_IMAGE_URL)
-    return html
-
 
 def get_convex_client():
     """Connect to Convex, exit on failure."""

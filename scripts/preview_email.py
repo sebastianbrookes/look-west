@@ -6,22 +6,21 @@ import sys
 import tempfile
 from pathlib import Path
 
+import email_renderer
+
 SCRIPT_DIR = Path(__file__).parent
 PROJECT_ROOT = SCRIPT_DIR.parent
-TEMPLATE = (SCRIPT_DIR / "email_template.html").read_text()
-BACKGROUND = (PROJECT_ROOT / "public" / "background.webp").resolve().as_uri()
+email_renderer.BACKGROUND_IMAGE_URL = (PROJECT_ROOT / "public" / "background.webp").resolve().as_uri()
 
-html = (
-    TEMPLATE.replace("{{background_url}}", BACKGROUND)
-    .replace("{{location}}", "Charleston, SC")
-    .replace("{{sunset_time}}", "7:42 PM")
-    .replace(
-        "{{message}}",
+html = email_renderer.render_email_html(
+    location="Charleston, SC",
+    sunset_time="7:42 PM",
+    message=(
         "Sky's looking real good tonight — scattered clouds "
         "should catch some nice color right around sunset. "
-        "Might be worth stepping outside around 7:15 if you can.",
-    )
-    .replace("{{unsubscribe_url}}", "#")
+        "Might be worth stepping outside around 7:15 if you can."
+    ),
+    unsubscribe_url="#",
 )
 
 out = Path(tempfile.mktemp(suffix=".html"))
