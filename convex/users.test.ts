@@ -1,6 +1,7 @@
 import { convexTest } from "convex-test";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { api } from "./_generated/api";
+import type { Id } from "./_generated/dataModel";
 import schema from "./schema";
 
 const modules = import.meta.glob("./**/*.ts");
@@ -89,8 +90,8 @@ describe("users unsubscribe flow", () => {
   it("generates a replacement token if a collision occurs", async () => {
     const t = convexTest(schema, modules);
     const randomValuesSpy = vi.spyOn(crypto, "getRandomValues");
-    const firstTokenBytes = new Uint8Array(24).fill(1);
-    const secondTokenBytes = new Uint8Array(24).fill(2);
+    const firstTokenBytes = new Uint8Array(32).fill(1);
+    const secondTokenBytes = new Uint8Array(32).fill(2);
 
     randomValuesSpy
       .mockImplementationOnce((array) => {
@@ -120,5 +121,50 @@ describe("users unsubscribe flow", () => {
     expect(firstUser?.unsubscribeToken).toBeDefined();
     expect(secondUser?.unsubscribeToken).toBeDefined();
     expect(secondUser?.unsubscribeToken).not.toBe(firstUser?.unsubscribeToken);
+  });
+
+  it("backfills tokens for legacy active users without one", async () => {
+    const t = convexTest(schema, modules);
+    const legacyUserId = await t.run((ctx) =>
+      ctx.db.insert("users", {
+        ...BASE_USER,
+        active: true,
+        createdAt: Date.now(),
+      } as {
+        name: string;
+        email: string;
+        latitude: number;
+        longitude: number;
+        locationName: string;
+        timezone: string;
+        active: boolean;
+        createdAt: number;
+      })
+    );
+
+    const updatedCount = await t.mutation(async (ctx) => {
+      const users = await ctx.db.query("users").collect();
+      let updatedCount = 0;
+
+      for (const user of users) {
+        if (user.unsubscribeToken) {
+          continue;
+        }
+
+        await ctx.db.patch(user._id, {
+          unsubscribeToken: "backfilled-token",
+        });
+        updatedCount += 1;
+      }
+
+      return updatedCount;
+    });
+
+    const legacyUser = await t.run((ctx) =>
+      ctx.db.get(legacyUserId as Id<"users">)
+    );
+    expect(updatedCount).toBe(1);
+    expect(legacyUser?.unsubscribeToken).toBeDefined();
+    expect(legacyUser?.unsubscribeToken?.length).toBeGreaterThan(0);
   });
 });

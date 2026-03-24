@@ -15,8 +15,9 @@ npx convex dev
 
 Copy the deployment URL it prints (e.g. `https://your-deployment.convex.cloud`) into your `.env` file as `CONVEX_URL`.
 
-If you want the Python sender to call internal Convex functions (recommended for production),
-also set `CONVEX_ADMIN_KEY` to an admin/deploy key for the same deployment.
+The Python sender now requires `CONVEX_ADMIN_KEY` because it calls internal Convex
+functions to fetch delivery-safe user records (including unsubscribe tokens) without
+exposing those tokens through the public API.
 
 ### 2. Python script
 
@@ -97,7 +98,7 @@ See `.env.example` for all required variables. Key ones:
 | Variable | Description |
 |---|---|
 | `CONVEX_URL` | Your Convex deployment URL |
-| `CONVEX_ADMIN_KEY` | Admin/deploy key for trusted scripts calling internal Convex functions |
+| `CONVEX_ADMIN_KEY` | Required admin/deploy key for the sender's internal Convex queries |
 | `APP_BASE_URL` | Public app origin used to build unsubscribe links in email |
 | `SUNSETHUE_API_KEY` | SunsetHue API key (if using sunsethue scorer) |
 | `OPENWEATHERMAP_API_KEY` | OpenWeatherMap API key (if using owm scorer) |

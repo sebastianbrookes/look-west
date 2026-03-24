@@ -81,10 +81,14 @@ def get_convex_client():
     if not CONVEX_URL:
         logger.error("CONVEX_URL is not set. Run `npx convex dev` and copy the deployment URL.")
         sys.exit(1)
+    if not CONVEX_ADMIN_KEY:
+        logger.error(
+            "CONVEX_ADMIN_KEY is required for the sender because it calls internal Convex functions."
+        )
+        sys.exit(1)
     try:
         client = ConvexClient(CONVEX_URL)
-        if CONVEX_ADMIN_KEY:
-            client.set_admin_auth(CONVEX_ADMIN_KEY)
+        client.set_admin_auth(CONVEX_ADMIN_KEY)
         return client
     except Exception as e:
         logger.error(f"Failed to connect to Convex: {e}")
@@ -252,6 +256,7 @@ def phase_check(client, test_email=None):
     """Check sunset quality for active users and queue alerts."""
     logger.info("=== Phase 1: Score Check & Queue ===")
 
+    client.mutation("users:backfillMissingUnsubscribeTokens")
     users = client.query("users:getActiveUsersForDelivery")
     if not users:
         logger.info("No active users found.")
@@ -349,6 +354,7 @@ def phase_send(client):
     """Send all pending alerts whose scheduledSendTime has passed."""
     logger.info("=== Phase 2: Send Pending Alerts ===")
 
+    client.mutation("users:backfillMissingUnsubscribeTokens")
     alerts = client.query("alerts:getPendingAlerts")
     if not alerts:
         logger.info("No pending alerts to send.")
@@ -357,7 +363,7 @@ def phase_send(client):
     logger.info(f"Found {len(alerts)} pending alert(s).")
 
     # Build user lookup from active users
-    users = client.query("users:getActiveUsers")
+    users = client.query("users:getActiveUsersForDelivery")
     user_map = {u["_id"]: u for u in users}
 
     resend.api_key = RESEND_API_KEY

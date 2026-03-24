@@ -4,6 +4,7 @@ import {
   query,
   type MutationCtx,
 } from "./_generated/server";
+import type { Doc } from "./_generated/dataModel";
 import { v } from "convex/values";
 import { generateUnsubscribeToken } from "./unsubscribeTokens";
 
@@ -41,11 +42,9 @@ function hasLocationChanged(
   );
 }
 
-function withoutUnsubscribeToken<
-  T extends {
-    unsubscribeToken: string;
-  },
->(user: T) {
+type UserWithMaybeToken = Doc<"users">;
+
+function withoutUnsubscribeToken(user: UserWithMaybeToken) {
   const { unsubscribeToken: _unsubscribeToken, ...safeUser } = user;
   return safeUser;
 }
@@ -81,10 +80,15 @@ export const getActiveUsers = query({
 export const getActiveUsersForDelivery = internalQuery({
   args: {},
   handler: async (ctx) => {
-    return await ctx.db
+    const users = await ctx.db
       .query("users")
       .filter((q) => q.eq(q.field("active"), true))
       .collect();
+
+    return users.filter(
+      (user): user is UserWithMaybeToken & { unsubscribeToken: string } =>
+        typeof user.unsubscribeToken === "string" && user.unsubscribeToken.length > 0
+    );
   },
 });
 
@@ -123,18 +127,27 @@ export const addUser = mutation({
 
     if (existing) {
       if (existing.active) {
-        if (!hasLocationChanged(existing, args)) {
-          throw new Error(DUPLICATE_ACTIVE_EMAIL_ERROR);
-        }
-
-        await ctx.db.patch(existing._id, {
+        const updates: Partial<Doc<"users">> = {
           name: args.name,
           email: normalizedEmail,
           latitude: args.latitude,
           longitude: args.longitude,
           locationName: args.locationName,
           timezone: args.timezone,
-        });
+        };
+
+        if (!existing.unsubscribeToken) {
+          updates.unsubscribeToken = await issueUnsubscribeToken(ctx);
+        }
+
+        if (!hasLocationChanged(existing, args)) {
+          if (updates.unsubscribeToken) {
+            await ctx.db.patch(existing._id, updates);
+          }
+          throw new Error(DUPLICATE_ACTIVE_EMAIL_ERROR);
+        }
+
+        await ctx.db.patch(existing._id, updates);
         return existing._id;
       }
 
@@ -160,6 +173,27 @@ export const addUser = mutation({
       unsubscribeToken,
       createdAt: Date.now(),
     });
+  },
+});
+
+export const backfillMissingUnsubscribeTokens = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const users = await ctx.db.query("users").collect();
+    let updatedCount = 0;
+
+    for (const user of users) {
+      if (user.unsubscribeToken) {
+        continue;
+      }
+
+      await ctx.db.patch(user._id, {
+        unsubscribeToken: await issueUnsubscribeToken(ctx),
+      });
+      updatedCount += 1;
+    }
+
+    return { updatedCount };
   },
 });
 

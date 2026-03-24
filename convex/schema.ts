@@ -10,7 +10,7 @@ export default defineSchema({
     locationName: v.string(),
     timezone: v.string(),
     active: v.boolean(),
-    unsubscribeToken: v.string(),
+    unsubscribeToken: v.optional(v.string()),
     createdAt: v.number(),
   }).index("by_unsubscribeToken", ["unsubscribeToken"]),
 
