@@ -1,7 +1,14 @@
-import { query, mutation } from "./_generated/server";
+import {
+  internalQuery,
+  mutation,
+  query,
+  type MutationCtx,
+} from "./_generated/server";
 import { v } from "convex/values";
+import { generateUnsubscribeToken } from "./unsubscribeTokens";
 
 const DUPLICATE_ACTIVE_EMAIL_ERROR = "Email already registered";
+const INVALID_UNSUBSCRIBE_TOKEN_ERROR = "Invalid unsubscribe link.";
 
 function normalizeEmail(email: string) {
   return email.trim().toLowerCase();
@@ -34,7 +41,44 @@ function hasLocationChanged(
   );
 }
 
+function withoutUnsubscribeToken<
+  T extends {
+    unsubscribeToken: string;
+  },
+>(user: T) {
+  const { unsubscribeToken: _unsubscribeToken, ...safeUser } = user;
+  return safeUser;
+}
+
+async function issueUnsubscribeToken(ctx: MutationCtx) {
+  while (true) {
+    const token = generateUnsubscribeToken();
+    const existing = await ctx.db
+      .query("users")
+      .withIndex("by_unsubscribeToken", (q) =>
+        q.eq("unsubscribeToken", token)
+      )
+      .unique();
+
+    if (!existing) {
+      return token;
+    }
+  }
+}
+
 export const getActiveUsers = query({
+  args: {},
+  handler: async (ctx) => {
+    const users = await ctx.db
+      .query("users")
+      .filter((q) => q.eq(q.field("active"), true))
+      .collect();
+
+    return users.map(withoutUnsubscribeToken);
+  },
+});
+
+export const getActiveUsersForDelivery = internalQuery({
   args: {},
   handler: async (ctx) => {
     return await ctx.db
@@ -49,7 +93,11 @@ export const getUserByEmail = query({
   handler: async (ctx, args) => {
     const normalizedEmail = normalizeEmail(args.email);
     const users = await ctx.db.query("users").collect();
-    return users.find((user) => normalizeEmail(user.email) === normalizedEmail) ?? null;
+    const user =
+      users.find((existingUser) => normalizeEmail(existingUser.email) === normalizedEmail) ??
+      null;
+
+    return user ? withoutUnsubscribeToken(user) : null;
   },
 });
 
@@ -90,6 +138,7 @@ export const addUser = mutation({
         return existing._id;
       }
 
+      const unsubscribeToken = await issueUnsubscribeToken(ctx);
       await ctx.db.patch(existing._id, {
         name: args.name,
         email: normalizedEmail,
@@ -98,25 +147,46 @@ export const addUser = mutation({
         longitude: args.longitude,
         locationName: args.locationName,
         timezone: args.timezone,
+        unsubscribeToken,
       });
       return existing._id;
     }
 
+    const unsubscribeToken = await issueUnsubscribeToken(ctx);
     return await ctx.db.insert("users", {
       ...args,
       email: normalizedEmail,
       active: true,
+      unsubscribeToken,
       createdAt: Date.now(),
     });
   },
 });
 
-export const toggleUserActive = mutation({
-  args: { userId: v.id("users") },
+export const unsubscribeByToken = mutation({
+  args: { token: v.string() },
   handler: async (ctx, args) => {
-    const user = await ctx.db.get(args.userId);
-    if (!user) throw new Error("User not found");
-    await ctx.db.patch(args.userId, { active: !user.active });
+    const token = args.token.trim();
+    if (!token) {
+      throw new Error(INVALID_UNSUBSCRIBE_TOKEN_ERROR);
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_unsubscribeToken", (q) =>
+        q.eq("unsubscribeToken", token)
+      )
+      .unique();
+
+    if (!user) {
+      throw new Error(INVALID_UNSUBSCRIBE_TOKEN_ERROR);
+    }
+
+    if (user.active) {
+      await ctx.db.patch(user._id, { active: false });
+    }
+
+    return { success: true };
   },
 });
 

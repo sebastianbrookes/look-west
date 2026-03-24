@@ -6,6 +6,7 @@ import logging
 import os
 import sys
 import time
+from urllib.parse import urlencode
 from datetime import datetime, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -32,6 +33,7 @@ logger = logging.getLogger("sunset_check")
 
 # Environment
 CONVEX_URL = os.getenv("CONVEX_URL")
+CONVEX_ADMIN_KEY = os.getenv("CONVEX_ADMIN_KEY", "")
 SUNSETHUE_API_KEY = os.getenv("SUNSETHUE_API_KEY", "")
 OPENWEATHERMAP_API_KEY = os.getenv("OPENWEATHERMAP_API_KEY", "")
 RESEND_API_KEY = os.getenv("RESEND_API_KEY", "")
@@ -39,6 +41,7 @@ RESEND_FROM_EMAIL = os.getenv("RESEND_FROM_EMAIL", "")
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
 SUNSET_QUALITY_THRESHOLD = int(os.getenv("SUNSET_QUALITY_THRESHOLD", "40"))
 SUNSET_SCORER = os.getenv("SUNSET_SCORER", "sunsethue")
+APP_BASE_URL = os.getenv("APP_BASE_URL", "https://golookwest.com").rstrip("/")
 
 # Email template
 BACKGROUND_IMAGE_URL = os.getenv(
@@ -79,10 +82,18 @@ def get_convex_client():
         logger.error("CONVEX_URL is not set. Run `npx convex dev` and copy the deployment URL.")
         sys.exit(1)
     try:
-        return ConvexClient(CONVEX_URL)
+        client = ConvexClient(CONVEX_URL)
+        if CONVEX_ADMIN_KEY:
+            client.set_admin_auth(CONVEX_ADMIN_KEY)
+        return client
     except Exception as e:
         logger.error(f"Failed to connect to Convex: {e}")
         sys.exit(1)
+
+
+def build_unsubscribe_url(token: str) -> str:
+    """Build the unsubscribe confirmation URL for a user token."""
+    return f"{APP_BASE_URL}/unsubscribe?{urlencode({'token': token})}"
 
 
 def retry(fn, retries=1, delay=2.0, label="API call"):
@@ -241,7 +252,7 @@ def phase_check(client, test_email=None):
     """Check sunset quality for active users and queue alerts."""
     logger.info("=== Phase 1: Score Check & Queue ===")
 
-    users = client.query("users:getActiveUsers")
+    users = client.query("users:getActiveUsersForDelivery")
     if not users:
         logger.info("No active users found.")
         return
@@ -373,10 +384,12 @@ def phase_send(client):
             except Exception:
                 sunset_local = ""
 
+            unsubscribe_url = build_unsubscribe_url(user["unsubscribeToken"])
             html_body = render_email_html(
                 message=alert["messageSent"],
                 location=location,
                 sunset_time=sunset_local,
+                unsubscribe_url=unsubscribe_url,
             )
 
             def _send_email(body=alert["messageSent"], html=html_body, to=user["email"], loc=location):
