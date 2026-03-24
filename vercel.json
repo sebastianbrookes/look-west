@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/unsubscribe",
+      "destination": "/"
+    }
+  ]
+}

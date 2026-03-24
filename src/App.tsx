@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { useMutation } from "convex/react";
 import tzLookup from "tz-lookup";
 import { api } from "../convex/_generated/api";
@@ -24,6 +24,7 @@ type BrowserGeoStatus = "idle" | "requesting" | "denied" | "unsupported";
 const NOMINATIM_HEADERS = { "User-Agent": "LookWest/1.0" };
 const DUPLICATE_EMAIL_ERROR = "Email already registered";
 const GENERIC_SUBMIT_ERROR = "Something went wrong. Please try again.";
+const INVALID_UNSUBSCRIBE_TOKEN_ERROR = "Invalid unsubscribe link.";
 
 function resolveTimezone(lat: number, lon: number): string {
   try {
@@ -88,6 +89,11 @@ function getReadableErrorMessage(err: unknown): string {
   return convexMessageMatch?.[1].trim() || err.message || GENERIC_SUBMIT_ERROR;
 }
 
+function getUnsubscribeTokenFromUrl() {
+  const params = new URLSearchParams(window.location.search);
+  return params.get("token")?.trim() ?? "";
+}
+
 function CheckIcon() {
   return (
     <svg className="input-check" viewBox="0 0 18 18" fill="none" aria-hidden>
@@ -108,6 +114,8 @@ function CheckIcon() {
 /* ------------------------------------------------------------------ */
 
 export default function App() {
+  const isUnsubscribePage = window.location.pathname === "/unsubscribe";
+  const unsubscribeToken = useMemo(getUnsubscribeTokenFromUrl, []);
   const [locationData, setLocationData] = useState<LocationData | null>(null);
   const [locationInput, setLocationInput] = useState("");
   const [browserGeoStatus, setBrowserGeoStatus] =
@@ -129,8 +137,13 @@ export default function App() {
   const [confirmedLocation, setConfirmedLocation] = useState("");
   const [copied, setCopied] = useState(false);
   const manualGeocodeInFlightRef = useRef(false);
+  const [unsubscribeState, setUnsubscribeState] = useState<
+    "idle" | "submitting" | "success" | "error"
+  >("idle");
+  const [unsubscribeError, setUnsubscribeError] = useState("");
 
   const addUser = useMutation(api.users.addUser);
+  const unsubscribeByToken = useMutation(api.users.unsubscribeByToken);
   const hasLocationChangedSinceLastGeocode = (value: string) => {
     const normalizedInput = value.trim().toLowerCase();
     const normalizedGeocodedLocation =
@@ -323,6 +336,77 @@ const resolveManualLocation = useCallback(() => {
       /* clipboard may not be available — fail silently */
     }
   };
+
+  const handleUnsubscribe = async () => {
+    if (!unsubscribeToken) {
+      setUnsubscribeState("error");
+      setUnsubscribeError(INVALID_UNSUBSCRIBE_TOKEN_ERROR);
+      return;
+    }
+
+    setUnsubscribeState("submitting");
+    setUnsubscribeError("");
+
+    try {
+      await unsubscribeByToken({ token: unsubscribeToken });
+      setUnsubscribeState("success");
+    } catch (err: unknown) {
+      setUnsubscribeState("error");
+      setUnsubscribeError(getReadableErrorMessage(err));
+    }
+  };
+
+  if (isUnsubscribePage) {
+    return (
+      <div className="page">
+        <div className="card confirmation unsubscribe-card">
+          {unsubscribeState === "success" ? (
+            <>
+              <h1 className="headline">You're unsubscribed.</h1>
+              <p className="body">
+                You won't receive any more sunset alerts from Look West.
+              </p>
+              <p className="body dim">
+                If you change your mind later, you can sign up again from the home page.
+              </p>
+              <a href="/" className="link-btn unsubscribe-home-link">
+                Back to Look West
+              </a>
+            </>
+          ) : (
+            <>
+              <h1 className="headline">Unsubscribe from alerts?</h1>
+              <p className="body">
+                Confirm below to stop receiving sunset alert emails for this address.
+              </p>
+              <p className="body dim">
+                This action is one-way, but you can always sign up again later.
+              </p>
+              {unsubscribeError && <p className="field-error">{unsubscribeError}</p>}
+              <button
+                type="button"
+                className="submit-btn"
+                onClick={handleUnsubscribe}
+                disabled={unsubscribeState === "submitting"}
+              >
+                {unsubscribeState === "submitting" ? (
+                  <>
+                    <span className="spinner" />
+                    <span>Unsubscribing...</span>
+                  </>
+                ) : (
+                  "Unsubscribe"
+                )}
+              </button>
+              <a href="/" className="link-btn unsubscribe-home-link">
+                Keep my alerts
+              </a>
+            </>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   /* ================================================================ */
   /*  Confirmation view                                                */
