@@ -380,7 +380,7 @@ const resolveManualLocation = useCallback(() => {
                 Confirm below to stop receiving sunset alert emails for this address.
               </p>
               <p className="body dim">
-                This action is one-way, but you can always sign up again later.
+                You can always sign up again later.
               </p>
               {unsubscribeError && <p className="field-error">{unsubscribeError}</p>}
               <button

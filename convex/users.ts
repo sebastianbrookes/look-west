@@ -4,6 +4,7 @@ import {
   query,
   type MutationCtx,
 } from "./_generated/server";
+import { internal } from "./_generated/api";
 import type { Doc } from "./_generated/dataModel";
 import { v } from "convex/values";
 import { generateUnsubscribeToken } from "./unsubscribeTokens";
@@ -162,17 +163,30 @@ export const addUser = mutation({
         timezone: args.timezone,
         unsubscribeToken,
       });
+      await ctx.scheduler.runAfter(0, internal.emails.sendWelcomeEmail, {
+        name: args.name,
+        email: normalizedEmail,
+        locationName: args.locationName,
+        unsubscribeToken,
+      });
       return existing._id;
     }
 
     const unsubscribeToken = await issueUnsubscribeToken(ctx);
-    return await ctx.db.insert("users", {
+    const userId = await ctx.db.insert("users", {
       ...args,
       email: normalizedEmail,
       active: true,
       unsubscribeToken,
       createdAt: Date.now(),
     });
+    await ctx.scheduler.runAfter(0, internal.emails.sendWelcomeEmail, {
+      name: args.name,
+      email: normalizedEmail,
+      locationName: args.locationName,
+      unsubscribeToken,
+    });
+    return userId;
   },
 });
 
