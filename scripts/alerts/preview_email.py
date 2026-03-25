@@ -9,7 +9,7 @@ from pathlib import Path
 import email_renderer
 
 SCRIPT_DIR = Path(__file__).parent
-PROJECT_ROOT = SCRIPT_DIR.parent
+PROJECT_ROOT = SCRIPT_DIR.parent.parent
 email_renderer.BACKGROUND_IMAGE_URL = (PROJECT_ROOT / "public" / "background.webp").resolve().as_uri()
 
 html = email_renderer.render_email_html(

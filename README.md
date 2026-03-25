@@ -39,16 +39,16 @@ in `.env` so unsubscribe links in email point to the correct origin.
 
 ```bash
 # Phase 1 only — check sunset quality, queue alerts
-python scripts/sunset_check.py check
+python scripts/alerts/sunset_check.py check
 
 # Phase 2 only — send queued SMS messages
-python scripts/sunset_check.py send
+python scripts/alerts/sunset_check.py send
 
 # Both phases in sequence (default)
-python scripts/sunset_check.py run
+python scripts/alerts/sunset_check.py run
 
 # Test mode — bypass timing filter for a specific user
-python scripts/sunset_check.py check --test-user "+16175551234"
+python scripts/alerts/sunset_check.py check --test-user "+16175551234"
 
 # Run backend unsubscribe flow tests
 npm run test:once
@@ -87,8 +87,15 @@ convex/
 └── crons.ts           # sunsetScoreCheck (15m) + sendPendingAlerts (5m)
 
 scripts/
-├── sunset_check.py    # main script — Phase 1 (score & queue) + Phase 2 (send)
-└── fallback_scorer.py # OpenWeatherMap sunset quality heuristic
+├── alerts/
+│   ├── sunset_check.py      # main script — Phase 1 (score & queue) + Phase 2 (send)
+│   ├── email_renderer.py    # safe HTML email rendering
+│   ├── fallback_scorer.py   # OpenWeatherMap sunset quality heuristic
+│   ├── prompts.py           # LLM prompts for message generation
+│   ├── preview_email.py     # dev utility — preview email in browser
+│   ├── email_template.html
+│   └── welcome_email_template.html
+└── generate-og-image.mjs    # generates public/og-image.png
 ```
 
 ## Environment Variables
