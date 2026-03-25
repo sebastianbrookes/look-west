@@ -4,6 +4,7 @@
 
 A sunset alert service that texts you a motivating message to go watch the sunset — but only when it's predicted to be beautiful.
 
+<!--
 ## Setup
 
 ### 1. Convex backend
@@ -117,3 +118,4 @@ See `.env.example` for all required variables. Key ones:
 | `OPENROUTER_API_KEY` | OpenRouter API key for Claude Haiku message generation |
 | `SUNSET_QUALITY_THRESHOLD` | Minimum score (0-100) to send an alert (default: 50) |
 | `SUNSET_SCORER` | `sunsethue` or `openweathermap` (default: sunsethue) |
+-->
