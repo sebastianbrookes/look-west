@@ -239,6 +239,10 @@ export const sendWelcomeEmail = internalAction({
         subject: "You're in! \u{1F305}",
         text: plainText,
         html,
+        headers: {
+          "List-Unsubscribe": `<${unsubscribeUrl}>`,
+          "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+        },
       }),
     });
 

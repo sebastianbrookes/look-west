@@ -365,13 +365,17 @@ def phase_send(client):
                 unsubscribe_url=unsubscribe_url,
             )
 
-            def _send_email(body=alert["messageSent"], html=html_body, to=user["email"], loc=location):
+            def _send_email(body=alert["messageSent"], html=html_body, to=user["email"], loc=location, unsub=unsubscribe_url):
                 return resend.Emails.send({
                     "from": RESEND_FROM_EMAIL,
                     "to": [to],
                     "subject": f"Beautiful sunset alert in {loc} 🌅",
                     "text": body,
                     "html": html,
+                    "headers": {
+                        "List-Unsubscribe": f"<{unsub}>",
+                        "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+                    },
                 })
 
             retry(_send_email, retries=1, delay=2.0, label=f"Resend [{location}]")
