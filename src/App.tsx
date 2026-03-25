@@ -110,6 +110,43 @@ function CheckIcon() {
 }
 
 /* ------------------------------------------------------------------ */
+/*  Sample email data                                                  */
+/* ------------------------------------------------------------------ */
+
+const SAMPLE_EMAILS = [
+  {
+    type: "alert",
+    subject: "Tonight's sunset in Cape Cod, MA",
+    location: "Cape Cod, MA",
+    time: "7:04 PM",
+    quality: "Great",
+    qualityScore: 88,
+    message:
+      "Clouds are sitting at about 45% tonight \u2014 perfect for some color. Sun drops at 7:04 but worth heading out around 6:30 to catch the good stuff. It's hovering at 49\u00b0 so bring something with sleeves.",
+  },
+  {
+    type: "alert",
+    subject: "Sunset alert for Brooklyn, NY",
+    location: "Brooklyn, NY",
+    time: "7:18 PM",
+    quality: "Good",
+    qualityScore: 72,
+    message:
+      "Clouds are hanging around at 35% coverage tonight \u2014 should catch some color when the sun drops at 7:18. Get to your spot by 6:48 if you can. 58 degrees so you won't need much of a jacket.",
+  },
+  {
+    type: "alert",
+    subject: "San Francisco, CA — sunset at 7:31 PM",
+    location: "San Francisco, CA",
+    time: "7:31 PM",
+    quality: "Fair",
+    qualityScore: 63,
+    message:
+      "Clear skies tonight with sunset at 7:31 \u2014 should be a straightforward one, probably worth getting to a west-facing spot by 7. Nice evening at 61 degrees, light jacket should do it.",
+  },
+];
+
+/* ------------------------------------------------------------------ */
 /*  Component                                                          */
 /* ------------------------------------------------------------------ */
 
@@ -159,8 +196,6 @@ export default function App() {
       return;
     }
 
-    // Check permission state first so we can show a helpful message
-    // instead of letting Chrome silently block the request.
     if (navigator.permissions) {
       try {
         const perm = await navigator.permissions.query({ name: "geolocation" });
@@ -169,7 +204,7 @@ export default function App() {
           return;
         }
       } catch {
-        // permissions.query not supported — fall through to getCurrentPosition
+        // permissions.query not supported
       }
     }
 
@@ -243,42 +278,38 @@ export default function App() {
     }
   }, []);
 
-useEffect(() => {
-  if (name.trim().length < 2) {
-    setNameConfirmed(false);
-    return;
-  }
+  useEffect(() => {
+    if (name.trim().length < 2) {
+      setNameConfirmed(false);
+      return;
+    }
+    const timeoutId = window.setTimeout(() => {
+      setNameConfirmed(true);
+    }, 500);
+    return () => window.clearTimeout(timeoutId);
+  }, [name]);
 
-  const timeoutId = window.setTimeout(() => {
-    setNameConfirmed(true);
-  }, 500);
+  useEffect(() => {
+    if (!email.trim() || !validateEmail(email)) {
+      setEmailConfirmed(false);
+      return;
+    }
+    const timeoutId = window.setTimeout(() => {
+      setEmailConfirmed(true);
+    }, 500);
+    return () => window.clearTimeout(timeoutId);
+  }, [email]);
 
-  return () => window.clearTimeout(timeoutId);
-}, [name]);
-
-useEffect(() => {
-  if (!email.trim() || !validateEmail(email)) {
-    setEmailConfirmed(false);
-    return;
-  }
-
-  const timeoutId = window.setTimeout(() => {
-    setEmailConfirmed(true);
-  }, 500);
-
-  return () => window.clearTimeout(timeoutId);
-}, [email]);
-
-const resolveManualLocation = useCallback(() => {
-  const trimmed = locationInput.trim();
-  if (!trimmed) {
-    setLocationData(null);
-    setGeocodeError(null);
-    return;
-  }
-  if (locationData?.locationName === trimmed) return;
-  geocodeManual(trimmed);
-}, [geocodeManual, locationData, locationInput]);
+  const resolveManualLocation = useCallback(() => {
+    const trimmed = locationInput.trim();
+    if (!trimmed) {
+      setLocationData(null);
+      setGeocodeError(null);
+      return;
+    }
+    if (locationData?.locationName === trimmed) return;
+    geocodeManual(trimmed);
+  }, [geocodeManual, locationData, locationInput]);
 
   const closeDuplicateEmailModal = useCallback(() => {
     setDuplicateEmailModalOpen(false);
@@ -333,7 +364,7 @@ const resolveManualLocation = useCallback(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      /* clipboard may not be available — fail silently */
+      /* clipboard may not be available */
     }
   };
 
@@ -355,6 +386,10 @@ const resolveManualLocation = useCallback(() => {
       setUnsubscribeError(getReadableErrorMessage(err));
     }
   };
+
+  /* ================================================================ */
+  /*  Unsubscribe page                                                 */
+  /* ================================================================ */
 
   if (isUnsubscribePage) {
     return (
@@ -478,133 +513,316 @@ const resolveManualLocation = useCallback(() => {
   }
 
   /* ================================================================ */
-  /*  Sign-up form                                                     */
+  /*  Main landing page                                                */
   /* ================================================================ */
 
   return (
-    <div className="page">
-      <div className="card">
-        <h1 className="headline">Look West</h1>
-        <p className="tagline">
-          We'll email you when the sunset's worth watching.
+    <>
+      {/* ---- Hero section ---- */}
+      <section className="hero">
+        <div className="hero-content">
+          <h1 className="hero-title">Look West</h1>
+          <p className="hero-subtitle">
+            Get an email whenever the sunset in your area is predicted to be beautiful.
+          </p>
+
+          <form onSubmit={handleSubmit} className="hero-form">
+            {/* location */}
+            <div className="field field-location">
+              <div className="input-with-icon">
+                <input
+                  id="location-input"
+                  type="text"
+                  className="input"
+                  placeholder="City or zip code"
+                  value={locationInput}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    setLocationInput(v);
+                    setGeocodeError(null);
+                    if (!v.trim()) setLocationData(null);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      resolveManualLocation();
+                    }
+                  }}
+                  onBlur={resolveManualLocation}
+                  disabled={geocoding || browserGeoStatus === "requesting"}
+                  autoComplete="address-level2"
+                  enterKeyHint="search"
+                  aria-invalid={!!geocodeError}
+                  aria-describedby={geocodeError ? "location-geocode-error" : undefined}
+                />
+                {geocoding && <span className="input-spinner" aria-hidden />}
+                {!geocoding && locationData && <CheckIcon />}
+              </div>
+              {geocodeError && (
+                <p className="field-error" id="location-geocode-error">{geocodeError}</p>
+              )}
+              {browserGeoStatus === "denied" && !locationData && (
+                <p className="field-hint">Location permission denied. Enter your city or ZIP code above instead.</p>
+              )}
+              {browserGeoStatus !== "unsupported" && browserGeoStatus !== "denied" && !locationData && (
+                <button
+                  type="button"
+                  className="geo-link"
+                  onClick={requestBrowserLocation}
+                  disabled={browserGeoStatus === "requesting" || geocoding}
+                >
+                  {browserGeoStatus === "requesting" ? (
+                    <>
+                      <span className="geo-link-spinner" aria-hidden />
+                      Finding you...
+                    </>
+                  ) : (
+                    "Use my current location"
+                  )}
+                </button>
+              )}
+            </div>
+
+            {/* name */}
+            <div className="field">
+              <div className="input-with-icon">
+                <input
+                  type="text"
+                  className="input"
+                  placeholder="Your first name"
+                  value={name}
+                  onChange={(e) => {
+                    setName(e.target.value);
+                    setNameConfirmed(false);
+                  }}
+                  onBlur={() => {
+                    setNameConfirmed(name.trim().length >= 2);
+                  }}
+                  autoComplete="given-name"
+                  enterKeyHint="next"
+                />
+                {nameConfirmed && <CheckIcon />}
+              </div>
+            </div>
+
+            {/* email */}
+            <div className="field">
+              <div className="input-with-icon">
+                <input
+                  type="email"
+                  className={`input${emailError ? " input-error" : ""}`}
+                  placeholder="Email address"
+                  value={email}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    setEmailConfirmed(false);
+                    setEmailError("");
+                  }}
+                  onBlur={() => {
+                    setEmailConfirmed(validateEmail(email));
+                  }}
+                  autoComplete="email"
+                  enterKeyHint="done"
+                />
+                {!emailError && emailConfirmed && <CheckIcon />}
+              </div>
+              {emailError && <p className="field-error">{emailError}</p>}
+            </div>
+
+            {submitError && <p className="field-error">{submitError}</p>}
+
+            <button type="submit" className="submit-btn" disabled={submitting}>
+              {submitting ? (
+                <>
+                  <span className="spinner" />
+                  <span>Signing up...</span>
+                </>
+              ) : (
+                "Sign me up"
+              )}
+            </button>
+          </form>
+
+          <p className="hero-fine-print">Free forever. Unsubscribe anytime.</p>
+        </div>
+
+        <a href="#how-it-works" className="scroll-hint" aria-label="Scroll to learn more">
+          <span className="scroll-hint-text">See how it works</span>
+          <svg className="scroll-hint-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="6 9 12 15 18 9" />
+          </svg>
+        </a>
+      </section>
+
+      {/* ---- Sample emails section ---- */}
+      <section id="how-it-works" className="section section-emails">
+        <div className="section-inner">
+          <h2 className="section-title">What you'll get</h2>
+          <p className="section-desc">
+            When conditions are right, you'll receive an email like one of these. Each alert includes your local sunset time and a brief, AI-written note about what to expect in the sky.
+          </p>
+
+          <div className="email-samples">
+            {SAMPLE_EMAILS.map((sample, i) => (
+              <div className="email-card" key={i}>
+                <div className="email-header">
+                  <div className="email-subject">{sample.subject}</div>
+                </div>
+                <div className="email-gradient-strip" />
+                <div className="email-body">
+                  {sample.type === "alert" && (
+                    <div className="email-pills">
+                      <span className="email-pill">{sample.location}</span>
+                      <span className="email-pill">{sample.time}</span>
+                      <span className={`email-pill email-pill-${sample.quality?.toLowerCase()}`}>
+                        {sample.quality} ({sample.qualityScore}%)
+                      </span>
+                    </div>
+                  )}
+                  <p className="email-message">{sample.message}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ---- Scoring methodology section ---- */}
+      <section className="section section-scoring">
+        <div className="section-inner">
+          <h2 className="section-title">How we predict beautiful sunsets</h2>
+          <p className="section-desc">
+            We use{" "}
+            <a
+              href="https://sunsethue.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-link"
+            >
+              SunsetHue
+            </a>{" "}
+            to score each evening's sunset potential on a 0-100 scale. Their model analyzes atmospheric conditions like cloud cover, humidity, visibility, and air quality to predict how colorful and vivid the sunset will be.
+          </p>
+
+          <div className="scoring-grid">
+            <div className="scoring-card">
+              <div className="scoring-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z" />
+                </svg>
+              </div>
+              <h3 className="scoring-card-title">Cloud cover</h3>
+              <p className="scoring-card-desc">
+                Partial clouds (30-70%) are ideal. They catch and scatter light, painting the sky in vivid oranges and pinks. Too few or too many mute the display.
+              </p>
+            </div>
+
+            <div className="scoring-card">
+              <div className="scoring-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z" />
+                </svg>
+              </div>
+              <h3 className="scoring-card-title">Humidity</h3>
+              <p className="scoring-card-desc">
+                Moderate humidity (40-70%) produces the richest colors. Water vapor in the air scatters shorter wavelengths, letting warm reds and oranges dominate.
+              </p>
+            </div>
+
+            <div className="scoring-card">
+              <div className="scoring-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="4" />
+                  <path d="M12 2v2" /><path d="M12 20v2" />
+                  <path d="m4.93 4.93 1.41 1.41" /><path d="m17.66 17.66 1.41 1.41" />
+                  <path d="M2 12h2" /><path d="M20 12h2" />
+                  <path d="m6.34 17.66-1.41 1.41" /><path d="m19.07 4.93-1.41 1.41" />
+                </svg>
+              </div>
+              <h3 className="scoring-card-title">Visibility</h3>
+              <p className="scoring-card-desc">
+                Higher visibility means a cleaner light path from the horizon. This lets sunlight travel through more atmosphere, deepening the color spectrum.
+              </p>
+            </div>
+
+            <div className="scoring-card">
+              <div className="scoring-icon scoring-icon-aqi">
+                <svg width="24" height="24" viewBox="35 35 135 125" fill="none">
+                  <path d="m94.17 40.42c-0.87-0.91-2.7-0.17-2.26 1.6 0.13 0.53 0.94 1.47 4.92 5.89-26.53-0.13-44.13 16.7-50.84 34.38-5.35 14.23-4.41 31.62 2.93 47.88 0.61 1.36 1.26 2.99 2.66 3.32 1.61 0.42 3.24-1.26 2.3-2.97-8.14-12.17-10.16-29.36-5-43.46 7.13-19.78 24.21-34.78 48.28-35.03l-4.34 4.47c-0.94 0.98-0.64 1.88 0.04 2.49 0.72 0.62 1.7 0.49 2.4-0.26l7.55-7.55c0.9-0.9 0.9-1.96 0-2.81l-8.64-7.95z" fill="currentColor"/>
+                  <path d="m141.9 73.59c-0.79-1.28-3.39-1.28-3.18 1.27 0.08 0.9 0.38 1.11 1.23 2.51 7 11.4 8.48 22.01 6.75 33.92-0.17 1.19 0.17 2.09 1.48 2.22 1.44 0.17 1.92-1.15 2-1.9 1.69-12.57-0.6-25.19-8.28-38.02z" fill="currentColor"/>
+                  <path d="m130.3 66.21c-0.43-0.39-0.96-0.47-1.66-0.47-18.5 0.3-36.69 4.28-47.75 13.05-13.88 11.13-16.38 26.96-12.75 48.6-5.55 7.38-8.05 14.5-1.54 19.89 8.34 6.4 19.55 9.59 30.85 9.59 7.56-0.34 13.66-1.82 19.26-3.77 1.71-0.72 1.93-1.82 1.18-2.89-0.84-0.98-2.15-0.22-2.32-0.13-14.01 4.93-30.48 4.63-43.4-3.75-6.01-3.11-6.95-7.62-0.86-15.87 18.63 2.9 32.13-0.38 42.48-11.04 12.08-12.14 17.47-31.23 17.13-51.81 0-0.53-0.17-1.02-0.62-1.4zm-19.58 50.4c-9.11 9.1-20.57 11.96-37.17 9.9l9.36-11.03c8.73-2.55 14.61-3.4 23.38-2.42 1.36 0.13 2.16-0.85 2.08-1.95-0.13-1.27-1.15-1.75-2.42-1.84-6.09-0.61-10.69-0.04-18.74 1.06l11.46-12.09c5.39-1.11 9.11-2 16.23-1.02 1.35 0.17 2.05-1.11 1.92-1.96-0.17-1.4-1.23-1.74-2.17-1.82-3.8-0.39-7.43-0.17-11.25 0.49l11.46-10.66c0.89-0.89 0.89-1.96 0.23-2.66-0.75-0.85-1.89-0.68-2.64 0.17l-11.81 11.81c0.48-3.95 0.44-5.86 0.05-10.17-0.17-1.55-1.02-2.03-2.24-1.9-1.1 0.21-1.54 1.11-1.41 2.38 0.61 4.22-0.25 8.86-0.91 13.09l-10.61 11.59c0.85-6.67 0.68-9.17-0.07-15.57-0.21-1.49-1.01-2.1-2.24-1.89-1.1 0.26-1.53 1.2-1.36 2.52 0.94 6.67 0.45 12.27-1.41 20.7l-9.14 10.65c-3.58-17.55 0.26-32.23 12.12-42.36 10.52-8.64 25.93-12.31 44.34-12.65 0.49 16.26-4.02 34.8-17.04 47.63z" fill="currentColor"/>
+                  <path d="m116.3 126.2c-2.68 0-2.55 3.9-0.05 3.9h18.93c5.03 0 7.32-4.28 7.32-6.7 0-4.89-3.67-7.62-7.45-7.62-4.33 0-6.84 3.24-7.05 6.56-0.08 2.15 3.81 2.53 3.9 0.21 0.17-2.42 1.71-3.44 3.5-3.44 2.63 0 3.47 2.14 3.47 3.99 0 1.82-1.71 3.1-3.77 3.1h-18.8z" fill="currentColor"/>
+                  <path d="m116.6 141c-2.59 0-2.42 3.62-0.09 3.62h26.2c3.11 0 3.91 2.42 3.91 3.36 0 1.95-1.59 3.3-3.42 3.3-1.85 0-2.74-1.02-3.13-2.5-0.57-2.34-4.47-1.49-4.29 0.52 0.43 3.8 3.85 5.47 6.93 5.47 4.59 0 6.8-3.79 6.8-6.54 0-4.32-3.54-7.23-7.1-7.23h-25.81z" fill="currentColor"/>
+                  <path d="m110.8 133.7c-2.06 0-2.36 3.41 0.08 3.41h40.37c6.05 0 8.3-5.35 8.3-7.85 0-4.55-3.71-8.01-7.65-8.01-4.76 0-6.97 3.63-7.27 7.29-0.13 2.06 3.67 2.28 3.75 0.18 0.17-2.5 1.93-3.89 3.76-3.89 2.94 0 4.16 2.33 4.16 4.18 0 2.5-1.95 4.69-5.02 4.69h-40.48z" fill="currentColor"/>
+                </svg>
+              </div>
+              <h3 className="scoring-card-title">Air quality</h3>
+              <p className="scoring-card-desc">
+                A slight haze can actually enhance colors by adding an extra scattering layer. But heavy pollution washes everything out into a dull gray.
+              </p>
+            </div>
+          </div>
+
+          <div className="scoring-scale">
+            <h3 className="scoring-scale-title">Quality ratings</h3>
+            <div className="scoring-scale-items">
+              <div className="scoring-scale-item">
+                <span className="scoring-dot scoring-dot-poor" />
+                <span className="scoring-label">Poor</span>
+                <span className="scoring-range">0 - 25</span>
+              </div>
+              <div className="scoring-scale-item">
+                <span className="scoring-dot scoring-dot-fair" />
+                <span className="scoring-label">Fair</span>
+                <span className="scoring-range">26 - 50</span>
+              </div>
+              <div className="scoring-scale-item">
+                <span className="scoring-dot scoring-dot-good" />
+                <span className="scoring-label">Good</span>
+                <span className="scoring-range">51 - 75</span>
+              </div>
+              <div className="scoring-scale-item">
+                <span className="scoring-dot scoring-dot-great" />
+                <span className="scoring-label">Great</span>
+                <span className="scoring-range">76 - 100</span>
+              </div>
+            </div>
+            <p className="scoring-threshold">
+              We only send an alert when the score is <strong>40 or above</strong>, so you won't hear from us on dull evenings.
+            </p>
+          </div>
+
+          <p className="scoring-cta">
+            Want to dig deeper?{" "}
+            <a
+              href="https://sunsethue.com/whitepaper"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-link"
+            >
+              Read about SunsetHue's methodology
+            </a>
+          </p>
+        </div>
+      </section>
+
+      {/* ---- Footer ---- */}
+      <footer className="site-footer">
+        <p>
+          Made with care by Sebastian Brookes
+          <span className="footer-divider">|</span>
+          <a
+            href="https://buymeacoffee.com/sebastianbrookes"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="footer-link"
+          >
+            Buy me a coffee
+          </a>
         </p>
+      </footer>
 
-        <form onSubmit={handleSubmit} className="form">
-          {/* ---------- location ---------- */}
-          <div className="field field-location">
-            <div className="input-with-icon">
-              <input
-                id="location-input"
-                type="text"
-                className="input"
-                placeholder="City or zip code"
-                value={locationInput}
-                onChange={(e) => {
-                  const v = e.target.value;
-                  setLocationInput(v);
-                  setGeocodeError(null);
-                  if (!v.trim()) setLocationData(null);
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    resolveManualLocation();
-                  }
-                }}
-                onBlur={resolveManualLocation}
-                disabled={geocoding || browserGeoStatus === "requesting"}
-                autoComplete="address-level2"
-                enterKeyHint="search"
-                aria-invalid={!!geocodeError}
-                aria-describedby={geocodeError ? "location-geocode-error" : undefined}
-              />
-              {geocoding && <span className="input-spinner" aria-hidden />}
-              {!geocoding && locationData && <CheckIcon />}
-            </div>
-            {geocodeError && (
-              <p className="field-error" id="location-geocode-error">{geocodeError}</p>
-            )}
-            {browserGeoStatus === "denied" && !locationData && (
-              <p className="field-hint">Location permission denied. Enter your city or ZIP code above instead.</p>
-            )}
-            {browserGeoStatus !== "unsupported" && browserGeoStatus !== "denied" && !locationData && (
-              <button
-                type="button"
-                className="geo-link"
-                onClick={requestBrowserLocation}
-                disabled={browserGeoStatus === "requesting" || geocoding}
-              >
-                {browserGeoStatus === "requesting" ? (
-                  <>
-                    <span className="geo-link-spinner" aria-hidden />
-                    Finding you…
-                  </>
-                ) : (
-                  "Use my current location"
-                )}
-              </button>
-            )}
-          </div>
-
-          <div className="field">
-            <div className="input-with-icon">
-              <input
-                type="text"
-                className="input"
-                placeholder="Your first name"
-                value={name}
-                onChange={(e) => {
-                  setName(e.target.value);
-                  setNameConfirmed(false);
-                }}
-                onBlur={() => {
-                  setNameConfirmed(name.trim().length >= 2);
-                }}
-                autoComplete="given-name"
-                enterKeyHint="next"
-              />
-              {nameConfirmed && <CheckIcon />}
-            </div>
-          </div>
-
-          <div className="field">
-            <div className="input-with-icon">
-              <input
-                type="email"
-                className={`input${emailError ? " input-error" : ""}`}
-                placeholder="Email address"
-                value={email}
-                onChange={(e) => {
-                  setEmail(e.target.value);
-                  setEmailConfirmed(false);
-                  setEmailError("");
-                }}
-                onBlur={() => {
-                  setEmailConfirmed(validateEmail(email));
-                }}
-                autoComplete="email"
-                enterKeyHint="done"
-              />
-              {!emailError && emailConfirmed && <CheckIcon />}
-            </div>
-            {emailError && <p className="field-error">{emailError}</p>}
-          </div>
-
-          {submitError && <p className="field-error">{submitError}</p>}
-
-          <button type="submit" className="submit-btn" disabled={submitting}>
-            {submitting ? (
-              <>
-                <span className="spinner" />
-                <span>Signing up...</span>
-              </>
-            ) : (
-              "Sign me up"
-            )}
-          </button>
-        </form>
-      </div>
-
+      {/* ---- Duplicate email modal ---- */}
       {duplicateEmailModalOpen && (
         <div
           className="modal-overlay"
@@ -634,6 +852,6 @@ const resolveManualLocation = useCallback(() => {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }
