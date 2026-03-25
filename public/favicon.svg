@@ -1,13 +1,24 @@
-<svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" fill="none" viewBox="0 0 200 200">
+  <path d="m100 6c-51.02 0-94 41.31-94 93.97 0 3.73 0.26 7.41 0.75 11.02 11.86-7.39 24.09-10.97 36.96-12.91 1.33-27.85 24.86-54.82 55.95-54.82 30.02 0 56.28 24.66 56.28 56.77 0 8.03-1.78 15.04-4.42 21.04 14.29-0.75 25.09-4.93 42.09-13.16 0.25-2.62 0.39-5.26 0.39-7.94 0-51.86-42.98-93.97-94-93.97z" fill="url(#paint0_linear_1_25097)"/>
+  <path d="m144.2 121.1c4.01-8.06 4.88-15 4.6-21.03-1.35-25.88-21.79-49.52-49.33-49.52-26.15 0-47.32 21.22-48.33 46.88h5.77c16.8 0 30.84 6.25 44.99 12.8 12.91 6.27 24.27 10.64 42.3 10.87z" fill="url(#paint1_linear_1_25097)"/>
+  <path d="m145 129.1c-17.75 0-30.75-4.2-44.91-11.38-13.64-6.8-26.87-12.76-46.45-12.76-15.84 0-29.5 3.97-46.2 12.67 2.17 10.67 5.65 20.13 10.77 29.2 10.96-6.05 21.65-8.63 37.95-8.63 16.14 0 29.66 5.38 41.56 11.14 13.25 6.46 24.23 12.25 45.08 12.41 11.79-0.07 22.66-3.25 33.22-7.26 8.63-11.67 14.14-23.3 16.67-37.26-14.54 8.23-28.55 11.87-47.69 11.87z" fill="url(#paint2_linear_1_25097)"/>
+  <path d="m141.9 169.3c-17.39 0-31.02-5.16-42.59-10.96-13.56-6.87-24.36-12.25-43.63-12.44-12.42 0-22.78 2.55-33.23 7.65 16.86 23.3 40.23 40.06 76.73 40.06 26.87 0 47.98-10.62 67.22-27.03-7.44 1.89-14.52 2.72-24.5 2.72z" fill="url(#paint3_linear_1_25097)"/>
   <defs>
-    <linearGradient id="skyShow" x1="0%" y1="100%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#C65A40" />
-      <stop offset="50%" stop-color="#E98044" />
-      <stop offset="100%" stop-color="#F7BA60" />
+    <linearGradient id="paint0_linear_1_25097" x1="99.47" x2="99.47" y1="6" y2="121.1" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F2C144" offset="0"/>
+      <stop stop-color="#CA7810" offset="1"/>
+    </linearGradient>
+    <linearGradient id="paint1_linear_1_25097" x1="100" x2="100" y1="50.54" y2="121.1" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FEE685" offset="0"/>
+      <stop stop-color="#F9B141" offset="1"/>
+    </linearGradient>
+    <linearGradient id="paint2_linear_1_25097" x1="100" x2="100" y1="105" y2="161.7" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F1C043" offset="0"/>
+      <stop stop-color="#C66C0E" offset="1"/>
+    </linearGradient>
+    <linearGradient id="paint3_linear_1_25097" x1="94.45" x2="94.45" y1="145.9" y2="193.6" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#D3891E" offset="0"/>
+      <stop stop-color="#BB5A07" offset="1"/>
     </linearGradient>
   </defs>
-  <g fill="url(#skyShow)">
-    <circle cx="40" cy="60" r="35" />
-    <path d="M 75 5 Q 75 25 95 25 Q 75 25 75 45 Q 75 25 55 25 Q 75 25 75 5 Z" />
-  </g>
 </svg>
