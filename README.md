@@ -1,5 +1,7 @@
 # Look West
 
+![Look West preview](public/lookwest-preview.png)
+
 A sunset alert service that texts you a motivating message to go watch the sunset — but only when it's predicted to be beautiful.
 
 ## Setup
