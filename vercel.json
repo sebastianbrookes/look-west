@@ -3,6 +3,10 @@
     {
       "source": "/unsubscribe",
       "destination": "/"
+    },
+    {
+      "source": "/confirm",
+      "destination": "/"
     }
   ]
 }

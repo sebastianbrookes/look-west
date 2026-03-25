@@ -156,7 +156,7 @@ export const addUser = mutation({
       await ctx.db.patch(existing._id, {
         name: args.name,
         email: normalizedEmail,
-        active: true,
+        active: false,
         latitude: args.latitude,
         longitude: args.longitude,
         locationName: args.locationName,
@@ -176,7 +176,7 @@ export const addUser = mutation({
     const userId = await ctx.db.insert("users", {
       ...args,
       email: normalizedEmail,
-      active: true,
+      active: false,
       unsubscribeToken,
       createdAt: Date.now(),
     });
@@ -231,7 +231,34 @@ export const unsubscribeByToken = mutation({
     }
 
     if (user.active) {
-      await ctx.db.patch(user._id, { active: false });
+      await ctx.db.patch(user._id, { active: false, unsubscribeToken: undefined });
+    }
+
+    return { success: true };
+  },
+});
+
+export const confirmByToken = mutation({
+  args: { token: v.string() },
+  handler: async (ctx, args) => {
+    const token = args.token.trim();
+    if (!token) {
+      throw new Error("Invalid confirmation link.");
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_unsubscribeToken", (q) =>
+        q.eq("unsubscribeToken", token)
+      )
+      .unique();
+
+    if (!user) {
+      throw new Error("Invalid confirmation link.");
+    }
+
+    if (!user.active) {
+      await ctx.db.patch(user._id, { active: true });
     }
 
     return { success: true };
