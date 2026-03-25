@@ -717,7 +717,7 @@ export default function App() {
             </button>
           </form>
 
-          <p className="hero-fine-print">Free forever. Unsubscribe anytime.</p>
+          <p className="hero-fine-print">Unsubscribe anytime.</p>
           </div>
 
           <a href="#how-it-works" className="scroll-hint" aria-label="Scroll to learn more">
