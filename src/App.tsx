@@ -445,7 +445,7 @@ export default function App() {
             {confirmState === "error" && (
               <>
                 <h1 className="headline">Confirmation failed</h1>
-                <p className="field-error">{confirmError}</p>
+                <p className="body">{confirmError}</p>
                 <a href="/" className="link-btn unsubscribe-home-link">
                   Back to Look West
                 </a>
