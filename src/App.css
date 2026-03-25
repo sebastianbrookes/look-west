@@ -589,6 +589,10 @@ h6 {
   margin-bottom: 0;
 }
 
+.unsubscribe-card .body.dim {
+  margin-top: 0.25rem;
+}
+
 .unsubscribe-home-link {
   display: inline-flex;
   align-items: center;
