@@ -5,3 +5,5 @@ When making commits to the remote repo, DO NOT include yourself as a collaborato
 To push changes to backend, run `npm run dev:backend -- --once`
 
 Run `npx convex dev` to push changes to the cloud environment.
+
+`npx vite` to start the dev environment.

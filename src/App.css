@@ -53,36 +53,51 @@ body {
 /* ================================================================ */
 
 .hero {
-  position: relative;
+  display: flex;
   min-height: 100vh;
   min-height: 100dvh;
+}
+
+/* ---- Left panel (form) — 2/3 ---- */
+.hero-left {
+  position: relative;
+  flex: 0 0 66.667%;
+  max-width: 66.667%;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 2.5rem 1.5rem;
-  isolation: isolate;
+  padding: 3rem 2.5rem;
+  background: #faf5ef;
 }
 
-/* Background artwork */
-.hero::before {
+/* ---- Right panel (image) — 1/3 ---- */
+.hero-right {
+  flex: 1 1 33.333%;
+  min-height: 100vh;
+  min-height: 100dvh;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 40%;
+  display: block;
+}
+
+/* Soft inner shadow on image edge for blending */
+.hero-right::after {
   content: "";
   position: absolute;
   inset: 0;
-  background: url("/background.webp") center 40% / cover no-repeat;
-  z-index: -2;
-}
-
-/* Vignette overlay */
-.hero::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(
-    ellipse at 50% 55%,
-    transparent 40%,
-    rgba(35, 20, 10, 0.12) 100%
+  background: linear-gradient(
+    to right,
+    rgba(253, 248, 244, 0.25) 0%,
+    transparent 8%
   );
-  z-index: -1;
   pointer-events: none;
 }
 
@@ -90,18 +105,7 @@ body {
   max-width: 420px;
   width: 100%;
   padding: 2.75rem 2.25rem 2.5rem;
-  background: var(--card-bg);
-  backdrop-filter: blur(24px) saturate(1.3);
-  -webkit-backdrop-filter: blur(24px) saturate(1.3);
-  border-radius: 20px;
-  box-shadow: var(--card-shadow);
-  transition-property: box-shadow;
-  transition-duration: 0.2s;
   animation: card-in 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-
-.hero-content:hover {
-  box-shadow: var(--card-shadow-hover);
 }
 
 .hero-title {
@@ -155,18 +159,12 @@ body {
   font-family: "Figtree", sans-serif;
   font-size: 0.8rem;
   font-weight: 600;
-  color: #fff;
+  color: var(--text-muted);
   letter-spacing: 0.03em;
-  text-shadow:
-    0 1px 3px rgba(35, 20, 10, 0.4),
-    0 0 12px rgba(35, 20, 10, 0.25);
 }
 
 .scroll-hint-chevron {
-  color: #fff;
-  filter:
-    drop-shadow(0 1px 2px rgba(35, 20, 10, 0.4))
-    drop-shadow(0 0 8px rgba(35, 20, 10, 0.2));
+  color: var(--accent);
   animation: bounce-down 2s ease-in-out 1.8s infinite;
 }
 
@@ -1117,19 +1115,52 @@ h1, h2, h3, h4, h5, h6 {
 /*  Responsive                                                      */
 /* ================================================================ */
 
+/* Tablet — adjust split for narrower screens */
+@media (max-width: 900px) and (min-width: 481px) {
+  .hero-left {
+    flex: 0 0 60%;
+    max-width: 60%;
+    padding: 2.5rem 2rem;
+  }
+
+  .hero-right {
+    flex: 1 1 40%;
+  }
+}
+
 @media (max-width: 480px) {
-  /* Hero */
+  /* Hero — stack vertically on mobile */
   .hero {
-    padding: 1.25rem 0.75rem;
-    padding-top: max(1.25rem, env(safe-area-inset-top));
-    padding-bottom: max(1.25rem, env(safe-area-inset-bottom));
-    align-items: flex-start;
-    padding-top: max(8vh, env(safe-area-inset-top));
+    flex-direction: column;
+  }
+
+  .hero-left {
+    flex: none;
+    max-width: 100%;
+    width: 100%;
+    padding: 2rem 1.25rem;
+    padding-top: max(2rem, env(safe-area-inset-top));
+    padding-bottom: max(2rem, env(safe-area-inset-bottom));
+    order: 2;
+  }
+
+  .hero-right {
+    flex: none;
+    min-height: 35vh;
+    max-height: 35vh;
+    order: 1;
+  }
+
+  .hero-right::after {
+    background: linear-gradient(
+      to bottom,
+      transparent 60%,
+      rgba(253, 248, 244, 0.6) 100%
+    );
   }
 
   .hero-content {
-    padding: 2rem 1.5rem 1.75rem;
-    border-radius: 18px;
+    padding: 0;
     max-width: 100%;
   }
 
@@ -1140,6 +1171,14 @@ h1, h2, h3, h4, h5, h6 {
   .hero-subtitle {
     font-size: 0.9375rem;
     margin-bottom: 1.25rem;
+  }
+
+  .scroll-hint {
+    position: relative;
+    bottom: auto;
+    left: auto;
+    transform: none;
+    margin-top: 1.5rem;
   }
 
   /* Page (confirmation/unsubscribe) */
@@ -1270,12 +1309,14 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Very small screens */
 @media (max-width: 375px) {
-  .hero {
-    padding-top: max(5vh, env(safe-area-inset-top));
+  .hero-left {
+    padding: 1.5rem 1rem;
+    padding-top: max(1.5rem, env(safe-area-inset-top));
   }
 
-  .hero-content {
-    padding: 1.75rem 1.25rem 1.5rem;
+  .hero-right {
+    min-height: 28vh;
+    max-height: 28vh;
   }
 
   .hero-title {

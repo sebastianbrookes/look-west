@@ -520,13 +520,14 @@ export default function App() {
     <>
       {/* ---- Hero section ---- */}
       <section className="hero">
-        <div className="hero-content">
-          <h1 className="hero-title">Look West</h1>
-          <p className="hero-subtitle">
-            Get an email whenever the sunset in your area is predicted to be beautiful.
-          </p>
+        <div className="hero-left">
+          <div className="hero-content">
+            <h1 className="hero-title">Look West</h1>
+            <p className="hero-subtitle">
+              Get an email whenever the sunset in your area is predicted to be beautiful.
+            </p>
 
-          <form onSubmit={handleSubmit} className="hero-form">
+            <form onSubmit={handleSubmit} className="hero-form">
             {/* location */}
             <div className="field field-location">
               <div className="input-with-icon">
@@ -644,14 +645,19 @@ export default function App() {
           </form>
 
           <p className="hero-fine-print">Free forever. Unsubscribe anytime.</p>
+          </div>
+
+          <a href="#how-it-works" className="scroll-hint" aria-label="Scroll to learn more">
+            <span className="scroll-hint-text">See how it works</span>
+            <svg className="scroll-hint-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="6 9 12 15 18 9" />
+            </svg>
+          </a>
         </div>
 
-        <a href="#how-it-works" className="scroll-hint" aria-label="Scroll to learn more">
-          <span className="scroll-hint-text">See how it works</span>
-          <svg className="scroll-hint-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="6 9 12 15 18 9" />
-          </svg>
-        </a>
+        <div className="hero-right" aria-hidden="true">
+          <img src="/background.webp" alt="" className="hero-image" />
+        </div>
       </section>
 
       {/* ---- Sample emails section ---- */}
