@@ -394,50 +394,55 @@ export default function App() {
   if (isUnsubscribePage) {
     return (
       <div className="page">
-        <div className="card confirmation unsubscribe-card">
-          {unsubscribeState === "success" ? (
-            <>
-              <h1 className="headline">You're unsubscribed.</h1>
-              <p className="body">
-                You won't receive any more sunset alerts from Look West.
-              </p>
-              <p className="body dim">
-                If you change your mind later, you can sign up again from the home page.
-              </p>
-              <a href="/" className="link-btn unsubscribe-home-link">
-                Back to Look West
-              </a>
-            </>
-          ) : (
-            <>
-              <h1 className="headline">Unsubscribe from alerts?</h1>
-              <p className="body">
-                Confirm below to stop receiving sunset alert emails for this address.
-              </p>
-              <p className="body dim">
-                You can always sign up again later.
-              </p>
-              {unsubscribeError && <p className="field-error">{unsubscribeError}</p>}
-              <button
-                type="button"
-                className="submit-btn"
-                onClick={handleUnsubscribe}
-                disabled={unsubscribeState === "submitting"}
-              >
-                {unsubscribeState === "submitting" ? (
-                  <>
-                    <span className="spinner" />
-                    <span>Unsubscribing...</span>
-                  </>
-                ) : (
-                  "Unsubscribe"
-                )}
-              </button>
-              <a href="/" className="link-btn unsubscribe-home-link">
-                Keep my alerts
-              </a>
-            </>
-          )}
+        <div className="page-left">
+          <div className="card confirmation unsubscribe-card">
+            {unsubscribeState === "success" ? (
+              <>
+                <h1 className="headline">You're unsubscribed.</h1>
+                <p className="body">
+                  You won't receive any more sunset alerts from Look West.
+                </p>
+                <p className="body dim">
+                  If you change your mind later, you can sign up again from the home page.
+                </p>
+                <a href="/" className="link-btn unsubscribe-home-link">
+                  Back to Look West
+                </a>
+              </>
+            ) : (
+              <>
+                <h1 className="headline">Unsubscribe from alerts?</h1>
+                <p className="body">
+                  Confirm below to stop receiving sunset alert emails for this address.
+                </p>
+                <p className="body dim">
+                  You can always sign up again later.
+                </p>
+                {unsubscribeError && <p className="field-error">{unsubscribeError}</p>}
+                <button
+                  type="button"
+                  className="submit-btn"
+                  onClick={handleUnsubscribe}
+                  disabled={unsubscribeState === "submitting"}
+                >
+                  {unsubscribeState === "submitting" ? (
+                    <>
+                      <span className="spinner" />
+                      <span>Unsubscribing...</span>
+                    </>
+                  ) : (
+                    "Unsubscribe"
+                  )}
+                </button>
+                <a href="/" className="link-btn unsubscribe-home-link">
+                  Keep my alerts
+                </a>
+              </>
+            )}
+          </div>
+        </div>
+        <div className="page-right" aria-hidden="true">
+          <img src="/background.webp" alt="" className="hero-image" />
         </div>
       </div>
     );
@@ -450,63 +455,60 @@ export default function App() {
   if (submitted) {
     return (
       <div className="page">
-        <div className="card confirmation">
-          <h1 className="headline">You're in.</h1>
-          <p className="body">
-            We'll email you at <strong>{confirmedEmail}</strong> whenever the
-            sunset in <strong>{confirmedLocation}</strong> will be beautiful.
-          </p>
-          <p className="body dim">
-            Your first alert could come as early as tonight.
-          </p>
-          <div className="confirmation-links">
-            <button type="button" className="link-btn" onClick={copyLink}>
-              {copied ? (
-                <>
-                  <svg
-                    className="link-icon copied-check"
-                    width="14"
-                    height="14"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <polyline points="20 6 9 17 4 12" />
-                  </svg>
-                  Copied!
-                </>
-              ) : (
-                <>
-                  Tell a friend
-                  <svg
-                    className="link-icon"
-                    width="14"
-                    height="14"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
-                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
-                  </svg>
-                </>
-              )}
-            </button>
-            <a
-              href="https://buymeacoffee.com/sebastianbrookes"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="link-btn"
-            >
-              Buy me a coffee
-            </a>
+        <div className="page-left">
+          <div className="card confirmation">
+            <h1 className="headline">You're in.</h1>
+            <p className="body">
+              We'll email you at <strong>{confirmedEmail}</strong> whenever the
+              sunset in <strong>{confirmedLocation}</strong> will be beautiful.
+            </p>
+            <p className="body dim">
+              Your first alert could come as early as tonight.
+            </p>
+            <div className="confirmation-links">
+              <button type="button" className="link-btn" onClick={copyLink}>
+                {copied ? (
+                  <>
+                    <svg
+                      className="link-icon copied-check"
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                    Copied!
+                  </>
+                ) : (
+                  <>
+                    Tell a friend
+                    <svg
+                      className="link-icon"
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+                      <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+                    </svg>
+                  </>
+                )}
+              </button>
+            </div>
           </div>
+        </div>
+        <div className="page-right" aria-hidden="true">
+          <img src="/background.webp" alt="" className="hero-image" />
         </div>
       </div>
     );

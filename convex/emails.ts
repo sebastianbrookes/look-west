@@ -73,6 +73,7 @@ function buildWelcomeHtml(location: string, unsubscribeUrl: string): string {
     @media (prefers-color-scheme: dark) {
       .body-bg { background-color: #3a2a1e !important; }
       .card-bg { background-color: #3a2a1e !important; }
+      .hero-img { border-radius: 0 !important; }
       .brand-text { color: #e8c4a0 !important; }
       .message-text { color: #f0e0d0 !important; }
       .meta-text { color: #c4967a !important; }
@@ -91,16 +92,16 @@ function buildWelcomeHtml(location: string, unsubscribeUrl: string): string {
     }
   </style>
 </head>
-<body style="margin: 0; padding: 0; background-color: #fdf8f4; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;">
+<body style="margin: 0; padding: 0; background-color: #faf5ef; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;">
 
   <!-- Preheader (hidden preview text) -->
-  <div style="display: none; max-height: 0; overflow: hidden; font-size: 1px; line-height: 1px; color: #fdf8f4;">
+  <div style="display: none; max-height: 0; overflow: hidden; font-size: 1px; line-height: 1px; color: #faf5ef;">
     You're signed up for ${loc} sunset alerts
     &#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;
   </div>
 
   <!-- Outer wrapper -->
-  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" class="body-bg" style="background-color: #fdf8f4;">
+  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" class="body-bg" style="background-color: #faf5ef;">
     <tr>
       <td align="center" class="card-wrapper" style="padding: 0;">
 
@@ -109,13 +110,13 @@ function buildWelcomeHtml(location: string, unsubscribeUrl: string): string {
 
           <!-- Hero sunset image -->
           <tr>
-            <td class="hero-img" style="height: 220px; background-image: url('${bg}'); background-size: cover; background-position: center 40%; background-color: #d4935c;" valign="bottom">
+            <td class="hero-img" style="height: 180px; background-image: url('${bg}'); background-size: cover; background-position: center 40%; background-color: #d4935c; border-radius: 0 0 0 0;" valign="bottom">
               <!--[if gte mso 9]>
-              <v:rect xmlns:v="urn:schemas-microsoft-com:vml" fill="true" stroke="false" style="width:480px;height:220px;">
+              <v:rect xmlns:v="urn:schemas-microsoft-com:vml" fill="true" stroke="false" style="width:480px;height:180px;">
                 <v:fill type="tile" src="${bg}" color="#d4935c" />
                 <v:textbox inset="0,0,0,0">
               <![endif]-->
-              <div style="height: 220px;"></div>
+              <div style="height: 180px;"></div>
               <!--[if gte mso 9]>
                 </v:textbox>
               </v:rect>
@@ -123,14 +124,9 @@ function buildWelcomeHtml(location: string, unsubscribeUrl: string): string {
             </td>
           </tr>
 
-          <!-- Warm gradient transition strip -->
-          <tr>
-            <td style="height: 4px; background: linear-gradient(90deg, #e8a87c 0%, #d4785c 35%, #c4967a 65%, #e8c4a0 100%);"></td>
-          </tr>
-
           <!-- Card body -->
           <tr>
-            <td class="card-bg" style="background-color: #fdf8f4;">
+            <td class="card-bg" style="background-color: #faf5ef;">
 
               <!-- Header: brand + location pill -->
               <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
