@@ -1132,31 +1132,33 @@ h1, h2, h3, h4, h5, h6 {
   /* Hero — stack vertically on mobile */
   .hero {
     flex-direction: column;
+    min-height: auto;
   }
 
   .hero-left {
     flex: none;
     max-width: 100%;
     width: 100%;
-    padding: 2rem 1.25rem;
-    padding-top: max(2rem, env(safe-area-inset-top));
+    padding: 1.5rem 1.25rem 2rem;
     padding-bottom: max(2rem, env(safe-area-inset-bottom));
     order: 2;
+    /* Pull form up to overlap image bottom */
+    margin-top: -2.5rem;
+    border-radius: 24px 24px 0 0;
+    z-index: 1;
+    justify-content: flex-start;
   }
 
   .hero-right {
-    flex: none;
-    min-height: 35vh;
-    max-height: 35vh;
+    flex: 0 0 auto;
+    height: 28vh;
+    min-height: 180px;
+    max-height: 240px;
     order: 1;
   }
 
   .hero-right::after {
-    background: linear-gradient(
-      to bottom,
-      transparent 60%,
-      rgba(253, 248, 244, 0.6) 100%
-    );
+    display: none;
   }
 
   .hero-content {
@@ -1165,20 +1167,23 @@ h1, h2, h3, h4, h5, h6 {
   }
 
   .hero-title {
-    font-size: 28px;
+    font-size: 26px;
+    margin-bottom: 0.25rem;
   }
 
   .hero-subtitle {
-    font-size: 0.9375rem;
-    margin-bottom: 1.25rem;
+    font-size: 0.875rem;
+    margin-bottom: 1rem;
+    line-height: 1.5;
   }
 
+  .hero-form {
+    gap: 0.75rem;
+  }
+
+  /* Hide scroll hint on mobile — form is the focus */
   .scroll-hint {
-    position: relative;
-    bottom: auto;
-    left: auto;
-    transform: none;
-    margin-top: 1.5rem;
+    display: none;
   }
 
   /* Page (confirmation/unsubscribe) */
@@ -1310,21 +1315,22 @@ h1, h2, h3, h4, h5, h6 {
 /* Very small screens */
 @media (max-width: 375px) {
   .hero-left {
-    padding: 1.5rem 1rem;
-    padding-top: max(1.5rem, env(safe-area-inset-top));
+    padding: 1.25rem 1rem 1.75rem;
+    margin-top: -2rem;
   }
 
   .hero-right {
-    min-height: 28vh;
-    max-height: 28vh;
+    height: 24vh;
+    min-height: 150px;
+    max-height: 200px;
   }
 
   .hero-title {
-    font-size: 26px;
+    font-size: 24px;
   }
 
   .hero-subtitle {
-    font-size: 0.875rem;
+    font-size: 0.8125rem;
   }
 
   .page {
