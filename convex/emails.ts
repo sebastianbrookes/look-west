@@ -4,7 +4,7 @@ import { internalAction } from "./_generated/server";
 import { v } from "convex/values";
 
 const WELCOME_MESSAGE =
-  "Welcome to Look West! You\u2019ve successfully signed up for sunset alerts. Whenever the sunset near you is predicted to be beautiful, we\u2019ll send you a heads-up so you don\u2019t miss it.";
+  "You\u2019re almost signed up for sunset alerts! Click the button below to confirm your email and start receiving alerts whenever the sunset near you is predicted to be beautiful.";
 
 const BACKGROUND_IMAGE_URL =
   process.env.EMAIL_BACKGROUND_URL ??
@@ -19,8 +19,9 @@ function escapeHtml(str: string): string {
     .replace(/'/g, "&#x27;");
 }
 
-function buildWelcomeHtml(location: string, unsubscribeUrl: string): string {
+function buildWelcomeHtml(location: string, confirmUrl: string, unsubscribeUrl: string): string {
   const loc = escapeHtml(location);
+  const confirm = escapeHtml(confirmUrl);
   const unsub = escapeHtml(unsubscribeUrl);
   const bg = BACKGROUND_IMAGE_URL;
 
@@ -96,7 +97,7 @@ function buildWelcomeHtml(location: string, unsubscribeUrl: string): string {
 
   <!-- Preheader (hidden preview text) -->
   <div style="display: none; max-height: 0; overflow: hidden; font-size: 1px; line-height: 1px; color: #faf5ef;">
-    You're signed up for ${loc} sunset alerts
+    Confirm your email to get ${loc} sunset alerts
     &#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;
   </div>
 
@@ -146,9 +147,9 @@ function buildWelcomeHtml(location: string, unsubscribeUrl: string): string {
 
                         <td style="width: 8px;"></td>
 
-                        <!-- Signed-up pill -->
+                        <!-- Pending pill -->
                         <td class="pill-bg" style="background-color: #f0e0d0; border-radius: 20px; padding: 6px 14px;">
-                          <span class="pill-text" style="font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; font-size: 13px; color: #996b4a; white-space: nowrap;">&#10003; Signed up</span>
+                          <span class="pill-text" style="font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; font-size: 13px; color: #996b4a; white-space: nowrap;">&#9679; Pending confirmation</span>
                         </td>
                       </tr>
                     </table>
@@ -162,6 +163,23 @@ function buildWelcomeHtml(location: string, unsubscribeUrl: string): string {
                 <tr>
                   <td class="card-inner" style="padding: 24px 32px 28px;">
                     <p class="message-text" style="margin: 0; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.75; color: #4a3728;">${WELCOME_MESSAGE}</p>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Confirm CTA button -->
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                <tr>
+                  <td class="card-inner" style="padding: 0 32px 24px;" align="center">
+                    <!--[if mso]>
+                    <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="${confirm}" style="height:48px;v-text-anchor:middle;width:280px;" arcsize="17%" fillcolor="#c4785c" stroke="f">
+                      <w:anchorlock/>
+                      <center style="color:#ffffff;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:16px;font-weight:500;">Confirm your email</center>
+                    </v:roundrect>
+                    <![endif]-->
+                    <!--[if !mso]><!-->
+                    <a href="${confirm}" style="display: inline-block; background-color: #c4785c; color: #ffffff; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; font-size: 16px; font-weight: 500; text-decoration: none; padding: 14px 40px; border-radius: 8px; text-align: center;">Confirm your email</a>
+                    <!--<![endif]-->
                   </td>
                 </tr>
               </table>
@@ -219,9 +237,10 @@ export const sendWelcomeEmail = internalAction({
       return;
     }
 
+    const confirmUrl = `${baseUrl}/confirm?token=${encodeURIComponent(args.unsubscribeToken)}`;
     const unsubscribeUrl = `${baseUrl}/unsubscribe?token=${encodeURIComponent(args.unsubscribeToken)}`;
-    const html = buildWelcomeHtml(args.locationName, unsubscribeUrl);
-    const plainText = `${WELCOME_MESSAGE}\n\nUnsubscribe: ${unsubscribeUrl}`;
+    const html = buildWelcomeHtml(args.locationName, confirmUrl, unsubscribeUrl);
+    const plainText = `${WELCOME_MESSAGE}\n\nConfirm your email: ${confirmUrl}\n\nUnsubscribe: ${unsubscribeUrl}`;
 
     const response = await fetch("https://api.resend.com/emails", {
       method: "POST",
@@ -232,7 +251,7 @@ export const sendWelcomeEmail = internalAction({
       body: JSON.stringify({
         from: fromEmail,
         to: [args.email],
-        subject: "You're in! \u{1F305}",
+        subject: "Confirm your signup",
         text: plainText,
         html,
         headers: {

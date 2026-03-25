@@ -27,12 +27,21 @@ describe("users unsubscribe flow", () => {
     const createdUser = await t.run((ctx) => ctx.db.get(userId));
     expect(createdUser).not.toBeNull();
 
-    await t.mutation(api.users.unsubscribeByToken, {
+    // Confirm first so the user is active before unsubscribing
+    await t.mutation(api.users.confirmByToken, {
       token: createdUser!.unsubscribeToken,
+    });
+
+    const confirmedUser = await t.run((ctx) => ctx.db.get(userId));
+    expect(confirmedUser?.active).toBe(true);
+
+    await t.mutation(api.users.unsubscribeByToken, {
+      token: confirmedUser!.unsubscribeToken,
     });
 
     const updatedUser = await t.run((ctx) => ctx.db.get(userId));
     expect(updatedUser?.active).toBe(false);
+    expect(updatedUser?.unsubscribeToken).toBeUndefined();
   });
 
   it("rejects an invalid token", async () => {
@@ -44,17 +53,27 @@ describe("users unsubscribe flow", () => {
     ).rejects.toThrowError("Invalid unsubscribe link.");
   });
 
-  it("is idempotent for repeated unsubscribe calls", async () => {
+  it("clears token on unsubscribe so old links stop working", async () => {
     const t = convexTest(schema, modules);
     const userId = await t.mutation(api.users.addUser, BASE_USER);
     const createdUser = await t.run((ctx) => ctx.db.get(userId));
     const token = createdUser!.unsubscribeToken;
 
-    await t.mutation(api.users.unsubscribeByToken, { token });
+    // Confirm first, then unsubscribe
+    await t.mutation(api.users.confirmByToken, { token });
     await t.mutation(api.users.unsubscribeByToken, { token });
 
     const updatedUser = await t.run((ctx) => ctx.db.get(userId));
     expect(updatedUser?.active).toBe(false);
+    expect(updatedUser?.unsubscribeToken).toBeUndefined();
+
+    // Old token no longer works for confirm or unsubscribe
+    await expect(
+      t.mutation(api.users.unsubscribeByToken, { token })
+    ).rejects.toThrowError("Invalid unsubscribe link.");
+    await expect(
+      t.mutation(api.users.confirmByToken, { token })
+    ).rejects.toThrowError("Invalid confirmation link.");
   });
 
   it("rotates old tokens when an inactive user re-subscribes", async () => {
@@ -63,7 +82,11 @@ describe("users unsubscribe flow", () => {
     const originalUser = await t.run((ctx) => ctx.db.get(userId));
     const originalToken = originalUser!.unsubscribeToken;
 
+    // Confirm, then unsubscribe (which clears the token)
+    await t.mutation(api.users.confirmByToken, { token: originalToken });
     await t.mutation(api.users.unsubscribeByToken, { token: originalToken });
+
+    // Re-signup — user should be inactive with a new token
     await t.mutation(api.users.addUser, {
       ...BASE_USER,
       locationName: "Savannah, GA",
@@ -72,19 +95,22 @@ describe("users unsubscribe flow", () => {
     });
 
     const reactivatedUser = await t.run((ctx) => ctx.db.get(userId));
-    expect(reactivatedUser?.active).toBe(true);
+    expect(reactivatedUser?.active).toBe(false);
+    expect(reactivatedUser?.unsubscribeToken).toBeDefined();
     expect(reactivatedUser?.unsubscribeToken).not.toBe(originalToken);
 
+    // Old token no longer works
     await expect(
-      t.mutation(api.users.unsubscribeByToken, { token: originalToken })
-    ).rejects.toThrowError("Invalid unsubscribe link.");
+      t.mutation(api.users.confirmByToken, { token: originalToken })
+    ).rejects.toThrowError("Invalid confirmation link.");
 
-    await t.mutation(api.users.unsubscribeByToken, {
+    // New token works for confirmation
+    await t.mutation(api.users.confirmByToken, {
       token: reactivatedUser!.unsubscribeToken,
     });
 
-    const unsubscribedAgain = await t.run((ctx) => ctx.db.get(userId));
-    expect(unsubscribedAgain?.active).toBe(false);
+    const confirmedAgain = await t.run((ctx) => ctx.db.get(userId));
+    expect(confirmedAgain?.active).toBe(true);
   });
 
   it("generates a replacement token if a collision occurs", async () => {
@@ -166,5 +192,87 @@ describe("users unsubscribe flow", () => {
     expect(updatedCount).toBe(1);
     expect(legacyUser?.unsubscribeToken).toBeDefined();
     expect(legacyUser?.unsubscribeToken?.length).toBeGreaterThan(0);
+  });
+});
+
+describe("users confirm flow", () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("confirms a user with a valid token", async () => {
+    const t = convexTest(schema, modules);
+    const userId = await t.mutation(api.users.addUser, BASE_USER);
+
+    const createdUser = await t.run((ctx) => ctx.db.get(userId));
+    expect(createdUser?.active).toBe(false);
+
+    await t.mutation(api.users.confirmByToken, {
+      token: createdUser!.unsubscribeToken,
+    });
+
+    const confirmedUser = await t.run((ctx) => ctx.db.get(userId));
+    expect(confirmedUser?.active).toBe(true);
+  });
+
+  it("rejects an invalid token", async () => {
+    const t = convexTest(schema, modules);
+    await t.mutation(api.users.addUser, BASE_USER);
+
+    await expect(
+      t.mutation(api.users.confirmByToken, { token: "not-a-real-token" })
+    ).rejects.toThrowError("Invalid confirmation link.");
+  });
+
+  it("is idempotent for repeated confirm calls", async () => {
+    const t = convexTest(schema, modules);
+    const userId = await t.mutation(api.users.addUser, BASE_USER);
+    const createdUser = await t.run((ctx) => ctx.db.get(userId));
+    const token = createdUser!.unsubscribeToken;
+
+    await t.mutation(api.users.confirmByToken, { token });
+    await t.mutation(api.users.confirmByToken, { token });
+
+    const confirmedUser = await t.run((ctx) => ctx.db.get(userId));
+    expect(confirmedUser?.active).toBe(true);
+  });
+
+  it("confirm link stops working after unsubscribe", async () => {
+    const t = convexTest(schema, modules);
+    const userId = await t.mutation(api.users.addUser, BASE_USER);
+    const createdUser = await t.run((ctx) => ctx.db.get(userId));
+    const token = createdUser!.unsubscribeToken;
+
+    // Confirm, then unsubscribe
+    await t.mutation(api.users.confirmByToken, { token });
+    await t.mutation(api.users.unsubscribeByToken, { token });
+
+    // Token is cleared — confirm link no longer works
+    await expect(
+      t.mutation(api.users.confirmByToken, { token })
+    ).rejects.toThrowError("Invalid confirmation link.");
+  });
+
+  it("full cycle: signup → confirm → unsubscribe → re-signup → confirm", async () => {
+    const t = convexTest(schema, modules);
+
+    // Sign up and confirm
+    const userId = await t.mutation(api.users.addUser, BASE_USER);
+    const user1 = await t.run((ctx) => ctx.db.get(userId));
+    await t.mutation(api.users.confirmByToken, { token: user1!.unsubscribeToken });
+
+    // Unsubscribe
+    await t.mutation(api.users.unsubscribeByToken, { token: user1!.unsubscribeToken });
+
+    // Re-signup
+    await t.mutation(api.users.addUser, BASE_USER);
+    const user2 = await t.run((ctx) => ctx.db.get(userId));
+    expect(user2?.active).toBe(false);
+    expect(user2?.unsubscribeToken).toBeDefined();
+
+    // Confirm with new token
+    await t.mutation(api.users.confirmByToken, { token: user2!.unsubscribeToken });
+    const user3 = await t.run((ctx) => ctx.db.get(userId));
+    expect(user3?.active).toBe(true);
   });
 });

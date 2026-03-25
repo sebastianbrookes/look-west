@@ -152,6 +152,7 @@ const SAMPLE_EMAILS = [
 
 export default function App() {
   const isUnsubscribePage = window.location.pathname === "/unsubscribe";
+  const isConfirmPage = window.location.pathname === "/confirm";
   const unsubscribeToken = useMemo(getUnsubscribeTokenFromUrl, []);
   const [locationData, setLocationData] = useState<LocationData | null>(null);
   const [locationInput, setLocationInput] = useState("");
@@ -178,9 +179,14 @@ export default function App() {
     "idle" | "submitting" | "success" | "error"
   >("idle");
   const [unsubscribeError, setUnsubscribeError] = useState("");
+  const [confirmState, setConfirmState] = useState<
+    "loading" | "success" | "error"
+  >("loading");
+  const [confirmError, setConfirmError] = useState("");
 
   const addUser = useMutation(api.users.addUser);
   const unsubscribeByToken = useMutation(api.users.unsubscribeByToken);
+  const confirmByToken = useMutation(api.users.confirmByToken);
   const hasLocationChangedSinceLastGeocode = (value: string) => {
     const normalizedInput = value.trim().toLowerCase();
     const normalizedGeocodedLocation =
@@ -388,6 +394,73 @@ export default function App() {
   };
 
   /* ================================================================ */
+  /*  Confirm page — auto-fires on mount                              */
+  /* ================================================================ */
+
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  useEffect(() => {
+    if (!isConfirmPage) return;
+
+    if (!unsubscribeToken) {
+      setConfirmState("error");
+      setConfirmError("Invalid confirmation link.");
+      return;
+    }
+
+    confirmByToken({ token: unsubscribeToken })
+      .then(() => setConfirmState("success"))
+      .catch((err: unknown) => {
+        setConfirmState("error");
+        setConfirmError(getReadableErrorMessage(err));
+      });
+  }, [isConfirmPage, unsubscribeToken, confirmByToken]);
+
+  if (isConfirmPage) {
+    return (
+      <div className="page">
+        <div className="page-left">
+          <div className="card confirmation">
+            {confirmState === "loading" && (
+              <>
+                <h1 className="headline">Confirming…</h1>
+                <p className="body">
+                  <span className="spinner" /> Verifying your email…
+                </p>
+              </>
+            )}
+            {confirmState === "success" && (
+              <>
+                <h1 className="headline">You're confirmed!</h1>
+                <p className="body">
+                  You're all set to receive sunset alerts from Look West.
+                </p>
+                <p className="body dim">
+                  Your first alert could come as early as tonight.
+                </p>
+                <a href="/" className="link-btn unsubscribe-home-link">
+                  Back to Look West
+                </a>
+              </>
+            )}
+            {confirmState === "error" && (
+              <>
+                <h1 className="headline">Confirmation failed</h1>
+                <p className="field-error">{confirmError}</p>
+                <a href="/" className="link-btn unsubscribe-home-link">
+                  Back to Look West
+                </a>
+              </>
+            )}
+          </div>
+        </div>
+        <div className="page-right" aria-hidden="true">
+          <img src="/background.webp" alt="" className="hero-image" />
+        </div>
+      </div>
+    );
+  }
+
+  /* ================================================================ */
   /*  Unsubscribe page                                                 */
   /* ================================================================ */
 
@@ -457,13 +530,11 @@ export default function App() {
       <div className="page">
         <div className="page-left">
           <div className="card confirmation">
-            <h1 className="headline">You're in.</h1>
+            <h1 className="headline">Check your email.</h1>
             <p className="body">
-              We'll email you at <strong>{confirmedEmail}</strong> whenever the
-              sunset in <strong>{confirmedLocation}</strong> will be beautiful.
-            </p>
-            <p className="body dim">
-              Your first alert could come as early as tonight.
+              We sent a confirmation link to <strong>{confirmedEmail}</strong>.
+              You won't receive sunset alerts for{" "}
+              <strong>{confirmedLocation}</strong> until you confirm your email.
             </p>
             <div className="confirmation-links">
               <button type="button" className="link-btn" onClick={copyLink}>
