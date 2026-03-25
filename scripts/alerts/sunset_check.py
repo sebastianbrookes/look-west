@@ -22,7 +22,7 @@ from fallback_scorer import calculate_owm_score
 from prompts import SYSTEM_PROMPT, USER_PROMPT_TEMPLATE
 
 # Load .env from project root
-load_dotenv(os.path.join(os.path.dirname(__file__), "..", ".env"))
+load_dotenv(os.path.join(os.path.dirname(__file__), "..", "..", ".env"))
 
 # Logging
 logging.basicConfig(
