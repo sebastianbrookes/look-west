@@ -317,4 +317,31 @@ describe("signup global rate limiting", () => {
       })
     ).rejects.toThrowError("Too many signup attempts. Please try again later.");
   });
+
+  it("blocks repeated re-subscribes from the same email", async () => {
+    const t = convexTest(schema, modules);
+
+    // Use up 49 of the 50 global tokens with unique emails
+    for (let i = 0; i < 49; i++) {
+      await t.mutation(api.users.addUser, {
+        ...BASE_USER,
+        email: `user${i}@example.com`,
+        name: `User ${i}`,
+      });
+    }
+
+    // Sign up, confirm, unsubscribe, then re-subscribe with the same email
+    await t.mutation(api.users.addUser, BASE_USER);
+
+    const user = await t.run((ctx) =>
+      ctx.db.query("users").collect().then((u) => u.find((u) => u.email === BASE_USER.email))
+    );
+    await t.mutation(api.users.confirmByToken, { token: user!.unsubscribeToken });
+    await t.mutation(api.users.unsubscribeByToken, { token: user!.unsubscribeToken });
+
+    // Re-subscribe should be blocked — the 50 tokens are exhausted
+    await expect(
+      t.mutation(api.users.addUser, BASE_USER)
+    ).rejects.toThrowError("Too many signup attempts. Please try again later.");
+  });
 });
