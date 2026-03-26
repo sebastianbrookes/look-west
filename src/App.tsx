@@ -738,7 +738,7 @@ export default function App() {
         <div className="section-inner">
           <h2 className="section-title">What you'll get</h2>
           <p className="section-desc">
-            When conditions are right, you'll receive an email like one of these. Each alert includes your local sunset time and a brief, AI-written note about what to expect in the sky.
+            When conditions are right, you'll receive an email like one of these. Each alert includes your local sunset time and a brief note about what to expect.
           </p>
 
           <div className="email-samples">
@@ -780,7 +780,7 @@ export default function App() {
             >
               SunsetHue
             </a>{" "}
-            to score each evening's sunset potential on a 0-100 scale. Their model casts virtual rays through the atmosphere to calculate how much sunlight can reach clouds and reflect back toward you — producing a quality score grounded in real physics, not simple rules of thumb.
+            to score each evening's sunset potential on a 0-100 scale. Their model casts virtual rays through the atmosphere to calculate how much sunlight can reach clouds and reflect back toward you, producing a quality score grounded in physics.
           </p>
 
           <div className="scoring-grid">
@@ -792,7 +792,7 @@ export default function App() {
               </div>
               <h3 className="scoring-card-title">Cloud cover</h3>
               <p className="scoring-card-desc">
-                The model calculates a reflection potential for each cloud cell — how much incoming sunlight it can catch and bounce back toward you. Partial cover lights up; total cover blocks everything.
+                The model calculates a reflection potential for each cloud cell — how much incoming sunlight it can catch and bounce back toward you.
               </p>
             </div>
 
@@ -816,7 +816,7 @@ export default function App() {
               </div>
               <h3 className="scoring-card-title">Humidity</h3>
               <p className="scoring-card-desc">
-                High surface humidity reduces visibility, so the score is adjusted down. Clearer air means more of that reflected color actually reaches your eyes.
+                High surface humidity reduces visibility, so the score is adjusted down. Clearer air means more of the reflected color reaches your eyes.
               </p>
             </div>
 
