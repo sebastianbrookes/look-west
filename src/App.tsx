@@ -780,7 +780,7 @@ export default function App() {
             >
               SunsetHue
             </a>{" "}
-            to score each evening's sunset potential on a 0-100 scale. Their model analyzes atmospheric conditions like cloud cover, humidity, visibility, and air quality to predict how colorful and vivid the sunset will be.
+            to score each evening's sunset potential on a 0-100 scale. Their model casts virtual rays through the atmosphere to calculate how much sunlight can reach clouds and reflect back toward you — producing a quality score grounded in real physics, not simple rules of thumb.
           </p>
 
           <div className="scoring-grid">
@@ -792,7 +792,19 @@ export default function App() {
               </div>
               <h3 className="scoring-card-title">Cloud cover</h3>
               <p className="scoring-card-desc">
-                Partial clouds (30-70%) are ideal. They catch and scatter light, painting the sky in vivid oranges and pinks. Too few or too many mute the display.
+                The model calculates a reflection potential for each cloud cell — how much incoming sunlight it can catch and bounce back toward you. Partial cover lights up; total cover blocks everything.
+              </p>
+            </div>
+
+            <div className="scoring-card">
+              <div className="scoring-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M7 20l5-16 5 16" /><path d="M4 16h16" />
+                </svg>
+              </div>
+              <h3 className="scoring-card-title">Cloud height</h3>
+              <p className="scoring-card-desc">
+                Mid- and high-altitude clouds are more potent reflectors at sunset. They sit above the shadow line, catching light that lower clouds can't.
               </p>
             </div>
 
@@ -804,7 +816,7 @@ export default function App() {
               </div>
               <h3 className="scoring-card-title">Humidity</h3>
               <p className="scoring-card-desc">
-                Moderate humidity (40-70%) produces the richest colors. Water vapor in the air scatters shorter wavelengths, letting warm reds and oranges dominate.
+                High surface humidity reduces visibility, so the score is adjusted down. Clearer air means more of that reflected color actually reaches your eyes.
               </p>
             </div>
 
@@ -818,26 +830,9 @@ export default function App() {
                   <path d="m6.34 17.66-1.41 1.41" /><path d="m19.07 4.93-1.41 1.41" />
                 </svg>
               </div>
-              <h3 className="scoring-card-title">Visibility</h3>
+              <h3 className="scoring-card-title">Seasonal duration</h3>
               <p className="scoring-card-desc">
-                Higher visibility means a cleaner light path from the horizon. This lets sunlight travel through more atmosphere, deepening the color spectrum.
-              </p>
-            </div>
-
-            <div className="scoring-card">
-              <div className="scoring-icon scoring-icon-aqi">
-                <svg width="24" height="24" viewBox="35 35 135 125" fill="none">
-                  <path d="m94.17 40.42c-0.87-0.91-2.7-0.17-2.26 1.6 0.13 0.53 0.94 1.47 4.92 5.89-26.53-0.13-44.13 16.7-50.84 34.38-5.35 14.23-4.41 31.62 2.93 47.88 0.61 1.36 1.26 2.99 2.66 3.32 1.61 0.42 3.24-1.26 2.3-2.97-8.14-12.17-10.16-29.36-5-43.46 7.13-19.78 24.21-34.78 48.28-35.03l-4.34 4.47c-0.94 0.98-0.64 1.88 0.04 2.49 0.72 0.62 1.7 0.49 2.4-0.26l7.55-7.55c0.9-0.9 0.9-1.96 0-2.81l-8.64-7.95z" fill="currentColor"/>
-                  <path d="m141.9 73.59c-0.79-1.28-3.39-1.28-3.18 1.27 0.08 0.9 0.38 1.11 1.23 2.51 7 11.4 8.48 22.01 6.75 33.92-0.17 1.19 0.17 2.09 1.48 2.22 1.44 0.17 1.92-1.15 2-1.9 1.69-12.57-0.6-25.19-8.28-38.02z" fill="currentColor"/>
-                  <path d="m130.3 66.21c-0.43-0.39-0.96-0.47-1.66-0.47-18.5 0.3-36.69 4.28-47.75 13.05-13.88 11.13-16.38 26.96-12.75 48.6-5.55 7.38-8.05 14.5-1.54 19.89 8.34 6.4 19.55 9.59 30.85 9.59 7.56-0.34 13.66-1.82 19.26-3.77 1.71-0.72 1.93-1.82 1.18-2.89-0.84-0.98-2.15-0.22-2.32-0.13-14.01 4.93-30.48 4.63-43.4-3.75-6.01-3.11-6.95-7.62-0.86-15.87 18.63 2.9 32.13-0.38 42.48-11.04 12.08-12.14 17.47-31.23 17.13-51.81 0-0.53-0.17-1.02-0.62-1.4zm-19.58 50.4c-9.11 9.1-20.57 11.96-37.17 9.9l9.36-11.03c8.73-2.55 14.61-3.4 23.38-2.42 1.36 0.13 2.16-0.85 2.08-1.95-0.13-1.27-1.15-1.75-2.42-1.84-6.09-0.61-10.69-0.04-18.74 1.06l11.46-12.09c5.39-1.11 9.11-2 16.23-1.02 1.35 0.17 2.05-1.11 1.92-1.96-0.17-1.4-1.23-1.74-2.17-1.82-3.8-0.39-7.43-0.17-11.25 0.49l11.46-10.66c0.89-0.89 0.89-1.96 0.23-2.66-0.75-0.85-1.89-0.68-2.64 0.17l-11.81 11.81c0.48-3.95 0.44-5.86 0.05-10.17-0.17-1.55-1.02-2.03-2.24-1.9-1.1 0.21-1.54 1.11-1.41 2.38 0.61 4.22-0.25 8.86-0.91 13.09l-10.61 11.59c0.85-6.67 0.68-9.17-0.07-15.57-0.21-1.49-1.01-2.1-2.24-1.89-1.1 0.26-1.53 1.2-1.36 2.52 0.94 6.67 0.45 12.27-1.41 20.7l-9.14 10.65c-3.58-17.55 0.26-32.23 12.12-42.36 10.52-8.64 25.93-12.31 44.34-12.65 0.49 16.26-4.02 34.8-17.04 47.63z" fill="currentColor"/>
-                  <path d="m116.3 126.2c-2.68 0-2.55 3.9-0.05 3.9h18.93c5.03 0 7.32-4.28 7.32-6.7 0-4.89-3.67-7.62-7.45-7.62-4.33 0-6.84 3.24-7.05 6.56-0.08 2.15 3.81 2.53 3.9 0.21 0.17-2.42 1.71-3.44 3.5-3.44 2.63 0 3.47 2.14 3.47 3.99 0 1.82-1.71 3.1-3.77 3.1h-18.8z" fill="currentColor"/>
-                  <path d="m116.6 141c-2.59 0-2.42 3.62-0.09 3.62h26.2c3.11 0 3.91 2.42 3.91 3.36 0 1.95-1.59 3.3-3.42 3.3-1.85 0-2.74-1.02-3.13-2.5-0.57-2.34-4.47-1.49-4.29 0.52 0.43 3.8 3.85 5.47 6.93 5.47 4.59 0 6.8-3.79 6.8-6.54 0-4.32-3.54-7.23-7.1-7.23h-25.81z" fill="currentColor"/>
-                  <path d="m110.8 133.7c-2.06 0-2.36 3.41 0.08 3.41h40.37c6.05 0 8.3-5.35 8.3-7.85 0-4.55-3.71-8.01-7.65-8.01-4.76 0-6.97 3.63-7.27 7.29-0.13 2.06 3.67 2.28 3.75 0.18 0.17-2.5 1.93-3.89 3.76-3.89 2.94 0 4.16 2.33 4.16 4.18 0 2.5-1.95 4.69-5.02 4.69h-40.48z" fill="currentColor"/>
-                </svg>
-              </div>
-              <h3 className="scoring-card-title">Air quality</h3>
-              <p className="scoring-card-desc">
-                A slight haze can actually enhance colors by adding an extra scattering layer. But heavy pollution washes everything out into a dull gray.
+                Longer sunsets — common at higher latitudes in summer and winter — give the sky more time to develop color, boosting the overall score.
               </p>
             </div>
           </div>
