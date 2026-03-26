@@ -52,6 +52,7 @@ export const logAlert = mutation({
     qualityScore: v.number(),
     qualityLabel: v.string(),
     messageSent: v.string(),
+    subjectLine: v.optional(v.string()),
     status: v.string(),
   },
   handler: async (ctx, args) => {
