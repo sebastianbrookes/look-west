@@ -253,7 +253,7 @@ describe("users confirm flow", () => {
     ).rejects.toThrowError("Invalid confirmation link.");
   });
 
-  it("full cycle: signup → confirm → unsubscribe → re-signup → confirm (within rate limit)", async () => {
+  it("full cycle: signup → confirm → unsubscribe → re-signup → confirm", async () => {
     const t = convexTest(schema, modules);
 
     // Sign up and confirm
@@ -277,12 +277,12 @@ describe("users confirm flow", () => {
   });
 });
 
-describe("signup rate limiting", () => {
+describe("signup global rate limiting", () => {
   beforeEach(() => {
     vi.restoreAllMocks();
   });
 
-  it("allows two signups with different emails", async () => {
+  it("allows signups within the global rate limit", async () => {
     const t = convexTest(schema, modules);
 
     await t.mutation(api.users.addUser, BASE_USER);
@@ -296,55 +296,25 @@ describe("signup rate limiting", () => {
     expect(allUsers).toHaveLength(2);
   });
 
-  it("blocks a third signup with the same email within the rate limit window", async () => {
+  it("blocks signups when the global rate limit is exhausted", async () => {
     const t = convexTest(schema, modules);
 
-    // First two signups succeed (capacity = 2)
-    await t.mutation(api.users.addUser, BASE_USER);
+    // Exhaust the global rate limit (capacity = 50)
+    for (let i = 0; i < 50; i++) {
+      await t.mutation(api.users.addUser, {
+        ...BASE_USER,
+        email: `user${i}@example.com`,
+        name: `User ${i}`,
+      });
+    }
 
-    // Unsubscribe so we can re-signup
-    const user1 = await t.run((ctx) =>
-      ctx.db.query("users").collect().then((u) => u[0])
-    );
-    await t.mutation(api.users.confirmByToken, { token: user1!.unsubscribeToken });
-    await t.mutation(api.users.unsubscribeByToken, { token: user1!.unsubscribeToken });
-
-    // Second signup succeeds
-    await t.mutation(api.users.addUser, BASE_USER);
-
-    // Unsubscribe again
-    const user2 = await t.run((ctx) =>
-      ctx.db.query("users").collect().then((u) => u[0])
-    );
-    await t.mutation(api.users.confirmByToken, { token: user2!.unsubscribeToken });
-    await t.mutation(api.users.unsubscribeByToken, { token: user2!.unsubscribeToken });
-
-    // Third signup should be rate limited
+    // The 51st signup should be rate limited
     await expect(
-      t.mutation(api.users.addUser, BASE_USER)
+      t.mutation(api.users.addUser, {
+        ...BASE_USER,
+        email: "onemore@example.com",
+        name: "One More",
+      })
     ).rejects.toThrowError("Too many signup attempts. Please try again later.");
-  });
-
-  it("rate limits are independent per email", async () => {
-    const t = convexTest(schema, modules);
-
-    // Two signups for email A
-    await t.mutation(api.users.addUser, BASE_USER);
-    const userA = await t.run((ctx) =>
-      ctx.db.query("users").collect().then((u) => u[0])
-    );
-    await t.mutation(api.users.confirmByToken, { token: userA!.unsubscribeToken });
-    await t.mutation(api.users.unsubscribeByToken, { token: userA!.unsubscribeToken });
-    await t.mutation(api.users.addUser, BASE_USER);
-
-    // Email B should still work — independent rate limit bucket
-    await t.mutation(api.users.addUser, {
-      ...BASE_USER,
-      email: "different@example.com",
-      name: "Jordan",
-    });
-
-    const allUsers = await t.run((ctx) => ctx.db.query("users").collect());
-    expect(allUsers).toHaveLength(2);
   });
 });

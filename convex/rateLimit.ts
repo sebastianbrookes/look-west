@@ -1,11 +1,11 @@
 import { defineRateLimits } from "convex-helpers/server/rateLimit";
 
 export const { checkRateLimit, rateLimit, resetRateLimit } = defineRateLimits({
-  // Max 2 signup emails per email address per hour
-  signupEmail: {
+  // Global limit: max 50 signup emails per hour across all users
+  signupGlobal: {
     kind: "token bucket",
-    rate: 2,
+    rate: 50,
     period: 60 * 60 * 1000, // 1 hour
-    capacity: 2,
+    capacity: 50,
   },
 });
