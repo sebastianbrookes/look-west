@@ -717,7 +717,15 @@ export default function App() {
             </button>
           </form>
 
-          <p className="hero-fine-print">Unsubscribe anytime.</p>
+          <p className="hero-fine-print">Unsubscribe anytime. Made by{" "}
+            <a
+              href="https://github.com/sebastianbrookes"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-link"
+            >
+              Sebastian Brookes
+            </a>.</p>
           </div>
 
           <a href="#how-it-works" className="scroll-hint" aria-label="Scroll to learn more">
