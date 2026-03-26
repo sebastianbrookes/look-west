@@ -21,6 +21,7 @@ export default defineSchema({
     qualityScore: v.number(),
     qualityLabel: v.string(),
     messageSent: v.string(),
+    subjectLine: v.optional(v.string()),
     status: v.string(),
     errorMessage: v.optional(v.string()),
     createdAt: v.number(),

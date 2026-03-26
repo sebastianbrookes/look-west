@@ -136,7 +136,7 @@ const SAMPLE_EMAILS = [
   },
   {
     type: "alert",
-    subject: "San Francisco, CA — sunset at 7:31 PM",
+    subject: "Sunset at 7:31 in San Francisco",
     location: "San Francisco, CA",
     time: "7:31 PM",
     quality: "Fair",

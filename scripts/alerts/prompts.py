@@ -52,4 +52,9 @@ Weather: {weather_description}, {temperature}°F
 Cloud cover: {cloud_cover}%
 Quality score (internal, don't mention): {quality_score}%
 
-Write the sunset alert message."""
+Write the sunset alert message.
+
+Then on a NEW line, write a short email subject line (max 40 characters).
+Prefix it exactly with "SUBJECT: " so it can be parsed.
+Do NOT use em dashes (—) in the subject. No emoji.
+Examples: "Tonight's sunset in Cape Cod, MA" or "Sunset alert for Brooklyn, NY"."""

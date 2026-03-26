@@ -181,7 +181,10 @@ def get_current_weather(lat, lon):
 
 
 def generate_message(quality_percent, quality_label, location_name, sunset_time_local, temp_f, weather_description, cloud_cover=0):
-    """Generate an email message using Kimi K2 via OpenRouter."""
+    """Generate an email message and subject line using Kimi K2 via OpenRouter.
+
+    Returns a dict with 'message' and 'subject' keys.
+    """
     sunset_dt = datetime.strptime(sunset_time_local, "%I:%M %p")
     viewing_time = (sunset_dt - timedelta(minutes=30)).strftime("%-I:%M %p")
 
@@ -212,7 +215,20 @@ def generate_message(quality_percent, quality_label, location_name, sunset_time_
         timeout=15,
     )
     resp.raise_for_status()
-    return resp.json()["choices"][0]["message"]["content"].strip()
+    raw = resp.json()["choices"][0]["message"]["content"].strip()
+
+    # Parse subject line from the response
+    message = raw
+    subject = f"Sunset alert for {location_name}"  # fallback
+    for line in raw.split("\n"):
+        if line.strip().upper().startswith("SUBJECT:"):
+            subject = line.strip().split(":", 1)[1].strip()[:40]
+            # Remove em dashes just in case
+            subject = subject.replace("—", "-").replace("–", "-")
+            message = raw.replace(line, "").strip()
+            break
+
+    return {"message": message, "subject": subject}
 
 
 # ---------------------------------------------------------------------------
@@ -283,7 +299,10 @@ def phase_check(client, test_email=None):
                     weather_desc = "unknown"
                     cloud_cover = 0
 
-                message = generate_message(score, label, location, sunset_local, temp_f, weather_desc, cloud_cover)
+                result = generate_message(score, label, location, sunset_local, temp_f, weather_desc, cloud_cover)
+                message = result["message"]
+                subject = result["subject"]
+                logger.info(f"[{location}] Subject: {subject}")
                 logger.info(f"[{location}] Message: {message}")
 
                 client.mutation("alerts:logAlert", {
@@ -293,6 +312,7 @@ def phase_check(client, test_email=None):
                     "qualityScore": score,
                     "qualityLabel": label,
                     "messageSent": message,
+                    "subjectLine": subject,
                     "status": "pending",
                 })
                 logger.info(f"[{location}] Queued pending alert")
@@ -365,11 +385,13 @@ def phase_send(client):
                 unsubscribe_url=unsubscribe_url,
             )
 
-            def _send_email(body=alert["messageSent"], html=html_body, to=user["email"], loc=location, unsub=unsubscribe_url):
+            email_subject = alert.get("subjectLine") or f"Sunset alert for {location}"
+
+            def _send_email(body=alert["messageSent"], html=html_body, to=user["email"], subj=email_subject, unsub=unsubscribe_url):
                 return resend.Emails.send({
                     "from": RESEND_FROM_EMAIL,
                     "to": [to],
-                    "subject": f"Beautiful sunset alert in {loc} 🌅",
+                    "subject": subj,
                     "text": body,
                     "html": html,
                     "headers": {
