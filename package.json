@@ -25,6 +25,7 @@
   "homepage": "https://github.com/sebastianbrookes/look-west#readme",
   "dependencies": {
     "convex": "^1.33.1",
+    "convex-helpers": "^0.1.114",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "tz-lookup": "^6.1.25"

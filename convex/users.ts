@@ -8,8 +8,10 @@ import { internal } from "./_generated/api";
 import type { Doc } from "./_generated/dataModel";
 import { v } from "convex/values";
 import { generateUnsubscribeToken } from "./unsubscribeTokens";
+import { rateLimit } from "./rateLimit";
 
 const DUPLICATE_ACTIVE_EMAIL_ERROR = "Email already registered";
+const RATE_LIMIT_ERROR = "Too many signup attempts. Please try again later.";
 const INVALID_UNSUBSCRIBE_TOKEN_ERROR = "Invalid unsubscribe link.";
 
 function normalizeEmail(email: string) {
@@ -152,6 +154,14 @@ export const addUser = mutation({
         return existing._id;
       }
 
+      const { ok } = await rateLimit(ctx, {
+        name: "signupEmail",
+        key: normalizedEmail,
+      });
+      if (!ok) {
+        throw new Error(RATE_LIMIT_ERROR);
+      }
+
       const unsubscribeToken = await issueUnsubscribeToken(ctx);
       await ctx.db.patch(existing._id, {
         name: args.name,
@@ -170,6 +180,14 @@ export const addUser = mutation({
         unsubscribeToken,
       });
       return existing._id;
+    }
+
+    const { ok } = await rateLimit(ctx, {
+      name: "signupEmail",
+      key: normalizedEmail,
+    });
+    if (!ok) {
+      throw new Error(RATE_LIMIT_ERROR);
     }
 
     const unsubscribeToken = await issueUnsubscribeToken(ctx);

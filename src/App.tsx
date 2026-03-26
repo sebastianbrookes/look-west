@@ -23,6 +23,7 @@ type BrowserGeoStatus = "idle" | "requesting" | "denied" | "unsupported";
 
 const NOMINATIM_HEADERS = { "User-Agent": "LookWest/1.0" };
 const DUPLICATE_EMAIL_ERROR = "Email already registered";
+const RATE_LIMIT_ERROR = "Too many signup attempts. Please try again later.";
 const GENERIC_SUBMIT_ERROR = "Something went wrong. Please try again.";
 const INVALID_UNSUBSCRIBE_TOKEN_ERROR = "Invalid unsubscribe link.";
 

@@ -12,6 +12,7 @@ import type * as alerts from "../alerts.js";
 import type * as cronActions from "../cronActions.js";
 import type * as crons from "../crons.js";
 import type * as emails from "../emails.js";
+import type * as rateLimit from "../rateLimit.js";
 import type * as unsubscribeTokens from "../unsubscribeTokens.js";
 import type * as users from "../users.js";
 
@@ -26,6 +27,7 @@ declare const fullApi: ApiFromModules<{
   cronActions: typeof cronActions;
   crons: typeof crons;
   emails: typeof emails;
+  rateLimit: typeof rateLimit;
   unsubscribeTokens: typeof unsubscribeTokens;
   users: typeof users;
 }>;
