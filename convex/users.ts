@@ -124,11 +124,6 @@ export const addUser = mutation({
       throw new Error("Please enter a valid email address.");
     }
 
-    const { ok } = await rateLimit(ctx, { name: "signupGlobal" });
-    if (!ok) {
-      throw new Error(RATE_LIMIT_ERROR);
-    }
-
     const users = await ctx.db.query("users").collect();
     const existing =
       users.find((user) => normalizeEmail(user.email) === normalizedEmail) ?? null;
@@ -159,6 +154,11 @@ export const addUser = mutation({
         return existing._id;
       }
 
+      const { ok } = await rateLimit(ctx, { name: "signupGlobal" });
+      if (!ok) {
+        throw new Error(RATE_LIMIT_ERROR);
+      }
+
       const unsubscribeToken = await issueUnsubscribeToken(ctx);
       await ctx.db.patch(existing._id, {
         name: args.name,
@@ -177,6 +177,11 @@ export const addUser = mutation({
         unsubscribeToken,
       });
       return existing._id;
+    }
+
+    const { ok } = await rateLimit(ctx, { name: "signupGlobal" });
+    if (!ok) {
+      throw new Error(RATE_LIMIT_ERROR);
     }
 
     const unsubscribeToken = await issueUnsubscribeToken(ctx);
