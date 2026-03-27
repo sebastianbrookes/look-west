@@ -215,5 +215,7 @@ __marimo__/
 # Testing
 .testing/
 
-# claude
+# ai
 .claude/skills
+.agents
+skills-lock.json
