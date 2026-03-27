@@ -177,6 +177,8 @@ export default function App() {
   const [copied, setCopied] = useState(false);
   const manualGeocodeInFlightRef = useRef(false);
   const locationInputRef = useRef<HTMLInputElement>(null);
+  const locationDataRef = useRef(locationData);
+  locationDataRef.current = locationData;
   const [unsubscribeState, setUnsubscribeState] = useState<
     "idle" | "submitting" | "success" | "error"
   >("idle");
@@ -646,9 +648,9 @@ export default function App() {
                     if (placesLoaded) {
                       if (locationInput.trim() && !locationData) {
                         setTimeout(() => {
-                          setGeocodeError((prev) =>
-                            !locationData ? "Please select a location from the dropdown." : prev
-                          );
+                          if (!locationDataRef.current) {
+                            setGeocodeError("Please select a location from the dropdown.");
+                          }
                         }, 200);
                       }
                     } else {
