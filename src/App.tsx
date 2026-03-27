@@ -116,33 +116,33 @@ function CheckIcon() {
 const SAMPLE_EMAILS = [
   {
     type: "alert",
-    subject: "Tonight's sunset in Cape Cod, MA",
-    location: "Cape Cod, MA",
-    time: "7:04 PM",
-    quality: "Great",
-    qualityScore: 88,
+    subject: "Tonight's sunset in Brooklyn, NY",
+    location: "Brooklyn, NY",
+    time: "4:32 PM",
+    quality: "Fair",
+    qualityScore: 48,
     message:
-      "Clouds are sitting at about 45% tonight \u2014 perfect for some color. Sun drops at 7:04 but worth heading out around 6:30 to catch the good stuff. It's hovering at 49\u00b0 so bring something with sleeves.",
+      "A giant orange fell behind\nthe buildings and the cranes.\nIt happens right at 4:32.\nIt's very cold, so wear your coat\nor else your nose will turn quite blue.",
   },
   {
     type: "alert",
-    subject: "Sunset alert for Brooklyn, NY",
-    location: "Brooklyn, NY",
-    time: "7:18 PM",
+    subject: "Sunset alert for Cape Cod, MA",
+    location: "Cape Cod, MA",
+    time: "7:54 PM",
     quality: "Good",
     qualityScore: 72,
     message:
-      "Clouds are hanging around at 35% coverage tonight \u2014 should catch some color when the sun drops at 7:18. Get to your spot by 6:48 if you can. 58 degrees so you won't need much of a jacket.",
+      "The clouds are lumpy, soft, and strange\nlike piles of unwashed socks.\nThe sun will hit them at 7:54\nwhile you stand on some rocks.\nIt's nice out.",
   },
   {
     type: "alert",
-    subject: "Sunset at 7:31 in San Francisco",
+    subject: "Sunset at 8:12 in San Francisco",
     location: "San Francisco, CA",
-    time: "7:31 PM",
-    quality: "Fair",
-    qualityScore: 63,
+    time: "8:12 PM",
+    quality: "Good",
+    qualityScore: 64,
     message:
-      "Clear skies tonight with sunset at 7:31 \u2014 should be a straightforward one, probably worth getting to a west-facing spot by 7. Nice evening at 61 degrees, light jacket should do it.",
+      "The sun has work to do elsewhere\nso it leaves at 8:12 sharp.\nThe air is mild, the sky is wide\nand there isn't any fog to hide\nthe way the light falls down.",
   },
 ];
 
@@ -597,7 +597,7 @@ export default function App() {
           <div className="hero-content">
             <h1 className="hero-title">Look West</h1>
             <p className="hero-subtitle">
-              Get an email whenever the sunset in your area is predicted to be beautiful.
+              Get a short, funny poem whenever the sunset in your area is predicted to be worth seeing.
             </p>
 
             <form onSubmit={handleSubmit} className="hero-form">
@@ -750,7 +750,7 @@ export default function App() {
         <div className="section-inner">
           <h2 className="section-title">What you'll get</h2>
           <p className="section-desc">
-            When conditions are right, you'll receive an email like one of these. Each alert includes your local sunset time and a brief note about what to expect.
+            When conditions are right, you'll receive an email like one of these. Each one is a short poem with your local sunset time and weather baked in.
           </p>
 
           <div className="email-samples">
