@@ -8,7 +8,7 @@ export default defineConfig({
           name: "convex",
           include: ["convex/**/*.test.ts"],
           environment: "edge-runtime",
-          setupFiles: ["convex/test-setup.ts"],
+          setupFiles: ["test_setup.ts"],
         },
       },
     ],
