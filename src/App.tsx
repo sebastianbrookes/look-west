@@ -716,7 +716,7 @@ export default function App() {
                   <span>Signing up…</span>
                 </>
               ) : (
-                "Sign Me Up"
+                "Sign me up"
               )}
             </button>
           </form>
