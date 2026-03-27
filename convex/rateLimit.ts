@@ -9,4 +9,3 @@ export const { checkRateLimit, rateLimit, resetRateLimit } = defineRateLimits({
     capacity: Number(process.env.SIGNUP_RATE_LIMIT ?? 50),
   },
 });
-});
