@@ -40,6 +40,7 @@ RESEND_API_KEY = os.getenv("RESEND_API_KEY", "")
 RESEND_FROM_EMAIL = os.getenv("RESEND_FROM_EMAIL", "")
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
 SUNSET_QUALITY_THRESHOLD = int(os.getenv("SUNSET_QUALITY_THRESHOLD", "40"))
+OPENROUTER_MODEL = os.getenv("OPENROUTER_MODEL", "moonshotai/kimi-k2-0905")
 SUNSET_SCORER = os.getenv("SUNSET_SCORER", "sunsethue")
 APP_BASE_URL = os.getenv("APP_BASE_URL", "https://golookwest.com").rstrip("/")
 
@@ -225,7 +226,7 @@ def generate_message(
             "Content-Type": "application/json",
         },
         json={
-            "model": "moonshotai/kimi-k2-0905",
+            "model": OPENROUTER_MODEL,
             "messages": [
                 {"role": "system", "content": SYSTEM_PROMPT},
                 {"role": "user", "content": user_prompt},
