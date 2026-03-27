@@ -1,16 +1,41 @@
-import { query, mutation } from "./_generated/server";
+import { query, internalQuery, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
 
-export const getPendingAlerts = query({
+export const getPendingAlerts = internalQuery({
   args: {},
   handler: async (ctx) => {
     const now = new Date().toISOString();
+    const cutoff = new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString();
     const alerts = await ctx.db
       .query("alerts")
       .withIndex("by_status", (q) => q.eq("status", "pending"))
       .collect();
 
-    return alerts.filter((a) => a.scheduledSendTime <= now);
+    return alerts.filter(
+      (a) => a.scheduledSendTime <= now && a.scheduledSendTime >= cutoff
+    );
+  },
+});
+
+export const expireStalePendingAlerts = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const cutoff = new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString();
+    const alerts = await ctx.db
+      .query("alerts")
+      .withIndex("by_status", (q) => q.eq("status", "pending"))
+      .collect();
+
+    const stale = alerts.filter((a) => a.scheduledSendTime < cutoff);
+    for (const alert of stale) {
+      await ctx.db.patch(alert._id, {
+        status: "expired",
+        errorMessage: "Alert expired — not sent (scheduled send time too far in the past)",
+      });
+    }
+    if (stale.length) {
+      console.log(`Expired ${stale.length} stale pending alert(s)`);
+    }
   },
 });
 
@@ -29,10 +54,13 @@ export const getAlertHistory = query({
   },
 });
 
-export const getTodaysAlertForUser = query({
-  args: { userId: v.id("users") },
+export const getTodaysAlertForUser = internalQuery({
+  args: { userId: v.id("users"), timezone: v.string() },
   handler: async (ctx, args) => {
-    const today = new Date().toISOString().slice(0, 10); // "YYYY-MM-DD" in UTC
+    // Compare dates in the user's local timezone to avoid UTC date-boundary mismatches
+    const todayLocal = new Intl.DateTimeFormat("en-CA", {
+      timeZone: args.timezone,
+    }).format(new Date()); // "YYYY-MM-DD" in user's timezone
 
     const alerts = await ctx.db
       .query("alerts")
@@ -40,11 +68,18 @@ export const getTodaysAlertForUser = query({
       .order("desc")
       .collect();
 
-    return alerts.find((a) => a.sunsetTime.slice(0, 10) === today) ?? null;
+    return (
+      alerts.find((a) => {
+        const sunsetDateLocal = new Intl.DateTimeFormat("en-CA", {
+          timeZone: args.timezone,
+        }).format(new Date(a.sunsetTime));
+        return sunsetDateLocal === todayLocal;
+      }) ?? null
+    );
   },
 });
 
-export const logAlert = mutation({
+export const logAlert = internalMutation({
   args: {
     userId: v.id("users"),
     sunsetTime: v.string(),
@@ -64,7 +99,7 @@ export const logAlert = mutation({
   },
 });
 
-export const updateAlertStatus = mutation({
+export const updateAlertStatus = internalMutation({
   args: {
     alertId: v.id("alerts"),
     status: v.string(),

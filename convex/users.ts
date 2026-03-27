@@ -1,4 +1,5 @@
 import {
+  internalMutation,
   internalQuery,
   mutation,
   query,
@@ -202,7 +203,7 @@ export const addUser = mutation({
   },
 });
 
-export const backfillMissingUnsubscribeTokens = mutation({
+export const backfillMissingUnsubscribeTokens = internalMutation({
   args: {},
   handler: async (ctx) => {
     const users = await ctx.db.query("users").collect();
