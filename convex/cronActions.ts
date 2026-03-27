@@ -193,7 +193,7 @@ export const sunsetScoreCheck = internalAction({
         // Idempotency check
         const existing = await ctx.runQuery(
           internal.alerts.getTodaysAlertForUser,
-          { userId: user._id }
+          { userId: user._id, timezone: user.timezone }
         );
         if (existing) {
           console.log(

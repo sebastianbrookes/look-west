@@ -30,9 +30,12 @@ export const getAlertHistory = query({
 });
 
 export const getTodaysAlertForUser = internalQuery({
-  args: { userId: v.id("users") },
+  args: { userId: v.id("users"), timezone: v.string() },
   handler: async (ctx, args) => {
-    const today = new Date().toISOString().slice(0, 10); // "YYYY-MM-DD" in UTC
+    // Compare dates in the user's local timezone to avoid UTC date-boundary mismatches
+    const todayLocal = new Intl.DateTimeFormat("en-CA", {
+      timeZone: args.timezone,
+    }).format(new Date()); // "YYYY-MM-DD" in user's timezone
 
     const alerts = await ctx.db
       .query("alerts")
@@ -40,7 +43,14 @@ export const getTodaysAlertForUser = internalQuery({
       .order("desc")
       .collect();
 
-    return alerts.find((a) => a.sunsetTime.slice(0, 10) === today) ?? null;
+    return (
+      alerts.find((a) => {
+        const sunsetDateLocal = new Intl.DateTimeFormat("en-CA", {
+          timeZone: args.timezone,
+        }).format(new Date(a.sunsetTime));
+        return sunsetDateLocal === todayLocal;
+      }) ?? null
+    );
   },
 });
 
