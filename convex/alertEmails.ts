@@ -148,7 +148,7 @@ export function buildAlertHtml(args: {
               <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
                 <tr>
                   <td class="card-inner" style="padding: 22px 34px 28px;">
-                    <p class="message-text" style="margin: 0; font-family: 'Figtree', 'Inter', 'Segoe UI', -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif; font-size: 15.5px; line-height: 1.7; color: #3d2b1f;">${msg}</p>
+                    <p class="message-text" style="margin: 0; font-family: 'Figtree', 'Inter', 'Segoe UI', -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif; font-size: 15.5px; line-height: 1.55; color: #3d2b1f;">${msg}</p>
                   </td>
                 </tr>
               </table>
