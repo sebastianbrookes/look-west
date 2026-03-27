@@ -1,6 +1,6 @@
 # Look West
 
-A sunset alert service that emails you a short, funny poem about the sunset — but only when it's predicted to be worth seeing.
+Get a short, funny poem whenever the sunset in your area is predicted to be worth seeing.
 
 ![Look West preview](public/lookwest-preview.png)
 
