@@ -8,11 +8,14 @@
  * @module
  */
 
+import type * as alertEmails from "../alertEmails.js";
 import type * as alerts from "../alerts.js";
 import type * as cronActions from "../cronActions.js";
 import type * as crons from "../crons.js";
 import type * as emails from "../emails.js";
+import type * as prompts from "../prompts.js";
 import type * as rateLimit from "../rateLimit.js";
+import type * as sunsetScoring from "../sunsetScoring.js";
 import type * as unsubscribeTokens from "../unsubscribeTokens.js";
 import type * as users from "../users.js";
 
@@ -23,11 +26,14 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  alertEmails: typeof alertEmails;
   alerts: typeof alerts;
   cronActions: typeof cronActions;
   crons: typeof crons;
   emails: typeof emails;
+  prompts: typeof prompts;
   rateLimit: typeof rateLimit;
+  sunsetScoring: typeof sunsetScoring;
   unsubscribeTokens: typeof unsubscribeTokens;
   users: typeof users;
 }>;

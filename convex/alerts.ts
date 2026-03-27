@@ -1,7 +1,7 @@
-import { query, mutation } from "./_generated/server";
+import { query, internalQuery, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
 
-export const getPendingAlerts = query({
+export const getPendingAlerts = internalQuery({
   args: {},
   handler: async (ctx) => {
     const now = new Date().toISOString();
@@ -29,7 +29,7 @@ export const getAlertHistory = query({
   },
 });
 
-export const getTodaysAlertForUser = query({
+export const getTodaysAlertForUser = internalQuery({
   args: { userId: v.id("users") },
   handler: async (ctx, args) => {
     const today = new Date().toISOString().slice(0, 10); // "YYYY-MM-DD" in UTC
@@ -44,7 +44,7 @@ export const getTodaysAlertForUser = query({
   },
 });
 
-export const logAlert = mutation({
+export const logAlert = internalMutation({
   args: {
     userId: v.id("users"),
     sunsetTime: v.string(),
@@ -64,7 +64,7 @@ export const logAlert = mutation({
   },
 });
 
-export const updateAlertStatus = mutation({
+export const updateAlertStatus = internalMutation({
   args: {
     alertId: v.id("alerts"),
     status: v.string(),
