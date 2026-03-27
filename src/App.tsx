@@ -454,7 +454,7 @@ export default function App() {
           </div>
         </div>
         <div className="page-right" aria-hidden="true">
-          <img src="/background.webp" alt="" className="hero-image" />
+          <img src="/background.webp" alt="" className="hero-image" width={1920} height={1280} fetchPriority="high" />
         </div>
       </div>
     );
@@ -501,7 +501,7 @@ export default function App() {
                   {unsubscribeState === "submitting" ? (
                     <>
                       <span className="spinner" />
-                      <span>Unsubscribing...</span>
+                      <span>Unsubscribing…</span>
                     </>
                   ) : (
                     "Unsubscribe"
@@ -515,7 +515,7 @@ export default function App() {
           </div>
         </div>
         <div className="page-right" aria-hidden="true">
-          <img src="/background.webp" alt="" className="hero-image" />
+          <img src="/background.webp" alt="" className="hero-image" width={1920} height={1280} fetchPriority="high" />
         </div>
       </div>
     );
@@ -579,7 +579,7 @@ export default function App() {
           </div>
         </div>
         <div className="page-right" aria-hidden="true">
-          <img src="/background.webp" alt="" className="hero-image" />
+          <img src="/background.webp" alt="" className="hero-image" width={1920} height={1280} fetchPriority="high" />
         </div>
       </div>
     );
@@ -608,6 +608,7 @@ export default function App() {
                   id="location-input"
                   type="text"
                   className="input"
+                  name="location"
                   placeholder="City or zip code"
                   value={locationInput}
                   onChange={(e) => {
@@ -636,7 +637,7 @@ export default function App() {
                 <p className="field-error" id="location-geocode-error">{geocodeError}</p>
               )}
               {browserGeoStatus === "denied" && !locationData && (
-                <p className="field-hint">Your browser blocked us :/ Enter your city or ZIP code above instead.</p>
+                <p className="field-hint">Your browser blocked us :/<br />Enter your city or ZIP code above instead.</p>
               )}
               {browserGeoStatus !== "unsupported" && browserGeoStatus !== "denied" && !locationData && (
                 <button
@@ -648,10 +649,10 @@ export default function App() {
                   {browserGeoStatus === "requesting" ? (
                     <>
                       <span className="geo-link-spinner" aria-hidden />
-                      Finding you...
+                      Finding you…
                     </>
                   ) : (
-                    "Use my current location"
+                    "Use My Current Location"
                   )}
                 </button>
               )}
@@ -663,6 +664,7 @@ export default function App() {
                 <input
                   type="text"
                   className="input"
+                  name="given-name"
                   placeholder="Your first name"
                   value={name}
                   onChange={(e) => {
@@ -685,7 +687,9 @@ export default function App() {
                 <input
                   type="email"
                   className={`input${emailError ? " input-error" : ""}`}
+                  name="email"
                   placeholder="Email address"
+                  spellCheck={false}
                   value={email}
                   onChange={(e) => {
                     setEmail(e.target.value);
@@ -709,7 +713,7 @@ export default function App() {
               {submitting ? (
                 <>
                   <span className="spinner" />
-                  <span>Signing up...</span>
+                  <span>Signing up…</span>
                 </>
               ) : (
                 "Sign me up"
@@ -737,7 +741,7 @@ export default function App() {
         </div>
 
         <div className="hero-right" aria-hidden="true">
-          <img src="/background.webp" alt="" className="hero-image" />
+          <img src="/background.webp" alt="" className="hero-image" width={1920} height={1280} fetchPriority="high" />
         </div>
       </section>
 
@@ -929,7 +933,7 @@ export default function App() {
               className="modal-btn"
               onClick={closeDuplicateEmailModal}
             >
-              OK
+              Got It
             </button>
           </div>
         </div>
