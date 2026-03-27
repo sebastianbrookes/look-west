@@ -7,3 +7,5 @@ To push changes to backend, run `npm run dev:backend -- --once`
 Run `npx convex dev` to push changes to the cloud environment.
 
 `npx vite` to start the dev environment.
+
+Official link: `https://golookwest.org`
