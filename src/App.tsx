@@ -452,6 +452,18 @@ export default function App() {
             )}
             {confirmState === "success" && (
               <>
+                <div className="confirm-check" aria-hidden>
+                  <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                    <circle cx="16" cy="16" r="16" fill="#F9DE8E" />
+                    <path
+                      d="M10 16.4L14.2 20.6L22 11.5"
+                      stroke="#5c4030"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </div>
                 <h1 className="headline">You're confirmed!</h1>
                 <p className="body">
                   You're all set to receive sunset alerts from Look West.
