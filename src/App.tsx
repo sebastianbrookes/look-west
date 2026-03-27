@@ -571,6 +571,23 @@ export default function App() {
               <strong>{confirmedLocation}</strong> until you confirm your email.
             </p>
             <div className="confirmation-links">
+              <a href="/" className="link-btn">
+                <svg
+                  className="link-icon"
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M19 12H5" />
+                  <polyline points="12 19 5 12 12 5" />
+                </svg>
+                Back to homepage
+              </a>
               <button type="button" className="link-btn" onClick={copyLink}>
                 {copied ? (
                   <>

@@ -783,7 +783,7 @@ h1, h2, h3, h4, h5, h6 {
 .confirmation-links {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: baseline;
   margin-top: 2rem;
   animation: text-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) 0.4s both;
 }
