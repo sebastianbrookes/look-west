@@ -95,9 +95,14 @@ function getUnsubscribeTokenFromUrl() {
   return params.get("token")?.trim() ?? "";
 }
 
-function CheckIcon() {
+function CheckIcon({ visible = false }: { visible?: boolean }) {
   return (
-    <svg className="input-check" viewBox="0 0 18 18" fill="none" aria-hidden>
+    <svg
+      className={`input-check${visible ? " input-check-visible" : ""}`}
+      viewBox="0 0 18 18"
+      fill="none"
+      aria-hidden
+    >
       <circle cx="9" cy="9" r="9" fill="#F9DE8E" />
       <path
         d="M5.5 9.2L8 11.7L12.5 6.5"
@@ -663,7 +668,7 @@ export default function App() {
                   aria-describedby={geocodeError ? "location-geocode-error" : undefined}
                 />
                 {geocoding && <span className="input-spinner" aria-hidden />}
-                {!geocoding && locationData && <CheckIcon />}
+                <CheckIcon visible={!geocoding && !!locationData} />
               </div>
               {geocodeError && (
                 <p className="field-error" id="location-geocode-error">{geocodeError}</p>
@@ -709,7 +714,7 @@ export default function App() {
                   autoComplete="given-name"
                   enterKeyHint="next"
                 />
-                {nameConfirmed && <CheckIcon />}
+                <CheckIcon visible={nameConfirmed} />
               </div>
             </div>
 
@@ -734,7 +739,7 @@ export default function App() {
                   autoComplete="email"
                   enterKeyHint="done"
                 />
-                {!emailError && emailConfirmed && <CheckIcon />}
+                <CheckIcon visible={!emailError && emailConfirmed} />
               </div>
               {emailError && <p className="field-error">{emailError}</p>}
             </div>
