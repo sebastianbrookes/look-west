@@ -341,6 +341,7 @@ export const sendPendingAlerts = internalAction({
   args: {},
   handler: async (ctx) => {
     await ctx.runMutation(internal.users.backfillMissingUnsubscribeTokens);
+    await ctx.runMutation(internal.alerts.expireStalePendingAlerts);
 
     const alerts = await ctx.runQuery(internal.alerts.getPendingAlerts);
     if (!alerts.length) {
