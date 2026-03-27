@@ -637,7 +637,7 @@ export default function App() {
                 <p className="field-error" id="location-geocode-error">{geocodeError}</p>
               )}
               {browserGeoStatus === "denied" && !locationData && (
-                <p className="field-hint">Your browser blocked us :/<br></br>Enter your city or ZIP code above instead.</p>
+                <p className="field-hint">Your browser blocked us :/<br />Enter your city or ZIP code above instead.</p>
               )}
               {browserGeoStatus !== "unsupported" && browserGeoStatus !== "denied" && !locationData && (
                 <button
@@ -664,7 +664,7 @@ export default function App() {
                 <input
                   type="text"
                   className="input"
-                  name="name"
+                  name="given-name"
                   placeholder="Your first name"
                   value={name}
                   onChange={(e) => {
