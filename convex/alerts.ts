@@ -54,6 +54,7 @@ export const logAlert = mutation({
     messageSent: v.string(),
     subjectLine: v.optional(v.string()),
     status: v.string(),
+    test: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     return await ctx.db.insert("alerts", {

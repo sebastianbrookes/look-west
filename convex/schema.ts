@@ -26,6 +26,7 @@ export default defineSchema({
     subjectLine: v.optional(v.string()),
     status: v.string(),
     errorMessage: v.optional(v.string()),
+    test: v.optional(v.boolean()),
     createdAt: v.number(),
   })
     .index("by_status", ["status"])
