@@ -130,7 +130,13 @@ async function generateMessage(args: {
   }
 
   const data = await resp.json();
-  const raw: string = data.choices[0].message.content.trim();
+  const content = data.choices?.[0]?.message?.content;
+  if (!content) {
+    throw new Error(
+      `OpenRouter returned no content: ${JSON.stringify(data).slice(0, 500)}`
+    );
+  }
+  const raw: string = content.trim();
 
   // Parse subject line
   let message = raw;
