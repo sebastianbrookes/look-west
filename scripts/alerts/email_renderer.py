@@ -30,7 +30,7 @@ def render_email_html(
     """Render the HTML email while escaping untrusted text content."""
     html = _load_email_template()
     replacements = {
-        "{{message}}": escape(message),
+        "{{message}}": escape(message).replace("\n", "<br>"),
         "{{location}}": escape(location),
         "{{sunset_time}}": escape(sunset_time),
         "{{unsubscribe_url}}": escape(unsubscribe_url or "#", quote=True),
