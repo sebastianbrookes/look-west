@@ -645,7 +645,11 @@ export default function App() {
                   onBlur={() => {
                     if (placesLoaded) {
                       if (locationInput.trim() && !locationData) {
-                        setGeocodeError("Please select a location from the dropdown.");
+                        setTimeout(() => {
+                          setGeocodeError((prev) =>
+                            !locationData ? "Please select a location from the dropdown." : prev
+                          );
+                        }, 200);
                       }
                     } else {
                       resolveManualLocation();

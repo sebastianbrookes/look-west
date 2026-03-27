@@ -118,8 +118,9 @@ export function useGooglePlacesAutocomplete({
         autocompleteRef.current = autocomplete;
         setLoaded(true);
       })
-      .catch(() => {
+      .catch((err) => {
         if (!cancelled) {
+          console.error("[Places] Failed to load Google Maps API:", err);
           setLoaded(false);
         }
       });
