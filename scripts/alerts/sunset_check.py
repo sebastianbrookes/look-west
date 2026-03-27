@@ -43,10 +43,13 @@ SUNSET_QUALITY_THRESHOLD = int(os.getenv("SUNSET_QUALITY_THRESHOLD", "40"))
 SUNSET_SCORER = os.getenv("SUNSET_SCORER", "sunsethue")
 APP_BASE_URL = os.getenv("APP_BASE_URL", "https://golookwest.com").rstrip("/")
 
+
 def get_convex_client():
     """Connect to Convex, exit on failure."""
     if not CONVEX_URL:
-        logger.error("CONVEX_URL is not set. Run `npx convex dev` and copy the deployment URL.")
+        logger.error(
+            "CONVEX_URL is not set. Run `npx convex dev` and copy the deployment URL."
+        )
         sys.exit(1)
     if not CONVEX_ADMIN_KEY:
         logger.error(
@@ -74,7 +77,9 @@ def retry(fn, retries=1, delay=2.0, label="API call"):
             return fn()
         except Exception as e:
             if attempt < retries:
-                logger.warning(f"{label} failed (attempt {attempt + 1}), retrying in {delay}s: {e}")
+                logger.warning(
+                    f"{label} failed (attempt {attempt + 1}), retrying in {delay}s: {e}"
+                )
                 time.sleep(delay)
             else:
                 raise
@@ -83,6 +88,7 @@ def retry(fn, retries=1, delay=2.0, label="API call"):
 # ---------------------------------------------------------------------------
 # Sunset time
 # ---------------------------------------------------------------------------
+
 
 def get_sunset_time(lat, lon, tz_name):
     """Calculate today's sunset time for a location using astral."""
@@ -95,6 +101,7 @@ def get_sunset_time(lat, lon, tz_name):
 # ---------------------------------------------------------------------------
 # Sunset quality scorers
 # ---------------------------------------------------------------------------
+
 
 def get_sunsethue_score(lat, lon, cache, tz_name="UTC"):
     """Fetch sunset quality from SunsetHue API with geo-caching."""
@@ -164,7 +171,12 @@ def get_current_weather(lat, lon):
     """Fetch current temperature (°F) and description from OpenWeatherMap."""
     resp = requests.get(
         "https://api.openweathermap.org/data/2.5/weather",
-        params={"lat": lat, "lon": lon, "appid": OPENWEATHERMAP_API_KEY, "units": "imperial"},
+        params={
+            "lat": lat,
+            "lon": lon,
+            "appid": OPENWEATHERMAP_API_KEY,
+            "units": "imperial",
+        },
         timeout=10,
     )
     resp.raise_for_status()
@@ -180,7 +192,15 @@ def get_current_weather(lat, lon):
 # ---------------------------------------------------------------------------
 
 
-def generate_message(quality_percent, quality_label, location_name, sunset_time_local, temp_f, weather_description, cloud_cover=0):
+def generate_message(
+    quality_percent,
+    quality_label,
+    location_name,
+    sunset_time_local,
+    temp_f,
+    weather_description,
+    cloud_cover=0,
+):
     """Generate an email message and subject line using Kimi K2 via OpenRouter.
 
     Returns a dict with 'message' and 'subject' keys.
@@ -235,6 +255,7 @@ def generate_message(quality_percent, quality_label, location_name, sunset_time_
 # Phase 1 — Score Check & Queue
 # ---------------------------------------------------------------------------
 
+
 def phase_check(client, test_email=None):
     """Check sunset quality for active users and queue alerts."""
     logger.info("=== Phase 1: Score Check & Queue ===")
@@ -253,35 +274,56 @@ def phase_check(client, test_email=None):
     for user in users:
         location = user.get("locationName", "Unknown")
         try:
-            sunset = get_sunset_time(user["latitude"], user["longitude"], user["timezone"])
+            sunset = get_sunset_time(
+                user["latitude"], user["longitude"], user["timezone"]
+            )
             minutes_until = (sunset - now).total_seconds() / 60
 
             # Timing filter (bypassed in test mode)
             if test_email:
                 if user["email"] != test_email:
                     continue
-                logger.info(f"[{location}] Test mode — skipping timing filter (sunset in {minutes_until:.0f}m)")
+                logger.info(
+                    f"[{location}] Test mode — skipping timing filter (sunset in {minutes_until:.0f}m)"
+                )
             elif not (60 <= minutes_until <= 75):
-                logger.info(f"[{location}] Sunset in {minutes_until:.0f}m — outside window, skipping")
+                logger.info(
+                    f"[{location}] Sunset in {minutes_until:.0f}m — outside window, skipping"
+                )
                 continue
             else:
-                logger.info(f"[{location}] Sunset in {minutes_until:.0f}m — within window")
+                logger.info(
+                    f"[{location}] Sunset in {minutes_until:.0f}m — within window"
+                )
 
             # Idempotency check (bypassed in test mode)
             if not test_email:
-                existing = client.query("alerts:getTodaysAlertForUser", {"userId": user["_id"]})
+                existing = client.query(
+                    "alerts:getTodaysAlertForUser", {"userId": user["_id"]}
+                )
                 if existing:
-                    logger.info(f"[{location}] Alert already exists for today, skipping")
+                    logger.info(
+                        f"[{location}] Alert already exists for today, skipping"
+                    )
                     continue
 
             # Quality score
-            quality = get_quality(user["latitude"], user["longitude"], score_cache, tz_name=user["timezone"])
+            quality = get_quality(
+                user["latitude"],
+                user["longitude"],
+                score_cache,
+                tz_name=user["timezone"],
+            )
             score = quality["score"]
             label = quality["label"]
             logger.info(f"[{location}] Quality: {score}% ({label})")
 
             sunset_iso = sunset.isoformat()
-            send_time = now.isoformat() if test_email else (sunset - timedelta(minutes=60)).isoformat()
+            send_time = (
+                now.isoformat()
+                if test_email
+                else (sunset - timedelta(minutes=60)).isoformat()
+            )
 
             if score >= SUNSET_QUALITY_THRESHOLD:
                 sunset_local = sunset.strftime("%-I:%M %p")
@@ -292,20 +334,32 @@ def phase_check(client, test_email=None):
                     temp_f = weather["temp_f"]
                     weather_desc = weather["description"]
                     cloud_cover = weather["cloud_cover"]
-                    logger.info(f"[{location}] Weather: {temp_f}°F, {weather_desc}, {cloud_cover}% clouds")
+                    logger.info(
+                        f"[{location}] Weather: {temp_f}°F, {weather_desc}, {cloud_cover}% clouds"
+                    )
                 except Exception as e:
-                    logger.warning(f"[{location}] Failed to fetch weather: {e}, using defaults")
+                    logger.warning(
+                        f"[{location}] Failed to fetch weather: {e}, using defaults"
+                    )
                     temp_f = "N/A"
                     weather_desc = "unknown"
                     cloud_cover = 0
 
-                result = generate_message(score, label, location, sunset_local, temp_f, weather_desc, cloud_cover)
+                result = generate_message(
+                    score,
+                    label,
+                    location,
+                    sunset_local,
+                    temp_f,
+                    weather_desc,
+                    cloud_cover,
+                )
                 message = result["message"]
                 subject = result["subject"]
                 logger.info(f"[{location}] Subject: {subject}")
                 logger.info(f"[{location}] Message: {message}")
 
-                client.mutation("alerts:logAlert", {
+                alert_data = {
                     "userId": user["_id"],
                     "sunsetTime": sunset_iso,
                     "scheduledSendTime": send_time,
@@ -314,10 +368,13 @@ def phase_check(client, test_email=None):
                     "messageSent": message,
                     "subjectLine": subject,
                     "status": "pending",
-                })
+                }
+                if test_email:
+                    alert_data["test"] = True
+                client.mutation("alerts:logAlert", alert_data)
                 logger.info(f"[{location}] Queued pending alert")
             else:
-                client.mutation("alerts:logAlert", {
+                alert_data = {
                     "userId": user["_id"],
                     "sunsetTime": sunset_iso,
                     "scheduledSendTime": send_time,
@@ -325,8 +382,13 @@ def phase_check(client, test_email=None):
                     "qualityLabel": label,
                     "messageSent": "",
                     "status": "skipped",
-                })
-                logger.info(f"[{location}] Below threshold ({score} < {SUNSET_QUALITY_THRESHOLD}), skipped")
+                }
+                if test_email:
+                    alert_data["test"] = True
+                client.mutation("alerts:logAlert", alert_data)
+                logger.info(
+                    f"[{location}] Below threshold ({score} < {SUNSET_QUALITY_THRESHOLD}), skipped"
+                )
 
         except Exception as e:
             logger.error(f"[{location}] Error during check: {e}")
@@ -336,6 +398,7 @@ def phase_check(client, test_email=None):
 # ---------------------------------------------------------------------------
 # Phase 2 — Send Pending Messages
 # ---------------------------------------------------------------------------
+
 
 def phase_send(client):
     """Send all pending alerts whose scheduledSendTime has passed."""
@@ -361,11 +424,14 @@ def phase_send(client):
 
         if not user:
             logger.error(f"[{location}] User {alert['userId']} not found or inactive")
-            client.mutation("alerts:updateAlertStatus", {
-                "alertId": alert["_id"],
-                "status": "error",
-                "errorMessage": "User not found or inactive",
-            })
+            client.mutation(
+                "alerts:updateAlertStatus",
+                {
+                    "alertId": alert["_id"],
+                    "status": "error",
+                    "errorMessage": "User not found or inactive",
+                },
+            )
             continue
 
         try:
@@ -387,39 +453,54 @@ def phase_send(client):
 
             email_subject = alert.get("subjectLine") or f"Sunset alert for {location}"
 
-            def _send_email(body=alert["messageSent"], html=html_body, to=user["email"], subj=email_subject, unsub=unsubscribe_url):
-                return resend.Emails.send({
-                    "from": RESEND_FROM_EMAIL,
-                    "to": [to],
-                    "subject": subj,
-                    "text": body,
-                    "html": html,
-                    "headers": {
-                        "List-Unsubscribe": f"<{unsub}>",
-                        "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
-                    },
-                })
+            def _send_email(
+                body=alert["messageSent"],
+                html=html_body,
+                to=user["email"],
+                subj=email_subject,
+                unsub=unsubscribe_url,
+            ):
+                return resend.Emails.send(
+                    {
+                        "from": RESEND_FROM_EMAIL,
+                        "to": [to],
+                        "subject": subj,
+                        "text": body,
+                        "html": html,
+                        "headers": {
+                            "List-Unsubscribe": f"<{unsub}>",
+                            "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+                        },
+                    }
+                )
 
             retry(_send_email, retries=1, delay=2.0, label=f"Resend [{location}]")
 
-            client.mutation("alerts:updateAlertStatus", {
-                "alertId": alert["_id"],
-                "status": "sent",
-            })
+            client.mutation(
+                "alerts:updateAlertStatus",
+                {
+                    "alertId": alert["_id"],
+                    "status": "sent",
+                },
+            )
             logger.info(f"[{location}] Email sent to {user['email']}")
 
         except Exception as e:
             logger.error(f"[{location}] Failed to send email: {e}")
-            client.mutation("alerts:updateAlertStatus", {
-                "alertId": alert["_id"],
-                "status": "error",
-                "errorMessage": str(e),
-            })
+            client.mutation(
+                "alerts:updateAlertStatus",
+                {
+                    "alertId": alert["_id"],
+                    "status": "error",
+                    "errorMessage": str(e),
+                },
+            )
 
 
 # ---------------------------------------------------------------------------
 # CLI
 # ---------------------------------------------------------------------------
+
 
 def main():
     parser = argparse.ArgumentParser(description="Go Look Up — sunset alert service")
