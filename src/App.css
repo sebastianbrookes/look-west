@@ -606,6 +606,54 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 /* ================================================================ */
+/*  Google Places Autocomplete dropdown                             */
+/* ================================================================ */
+
+.pac-container {
+  font-family: "Figtree", "Inter", system-ui, -apple-system, sans-serif;
+  background: var(--input-bg);
+  border: 1.5px solid var(--input-border);
+  border-top: none;
+  border-radius: 0 0 10px 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  margin-top: -2px;
+  z-index: 1050;
+}
+
+.pac-item {
+  padding: 0.625rem 1rem;
+  font-size: 0.9375rem;
+  color: var(--text);
+  border-top: 1px solid rgba(230, 213, 195, 0.5);
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.pac-item:first-child {
+  border-top: none;
+}
+
+.pac-item:hover,
+.pac-item-selected {
+  background: rgba(184, 112, 74, 0.08);
+}
+
+.pac-item-query {
+  font-size: 0.9375rem;
+  color: var(--text);
+  font-weight: 500;
+}
+
+.pac-matched {
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.pac-icon {
+  display: none;
+}
+
+/* ================================================================ */
 /*  Buttons                                                         */
 /* ================================================================ */
 

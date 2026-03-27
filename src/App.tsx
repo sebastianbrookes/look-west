@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { useMutation } from "convex/react";
 import tzLookup from "tz-lookup";
 import { api } from "../convex/_generated/api";
+import { useGooglePlacesAutocomplete } from "./useGooglePlacesAutocomplete";
 import "./App.css";
 
 /* ------------------------------------------------------------------ */
@@ -175,6 +176,7 @@ export default function App() {
   const [confirmedLocation, setConfirmedLocation] = useState("");
   const [copied, setCopied] = useState(false);
   const manualGeocodeInFlightRef = useRef(false);
+  const locationInputRef = useRef<HTMLInputElement>(null);
   const [unsubscribeState, setUnsubscribeState] = useState<
     "idle" | "submitting" | "success" | "error"
   >("idle");
@@ -187,6 +189,19 @@ export default function App() {
   const addUser = useMutation(api.users.addUser);
   const unsubscribeByToken = useMutation(api.users.unsubscribeByToken);
   const confirmByToken = useMutation(api.users.confirmByToken);
+
+  const { loaded: placesLoaded } = useGooglePlacesAutocomplete({
+    inputRef: locationInputRef,
+    onPlaceSelected: (data) => {
+      setLocationData(data);
+      setLocationInput(data.locationName);
+      setGeocodeError(null);
+    },
+    onError: (msg) => {
+      setGeocodeError(msg);
+    },
+  });
+
   const hasLocationChangedSinceLastGeocode = (value: string) => {
     const normalizedInput = value.trim().toLowerCase();
     const normalizedGeocodedLocation =
@@ -605,6 +620,7 @@ export default function App() {
             <div className="field field-location">
               <div className="input-with-icon">
                 <input
+                  ref={locationInputRef}
                   id="location-input"
                   type="text"
                   className="input"
@@ -616,17 +632,27 @@ export default function App() {
                     setLocationInput(v);
                     setGeocodeError(null);
                     if (!v.trim()) setLocationData(null);
+                    else if (locationData && v !== locationData.locationName) {
+                      setLocationData(null);
+                    }
                   }}
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
                       e.preventDefault();
+                      if (!placesLoaded) resolveManualLocation();
+                    }
+                  }}
+                  onBlur={() => {
+                    if (placesLoaded) {
+                      if (locationInput.trim() && !locationData) {
+                        setGeocodeError("Please select a location from the dropdown.");
+                      }
+                    } else {
                       resolveManualLocation();
                     }
                   }}
-                  onBlur={resolveManualLocation}
                   disabled={geocoding || browserGeoStatus === "requesting"}
-                  autoComplete="address-level2"
-                  enterKeyHint="search"
+                  autoComplete="off"
                   aria-invalid={!!geocodeError}
                   aria-describedby={geocodeError ? "location-geocode-error" : undefined}
                 />
