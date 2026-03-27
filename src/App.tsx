@@ -636,7 +636,7 @@ export default function App() {
                 <p className="field-error" id="location-geocode-error">{geocodeError}</p>
               )}
               {browserGeoStatus === "denied" && !locationData && (
-                <p className="field-hint">Location permission denied. Enter your city or ZIP code above instead.</p>
+                <p className="field-hint">Your browser blocked us :/ Enter your city or ZIP code above instead.</p>
               )}
               {browserGeoStatus !== "unsupported" && browserGeoStatus !== "denied" && !locationData && (
                 <button
