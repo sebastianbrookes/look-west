@@ -263,7 +263,7 @@ body {
 
 .card.confirmation {
   max-width: 540px;
-  animation: confirm-in 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  animation: none;
 }
 
 /* ================================================================ */
@@ -278,17 +278,6 @@ body {
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
-  }
-}
-
-@keyframes confirm-in {
-  from {
-    opacity: 0;
-    transform: scale(0.92);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
   }
 }
 
@@ -773,22 +762,12 @@ h1, h2, h3, h4, h5, h6 {
 
 .confirm-check {
   margin-bottom: 1rem;
-  animation: confirm-check-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 0.15s both;
-}
-
-@keyframes confirm-check-in {
-  from {
-    opacity: 0;
-    transform: scale(0.5);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
+  animation: text-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) 0.05s both;
 }
 
 .confirmation .headline {
   margin-bottom: 0.625rem;
+  animation: text-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) 0.12s both;
 }
 
 .confirmation .body {
@@ -798,7 +777,7 @@ h1, h2, h3, h4, h5, h6 {
 .confirmation .dim {
   margin-top: 1.125rem;
   margin-bottom: 0;
-  animation: text-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) 0.3s both;
+  animation: text-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) 0.28s both;
 }
 
 .confirmation-links {
@@ -831,6 +810,7 @@ h1, h2, h3, h4, h5, h6 {
   align-items: center;
   margin-top: 1.25rem;
   text-decoration: none;
+  animation: text-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) 0.36s both;
 }
 
 .confirmation .link-btn {
