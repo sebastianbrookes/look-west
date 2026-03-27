@@ -24,6 +24,7 @@
   },
   "homepage": "https://github.com/sebastianbrookes/look-west#readme",
   "dependencies": {
+    "@googlemaps/js-api-loader": "^2.0.2",
     "@vercel/analytics": "^2.0.1",
     "convex": "^1.33.1",
     "convex-helpers": "^0.1.114",
@@ -35,6 +36,7 @@
   "devDependencies": {
     "@edge-runtime/vm": "^5.0.0",
     "@napi-rs/canvas": "^0.1.97",
+    "@types/google.maps": "^3.58.1",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@types/suncalc": "^1.9.2",

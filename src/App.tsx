@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { useMutation } from "convex/react";
 import tzLookup from "tz-lookup";
 import { api } from "../convex/_generated/api";
+import { useGooglePlacesAutocomplete } from "./useGooglePlacesAutocomplete";
 import "./App.css";
 
 /* ------------------------------------------------------------------ */
@@ -94,9 +95,14 @@ function getUnsubscribeTokenFromUrl() {
   return params.get("token")?.trim() ?? "";
 }
 
-function CheckIcon() {
+function CheckIcon({ visible = false }: { visible?: boolean }) {
   return (
-    <svg className="input-check" viewBox="0 0 18 18" fill="none" aria-hidden>
+    <svg
+      className={`input-check${visible ? " input-check-visible" : ""}`}
+      viewBox="0 0 18 18"
+      fill="none"
+      aria-hidden
+    >
       <circle cx="9" cy="9" r="9" fill="#F9DE8E" />
       <path
         d="M5.5 9.2L8 11.7L12.5 6.5"
@@ -175,6 +181,9 @@ export default function App() {
   const [confirmedLocation, setConfirmedLocation] = useState("");
   const [copied, setCopied] = useState(false);
   const manualGeocodeInFlightRef = useRef(false);
+  const locationInputRef = useRef<HTMLInputElement>(null);
+  const locationDataRef = useRef(locationData);
+  locationDataRef.current = locationData;
   const [unsubscribeState, setUnsubscribeState] = useState<
     "idle" | "submitting" | "success" | "error"
   >("idle");
@@ -187,6 +196,19 @@ export default function App() {
   const addUser = useMutation(api.users.addUser);
   const unsubscribeByToken = useMutation(api.users.unsubscribeByToken);
   const confirmByToken = useMutation(api.users.confirmByToken);
+
+  const { loaded: placesLoaded } = useGooglePlacesAutocomplete({
+    inputRef: locationInputRef,
+    onPlaceSelected: (data) => {
+      setLocationData(data);
+      setLocationInput(data.locationName);
+      setGeocodeError(null);
+    },
+    onError: (msg) => {
+      setGeocodeError(msg);
+    },
+  });
+
   const hasLocationChangedSinceLastGeocode = (value: string) => {
     const normalizedInput = value.trim().toLowerCase();
     const normalizedGeocodedLocation =
@@ -605,6 +627,7 @@ export default function App() {
             <div className="field field-location">
               <div className="input-with-icon">
                 <input
+                  ref={locationInputRef}
                   id="location-input"
                   type="text"
                   className="input"
@@ -616,28 +639,45 @@ export default function App() {
                     setLocationInput(v);
                     setGeocodeError(null);
                     if (!v.trim()) setLocationData(null);
+                    else if (locationData && v !== locationData.locationName) {
+                      setLocationData(null);
+                    }
                   }}
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
                       e.preventDefault();
+                      if (!placesLoaded) resolveManualLocation();
+                    }
+                  }}
+                  onBlur={() => {
+                    if (placesLoaded) {
+                      if (locationInput.trim() && !locationData) {
+                        setTimeout(() => {
+                          if (!locationDataRef.current) {
+                            setGeocodeError("Please select a location from the dropdown.");
+                          }
+                        }, 200);
+                      }
+                    } else {
                       resolveManualLocation();
                     }
                   }}
-                  onBlur={resolveManualLocation}
                   disabled={geocoding || browserGeoStatus === "requesting"}
-                  autoComplete="address-level2"
-                  enterKeyHint="search"
+                  autoComplete="off"
                   aria-invalid={!!geocodeError}
                   aria-describedby={geocodeError ? "location-geocode-error" : undefined}
                 />
                 {geocoding && <span className="input-spinner" aria-hidden />}
-                {!geocoding && locationData && <CheckIcon />}
+                <CheckIcon visible={!geocoding && !!locationData} />
               </div>
               {geocodeError && (
                 <p className="field-error" id="location-geocode-error">{geocodeError}</p>
               )}
               {browserGeoStatus === "denied" && !locationData && (
-                <p className="field-hint">Your browser blocked us :/<br />Enter your city or ZIP code above instead.</p>
+                <p className="field-hint field-hint-denied">
+                  <span>Your browser blocked us :/</span>
+                  <span>Enter your city or ZIP code above instead.</span>
+                </p>
               )}
               {browserGeoStatus !== "unsupported" && browserGeoStatus !== "denied" && !locationData && (
                 <button
@@ -677,7 +717,7 @@ export default function App() {
                   autoComplete="given-name"
                   enterKeyHint="next"
                 />
-                {nameConfirmed && <CheckIcon />}
+                <CheckIcon visible={nameConfirmed} />
               </div>
             </div>
 
@@ -702,7 +742,7 @@ export default function App() {
                   autoComplete="email"
                   enterKeyHint="done"
                 />
-                {!emailError && emailConfirmed && <CheckIcon />}
+                <CheckIcon visible={!emailError && emailConfirmed} />
               </div>
               {emailError && <p className="field-error">{emailError}</p>}
             </div>
