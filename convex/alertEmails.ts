@@ -25,7 +25,7 @@ export function buildAlertHtml(args: {
   sunsetTime: string;
   unsubscribeUrl: string;
 }): string {
-  const msg = escapeHtml(args.message);
+  const msg = escapeHtml(args.message).replace(/\n/g, "<br>");
   const loc = escapeHtml(args.location);
   const time = escapeHtml(args.sunsetTime);
   const unsub = escapeHtml(args.unsubscribeUrl || "#");
