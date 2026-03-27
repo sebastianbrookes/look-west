@@ -8,4 +8,4 @@ Run `npx convex dev` to push changes to the cloud environment.
 
 `npx vite` to start the dev environment.
 
-Official link: `https://golookwest.org`
+Official link: `https://golookwest.com`

@@ -45,6 +45,7 @@ function buildWelcomeHtml(location: string, confirmUrl: string, unsubscribeUrl: 
   </noscript>
   <![endif]-->
   <style>
+    /* Progressive enhancement — renders in Apple Mail, Thunderbird, Samsung Mail */
     @font-face {
       font-family: 'Shadows Into Light';
       font-style: normal;
@@ -52,16 +53,16 @@ function buildWelcomeHtml(location: string, confirmUrl: string, unsubscribeUrl: 
       src: url(https://fonts.gstatic.com/s/shadowsintolight/v19/UqyNK9UOIntux_czAvDQx_ZcHqZXBNQzdcD55TecYQ.woff2) format('woff2');
     }
     @font-face {
-      font-family: 'Inter';
+      font-family: 'Figtree';
       font-style: normal;
       font-weight: 400;
-      src: url(https://fonts.gstatic.com/s/inter/v18/UcCO3FwrK3iLTeHuS_nVMrMxCp50SjIw2boKoduKmMEVuLyfAZ9hiJ-Ek-_EeA.woff2) format('woff2');
+      src: url(https://fonts.gstatic.com/s/figtree/v9/_Xmz-HUzqDCFdgfMsYiV_F7wfS-Bs_d_QF5e.ttf) format('truetype');
     }
     @font-face {
-      font-family: 'Inter';
+      font-family: 'Figtree';
       font-style: normal;
       font-weight: 500;
-      src: url(https://fonts.gstatic.com/s/inter/v18/UcCO3FwrK3iLTeHuS_nVMrMxCp50SjIw2boKoduKmMEVuLyfAZFhiJ-Ek-_EeA.woff2) format('woff2');
+      src: url(https://fonts.gstatic.com/s/figtree/v9/_Xmz-HUzqDCFdgfMsYiV_F7wfS-Bs_dNQF5e.ttf) format('truetype');
     }
 
     /* Reset */
@@ -72,24 +73,23 @@ function buildWelcomeHtml(location: string, confirmUrl: string, unsubscribeUrl: 
 
     /* Dark mode overrides */
     @media (prefers-color-scheme: dark) {
-      .body-bg { background-color: #3a2a1e !important; }
-      .card-bg { background-color: #3a2a1e !important; }
-      .hero-img { border-radius: 0 !important; }
+      .body-bg { background-color: #2a1e16 !important; }
+      .card-bg { background-color: #2a1e16 !important; }
       .brand-text { color: #e8c4a0 !important; }
-      .message-text { color: #f0e0d0 !important; }
+      .message-text { color: #e8d8c8 !important; }
       .meta-text { color: #c4967a !important; }
-      .footer-text { color: #8b7060 !important; }
-      .divider { background-color: #4a3728 !important; }
-      .pill-bg { background-color: #4a3728 !important; }
+      .footer-text { color: #7a6a5a !important; }
+      .divider { background-color: #3a2a1e !important; }
+      .pill-bg { background-color: #3a2a1e !important; }
       .pill-text { color: #d4a880 !important; }
     }
 
     /* Mobile adjustments */
     @media only screen and (max-width: 520px) {
-      .card-inner { padding-left: 24px !important; padding-right: 24px !important; }
-      .hero-img { height: 180px !important; }
+      .card-inner { padding-left: 22px !important; padding-right: 22px !important; }
+      .hero-img { height: 160px !important; }
       .brand-text { font-size: 24px !important; }
-      .message-text { font-size: 16px !important; }
+      .message-text { font-size: 15px !important; }
     }
   </style>
 </head>
@@ -98,20 +98,20 @@ function buildWelcomeHtml(location: string, confirmUrl: string, unsubscribeUrl: 
   <!-- Preheader (hidden preview text) -->
   <div style="display: none; max-height: 0; overflow: hidden; font-size: 1px; line-height: 1px; color: #faf5ef;">
     Confirm your email to get ${loc} sunset alerts
-    &#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;
+    &#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;
   </div>
 
   <!-- Outer wrapper -->
   <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" class="body-bg" style="background-color: #faf5ef;">
     <tr>
-      <td align="center" class="card-wrapper" style="padding: 0;">
+      <td align="center" style="padding: 0;">
 
         <!-- Main card -->
         <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width: 480px;">
 
           <!-- Hero sunset image -->
           <tr>
-            <td class="hero-img" style="height: 180px; background-image: url('${bg}'); background-size: cover; background-position: center 40%; background-color: #d4935c; border-radius: 0 0 0 0;" valign="bottom">
+            <td class="hero-img" style="height: 180px; background-image: url('${bg}'); background-size: cover; background-position: center 40%; background-color: #d4935c;" valign="bottom">
               <!--[if gte mso 9]>
               <v:rect xmlns:v="urn:schemas-microsoft-com:vml" fill="true" stroke="false" style="width:480px;height:180px;">
                 <v:fill type="tile" src="${bg}" color="#d4935c" />
@@ -125,6 +125,11 @@ function buildWelcomeHtml(location: string, confirmUrl: string, unsubscribeUrl: 
             </td>
           </tr>
 
+          <!-- Warm gradient transition strip -->
+          <tr>
+            <td style="height: 3px; background: linear-gradient(90deg, #e8a87c 0%, #d4785c 35%, #c4967a 65%, #e8c4a0 100%); background-color: #d4785c;"></td>
+          </tr>
+
           <!-- Card body -->
           <tr>
             <td class="card-bg" style="background-color: #faf5ef;">
@@ -132,24 +137,24 @@ function buildWelcomeHtml(location: string, confirmUrl: string, unsubscribeUrl: 
               <!-- Header: brand + location pill -->
               <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
                 <tr>
-                  <td class="card-inner" style="padding: 28px 32px 0;">
+                  <td class="card-inner" style="padding: 28px 34px 0;">
 
                     <!-- Brand name -->
-                    <p class="brand-text" style="margin: 0 0 16px; font-family: 'Shadows Into Light', Georgia, cursive; font-size: 26px; font-weight: 400; color: #8b6244; letter-spacing: 0.03em;">Look West</p>
+                    <p class="brand-text" style="margin: 0 0 16px; font-family: 'Shadows Into Light', Georgia, 'Times New Roman', serif; font-size: 28px; font-weight: 400; color: #7a5636; letter-spacing: 0.04em;">Look West</p>
 
-                    <!-- Location + signed-up pill row -->
+                    <!-- Location + pending pill row -->
                     <table role="presentation" cellpadding="0" cellspacing="0" border="0">
                       <tr>
                         <!-- Location pill -->
-                        <td class="pill-bg" style="background-color: #f0e0d0; border-radius: 20px; padding: 6px 14px;">
-                          <span class="pill-text" style="font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; font-size: 13px; color: #996b4a; white-space: nowrap;">&#128205; ${loc}</span>
+                        <td class="pill-bg" style="background-color: #ede0d2; border-radius: 20px; padding: 6px 14px; vertical-align: middle;">
+                          <span class="pill-text" style="font-family: 'Figtree', 'Inter', 'Segoe UI', -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif; font-size: 12.5px; line-height: 1; color: #8b6244; white-space: nowrap;">&#128205; ${loc}</span>
                         </td>
 
                         <td style="width: 8px;"></td>
 
                         <!-- Pending pill -->
-                        <td class="pill-bg" style="background-color: #f0e0d0; border-radius: 20px; padding: 6px 14px;">
-                          <span class="pill-text" style="font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; font-size: 13px; color: #996b4a; white-space: nowrap;">&#9679; Pending confirmation</span>
+                        <td class="pill-bg" style="background-color: #ede0d2; border-radius: 20px; padding: 6px 14px; vertical-align: middle;">
+                          <span class="pill-text" style="font-family: 'Figtree', 'Inter', 'Segoe UI', -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif; font-size: 12.5px; line-height: 1; color: #8b6244; white-space: nowrap;">&#9679; Pending confirmation</span>
                         </td>
                       </tr>
                     </table>
@@ -161,8 +166,8 @@ function buildWelcomeHtml(location: string, confirmUrl: string, unsubscribeUrl: 
               <!-- Message body -->
               <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
                 <tr>
-                  <td class="card-inner" style="padding: 24px 32px 28px;">
-                    <p class="message-text" style="margin: 0; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.75; color: #4a3728;">${WELCOME_MESSAGE}</p>
+                  <td class="card-inner" style="padding: 22px 34px 28px;">
+                    <p class="message-text" style="margin: 0; font-family: 'Figtree', 'Inter', 'Segoe UI', -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif; font-size: 15.5px; line-height: 1.7; color: #3d2b1f;">${WELCOME_MESSAGE}</p>
                   </td>
                 </tr>
               </table>
@@ -170,15 +175,15 @@ function buildWelcomeHtml(location: string, confirmUrl: string, unsubscribeUrl: 
               <!-- Confirm CTA button -->
               <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
                 <tr>
-                  <td class="card-inner" style="padding: 0 32px 24px;" align="center">
+                  <td class="card-inner" style="padding: 0 34px 24px;" align="center">
                     <!--[if mso]>
-                    <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="${confirm}" style="height:48px;v-text-anchor:middle;width:280px;" arcsize="17%" fillcolor="#c4785c" stroke="f">
+                    <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="${confirm}" style="height:48px;v-text-anchor:middle;width:280px;" arcsize="17%" fillcolor="#b8704a" stroke="f">
                       <w:anchorlock/>
-                      <center style="color:#ffffff;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:16px;font-weight:500;">Confirm your email</center>
+                      <center style="color:#ffffff;font-family:'Segoe UI',Helvetica,Arial,sans-serif;font-size:15.5px;font-weight:500;">Confirm your email</center>
                     </v:roundrect>
                     <![endif]-->
                     <!--[if !mso]><!-->
-                    <a href="${confirm}" style="display: inline-block; background-color: #c4785c; color: #ffffff; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; font-size: 16px; font-weight: 500; text-decoration: none; padding: 14px 40px; border-radius: 8px; text-align: center;">Confirm your email</a>
+                    <a href="${confirm}" style="display: inline-block; background-color: #b8704a; color: #ffffff; font-family: 'Figtree', 'Inter', 'Segoe UI', -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif; font-size: 15.5px; font-weight: 500; text-decoration: none; padding: 14px 40px; border-radius: 10px; text-align: center;">Confirm your email</a>
                     <!--<![endif]-->
                   </td>
                 </tr>
@@ -187,8 +192,8 @@ function buildWelcomeHtml(location: string, confirmUrl: string, unsubscribeUrl: 
               <!-- Divider -->
               <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
                 <tr>
-                  <td class="card-inner" style="padding: 0 32px;">
-                    <div class="divider" style="height: 1px; background-color: #ecddd0;"></div>
+                  <td class="card-inner" style="padding: 0 34px;">
+                    <div class="divider" style="height: 1px; background-color: #e6d5c3;"></div>
                   </td>
                 </tr>
               </table>
@@ -196,11 +201,11 @@ function buildWelcomeHtml(location: string, confirmUrl: string, unsubscribeUrl: 
               <!-- Footer -->
               <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
                 <tr>
-                  <td class="card-inner" style="padding: 18px 32px 24px;">
-                    <p class="footer-text" style="margin: 0; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; font-size: 12px; color: #b8a090; line-height: 1.6;">
-                      You signed up for sunset alerts at <a href="https://golookwest.com" style="color: #b8a090; text-decoration: underline;">golookwest.com</a>.<br>
-                      <a href="https://buymeacoffee.com/sebastianbrookes" style="color: #b8a090; text-decoration: underline;">Buy me a coffee</a> &middot;
-                      <a href="${unsub}" style="color: #b8a090; text-decoration: underline;">Unsubscribe</a>
+                  <td class="card-inner" style="padding: 18px 34px 26px;">
+                    <p class="footer-text" style="margin: 0; font-family: 'Figtree', 'Inter', 'Segoe UI', -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif; font-size: 11.5px; color: #a89080; line-height: 1.65;">
+                      You signed up for sunset alerts at <a href="https://golookwest.com" style="color: #a89080; text-decoration: underline;">golookwest.com</a>.<br />
+                      <a href="https://buymeacoffee.com/sebastianbrookes" style="color: #a89080; text-decoration: underline;">Buy me a coffee</a> &middot;
+                      <a href="${unsub}" style="color: #a89080; text-decoration: underline;">Unsubscribe</a>
                     </p>
                   </td>
                 </tr>

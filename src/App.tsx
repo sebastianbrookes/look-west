@@ -652,7 +652,7 @@ export default function App() {
                       Finding you…
                     </>
                   ) : (
-                    "Use My Current Location"
+                    "Use my current location"
                   )}
                 </button>
               )}
