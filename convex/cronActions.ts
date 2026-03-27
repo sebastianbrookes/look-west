@@ -116,7 +116,7 @@ async function generateMessage(args: {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      model: "moonshotai/kimi-k2-0905",
+      model: process.env.OPENROUTER_MODEL ?? "moonshotai/kimi-k2-0905",
       messages: [
         { role: "system", content: SYSTEM_PROMPT },
         { role: "user", content: userPrompt },
