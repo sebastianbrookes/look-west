@@ -223,8 +223,5 @@ skills-lock.json
 # macOS
 .DS_Store
 
-# Convex generated
-convex/_generated/
-
 # Prompts
 scripts/alerts/prompts.py
