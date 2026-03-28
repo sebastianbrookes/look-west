@@ -1010,7 +1010,7 @@ export default function App() {
 
           <p className="hero-fine-print">Unsubscribe anytime. Made by{" "}
             <a
-              href="https://github.com/sebastianbrookes"
+              href="https://www.linkedin.com/in/sebastian-brookes/"
               target="_blank"
               rel="noopener noreferrer"
               className="text-link"
