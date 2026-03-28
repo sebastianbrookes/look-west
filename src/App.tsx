@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useMemo, useRef } from "react";
-import { useMutation, useQuery } from "convex/react";
+import { useMutation } from "convex/react";
 import tzLookup from "tz-lookup";
 import { api } from "../convex/_generated/api";
 import { useGooglePlacesAutocomplete } from "./useGooglePlacesAutocomplete";
@@ -197,16 +197,14 @@ export default function App() {
     "loading" | "idle" | "submitting" | "success" | "error"
   >("loading");
   const [changeLocationError, setChangeLocationError] = useState("");
+  const [currentLocationName, setCurrentLocationName] = useState("");
   const [updatedLocationName, setUpdatedLocationName] = useState("");
 
   const addUser = useMutation(api.users.addUser);
   const unsubscribeByToken = useMutation(api.users.unsubscribeByToken);
   const confirmByToken = useMutation(api.users.confirmByToken);
   const updateLocationByToken = useMutation(api.users.updateLocationByToken);
-  const currentLocation = useQuery(
-    api.users.getUserLocationByToken,
-    isChangeLocationPage && unsubscribeToken ? { token: unsubscribeToken } : "skip"
-  );
+  const getUserLocationByToken = useMutation(api.users.getUserLocationByToken);
 
   const { loaded: placesLoaded } = useGooglePlacesAutocomplete({
     inputRef: locationInputRef,
@@ -438,13 +436,17 @@ export default function App() {
       setChangeLocationError("Invalid change-location link.");
       return;
     }
-    if (currentLocation === null) {
-      setChangeLocationState("error");
-      setChangeLocationError("Invalid change-location link.");
-    } else if (currentLocation !== undefined) {
-      setChangeLocationState("idle");
-    }
-  }, [isChangeLocationPage, unsubscribeToken, currentLocation]);
+
+    getUserLocationByToken({ token: unsubscribeToken })
+      .then((result) => {
+        setCurrentLocationName(result.locationName);
+        setChangeLocationState("idle");
+      })
+      .catch((err: unknown) => {
+        setChangeLocationState("error");
+        setChangeLocationError(getReadableErrorMessage(err));
+      });
+  }, [isChangeLocationPage, unsubscribeToken, getUserLocationByToken]);
 
   const handleChangeLocation = async () => {
     if (!unsubscribeToken || !locationData) return;
@@ -458,34 +460,37 @@ export default function App() {
       setUpdatedLocationName(locationData.locationName);
       setChangeLocationState("success");
     } catch (err: unknown) {
-      setChangeLocationState("error");
+      setChangeLocationState("idle");
       setChangeLocationError(getReadableErrorMessage(err));
     }
   };
 
   if (isChangeLocationPage) {
+    const isSubmitting = changeLocationState === "submitting";
+
     return (
       <div className="page">
         <div className="page-left">
-          <div className="card confirmation">
+          <div className="card confirmation change-location-card">
             {changeLocationState === "loading" && (
               <>
-                <h1 className="headline">Change your location</h1>
-                <p className="body">
-                  <span className="spinner" /> Loading…
-                </p>
+                <div className="skeleton skeleton-headline" />
+                <div className="skeleton skeleton-body" />
+                <div className="skeleton skeleton-body skeleton-body-short" />
+                <div className="skeleton skeleton-input" />
+                <div className="skeleton skeleton-btn" />
               </>
             )}
-            {changeLocationState === "idle" && (
+            {(changeLocationState === "idle" || isSubmitting) && (
               <>
                 <h1 className="headline">Change your location</h1>
                 <p className="body">
                   You're currently receiving sunset alerts for{" "}
-                  <strong>{currentLocation?.locationName}</strong>.
+                  <strong>{currentLocationName}</strong>.
                   Enter a new location below.
                 </p>
 
-                <div className="field field-location" style={{ marginTop: "1.25rem" }}>
+                <div className="field field-location">
                   <div className="input-with-icon">
                     <input
                       ref={locationInputRef}
@@ -522,7 +527,7 @@ export default function App() {
                           resolveManualLocation();
                         }
                       }}
-                      disabled={geocoding || browserGeoStatus === "requesting"}
+                      disabled={isSubmitting || geocoding || browserGeoStatus === "requesting"}
                       autoComplete="off"
                       aria-invalid={!!geocodeError}
                       aria-describedby={geocodeError ? "location-geocode-error" : undefined}
@@ -539,7 +544,7 @@ export default function App() {
                       <span>Enter your city or ZIP code above instead.</span>
                     </p>
                   )}
-                  {browserGeoStatus !== "unsupported" && browserGeoStatus !== "denied" && !locationData && (
+                  {browserGeoStatus !== "unsupported" && browserGeoStatus !== "denied" && !locationData && !isSubmitting && (
                     <button
                       type="button"
                       className="geo-link"
@@ -564,22 +569,20 @@ export default function App() {
                   type="button"
                   className="submit-btn"
                   onClick={handleChangeLocation}
-                  disabled={!locationData}
-                  style={{ marginTop: "0.75rem" }}
+                  disabled={!locationData || isSubmitting}
                 >
-                  Update location
+                  {isSubmitting ? (
+                    <>
+                      <span className="spinner" />
+                      <span>Updating…</span>
+                    </>
+                  ) : (
+                    "Update location"
+                  )}
                 </button>
                 <a href="/" className="link-btn unsubscribe-home-link">
                   Back to Look West
                 </a>
-              </>
-            )}
-            {changeLocationState === "submitting" && (
-              <>
-                <h1 className="headline">Change your location</h1>
-                <p className="body">
-                  <span className="spinner" /> Updating…
-                </p>
               </>
             )}
             {changeLocationState === "success" && (

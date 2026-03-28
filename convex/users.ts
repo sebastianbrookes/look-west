@@ -278,11 +278,13 @@ export const confirmByToken = mutation({
   },
 });
 
-export const getUserLocationByToken = query({
+export const getUserLocationByToken = mutation({
   args: { token: v.string() },
   handler: async (ctx, args) => {
     const token = args.token.trim();
-    if (!token) return null;
+    if (!token) {
+      throw new Error("Invalid change-location link.");
+    }
 
     const user = await ctx.db
       .query("users")
@@ -291,7 +293,9 @@ export const getUserLocationByToken = query({
       )
       .unique();
 
-    if (!user) return null;
+    if (!user) {
+      throw new Error("Invalid change-location link.");
+    }
 
     return { locationName: user.locationName };
   },

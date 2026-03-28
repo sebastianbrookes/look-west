@@ -292,6 +292,45 @@ body {
   }
 }
 
+@keyframes skeleton-pulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.15; }
+}
+
+.skeleton {
+  background: var(--input-border);
+  border-radius: 8px;
+  animation: skeleton-pulse 1.8s ease-in-out infinite;
+}
+
+.skeleton-headline {
+  height: 34px;
+  width: 75%;
+  margin-bottom: 0.75rem;
+}
+
+.skeleton-body {
+  height: 14px;
+  width: 100%;
+  margin-bottom: 0.5rem;
+}
+
+.skeleton-body-short {
+  width: 55%;
+  margin-bottom: 1.5rem;
+}
+
+.skeleton-input {
+  height: 48px;
+  width: 100%;
+  margin-bottom: 0.75rem;
+}
+
+.skeleton-btn {
+  height: 48px;
+  width: 100%;
+}
+
 @keyframes pac-in {
   from {
     opacity: 0;
@@ -804,6 +843,36 @@ h1, h2, h3, h4, h5, h6 {
 .unsubscribe-card .headline { margin-bottom: 0; }
 .unsubscribe-card .body { margin-bottom: 0; }
 .unsubscribe-card .body.dim { margin-top: 0.25rem; }
+
+.change-location-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.change-location-card .headline {
+  margin-bottom: 0.75rem;
+  animation: text-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) 0.05s both;
+}
+
+.change-location-card .body {
+  margin-bottom: 0;
+  animation: text-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) 0.12s both;
+}
+
+.change-location-card .field {
+  margin-top: 1.25rem;
+  animation: text-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) 0.2s both;
+}
+
+.change-location-card .submit-btn {
+  margin-top: 1.25rem;
+  animation: text-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) 0.28s both;
+}
+
+.change-location-card .unsubscribe-home-link {
+  margin-top: 1.25rem;
+  animation: text-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) 0.34s both;
+}
 
 .unsubscribe-home-link {
   display: inline-flex;
