@@ -457,6 +457,7 @@ def phase_send(client):
                 sunset_time=sunset_local,
                 unsubscribe_url=unsubscribe_url,
                 change_location_url=change_location_url,
+                quality_score=alert.get("qualityScore", ""),
             )
 
             email_subject = alert.get("subjectLine") or f"Sunset alert for {location}"

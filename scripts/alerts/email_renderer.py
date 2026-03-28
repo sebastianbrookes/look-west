@@ -39,6 +39,7 @@ def render_email_html(
     sunset_time: str,
     unsubscribe_url: str = "",
     change_location_url: str = "",
+    quality_score: int | str = "",
 ) -> str:
     """Render the HTML email while escaping untrusted text content."""
     haiku, metadata = _split_haiku_and_metadata(message)
@@ -48,6 +49,9 @@ def render_email_html(
         "{{metadata}}": escape(metadata).replace("\n", "<br>"),
         "{{location}}": escape(location),
         "{{sunset_time}}": escape(sunset_time),
+        "{{quality_score}}": (
+            escape(str(int(quality_score))) if quality_score != "" else ""
+        ),
         "{{unsubscribe_url}}": escape(unsubscribe_url or "#", quote=True),
         "{{change_location_url}}": escape(change_location_url or "#", quote=True),
         "{{background_url}}": BACKGROUND_IMAGE_URL,

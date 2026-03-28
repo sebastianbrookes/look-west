@@ -66,5 +66,5 @@ Write the sunset alert haiku.
 Then on a NEW line, write a short email subject line (max 40 characters).
 Prefix it exactly with "SUBJECT: " so it can be parsed.
 Do NOT use em dashes (\u2014) in the subject. No emoji.
-Examples: "Tonight's sunset in Cape Cod, MA" or "Sunset alert for Brooklyn, NY".`;
+Examples: "Tonight's sunset in Cape Cod" or "Brooklyn sunset at 7:15".`;
 }
