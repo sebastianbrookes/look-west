@@ -1045,28 +1045,29 @@ h1, h2, h3, h4, h5, h6 {
   font-variant-numeric: tabular-nums;
 }
 
-.email-pill-great {
-  background: #e0f0e0;
-  color: #3a7a3a;
-}
-
-.email-pill-good {
-  background: #e8f0e0;
-  color: #5a7a3a;
-}
-
-.email-pill-fair {
-  background: #f0ebe0;
-  color: #7a6a3a;
-}
 
 .email-message {
-  font-family: "Figtree", sans-serif;
-  font-size: 0.8125rem;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 0.875rem;
   line-height: 1.65;
-  color: #4a3728;
+  color: #3d2b1f;
   text-wrap: pretty;
   white-space: pre-line;
+}
+
+.email-divider {
+  height: 1px;
+  background-color: #e6d5c3;
+  opacity: 0.6;
+  margin: 0.875rem 0 0.75rem;
+}
+
+.email-metadata {
+  font-family: "Figtree", sans-serif;
+  font-size: 0.75rem;
+  line-height: 1.7;
+  color: #8b7a6a;
+  margin: 0;
 }
 
 /* ================================================================ */

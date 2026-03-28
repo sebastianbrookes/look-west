@@ -123,31 +123,38 @@ const SAMPLE_EMAILS = [
   {
     type: "alert",
     subject: "Tonight's sunset in Brooklyn, NY",
-    location: "Brooklyn, NY",
-    time: "4:32 PM",
+    location: "📍 Brooklyn, NY",
+    time: "🌅 6:46 PM",
+    message:
+      "fire escape shadow\ncuts across the wall at six\nforty-six — then gone",
+    viewingTime: "6:16 PM",
+    temp: "34°F",
     quality: "Fair",
     qualityScore: 48,
-    message: 
-    "Old Greta had forty-two tabs still to close,\nand a scarf she was knitting, and cold Brooklyn toes,\nand the sky wasn't much — just a thin strip of gold\nat six forty-six in the plain winter cold.\nShe said, \"Nothing to see on a clear night like this.\"\nBut nothing is still something easy to miss.",  
   },
   {
     type: "alert",
     subject: "Sunset alert for Boston, MA",
-    location: "Boston, MA",
-    time: "7:04 PM",
+    location: "📍 Boston, MA",
+    time: "🌅 7:04 PM",
+    message:
+      "cold wind off the harbor\nbroken clouds at 7:04\none lit window half",
+    viewingTime: "6:34 PM",
+    temp: "37°F",
     quality: "Good",
     qualityScore: 72,
-    message: 
-    "There was a man in Boston who swore\nhe'd step outside at 7:04\nbut first one more email, one more little task —\nby 7:06 he didn't have to ask.\nThe sky was just the sky again, cold and bare,\nthirty-seven degrees with nothing there.",  },
+  },
   {
     type: "alert",
     subject: "Sunset at 7:28 in San Francisco",
-    location: "San Francisco, CA",
-    time: "7:28 PM",
+    location: "📍 San Francisco, CA",
+    time: "🌅 7:28 PM",
+    message:
+      "fog bank at the bridge\nseven twenty-eight, the gap\nfills with tangerine",
+    viewingTime: "6:58 PM",
+    temp: "61°F",
     quality: "Good",
     qualityScore: 64,
-    message:
-      "Old Gary had seven hundred things to do,\na leaky pipe, a bill or possibly two,\nsome clouds thin as excuses drifting west,\na sixty-degree evening at its best.\nAt 7:28 the sky went cheap and gold.\nGary's pipe is still leaking, I am told.",
   },
 ];
 
@@ -1045,12 +1052,19 @@ export default function App() {
                     <div className="email-pills">
                       <span className="email-pill">{sample.location}</span>
                       <span className="email-pill">{sample.time}</span>
-                      <span className={`email-pill email-pill-${sample.quality?.toLowerCase()}`}>
-                        {sample.quality} ({sample.qualityScore}%)
-                      </span>
                     </div>
                   )}
                   <p className="email-message">{sample.message}</p>
+                  {sample.type === "alert" && (
+                    <>
+                      <div className="email-divider" />
+                      <p className="email-metadata">
+                        Suggested viewing time: {sample.viewingTime}<br />
+                        Temp: {sample.temp}<br />
+                        Quality: {sample.qualityScore}%
+                      </p>
+                    </>
+                  )}
                 </div>
               </div>
             ))}
