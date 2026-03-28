@@ -859,7 +859,7 @@ export default function App() {
           <div className="hero-content">
             <h1 className="hero-title">Look West</h1>
             <p className="hero-subtitle">
-              Get a short, funny poem whenever the sunset in your area is predicted to be worth seeing.
+              Get an email whenever the sunset in your location is worth seeing. Includes a haiku.
             </p>
 
             <form onSubmit={handleSubmit} className="hero-form">

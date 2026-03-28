@@ -21,6 +21,18 @@ def _load_email_template() -> str:
     return _EMAIL_TEMPLATE
 
 
+def _split_haiku_and_metadata(message: str) -> tuple[str, str]:
+    """Split the LLM message into haiku and metadata on the '---' separator."""
+    if "\n---\n" in message:
+        haiku, metadata = message.split("\n---\n", 1)
+    elif "\n---" in message:
+        haiku, metadata = message.split("\n---", 1)
+    else:
+        # Fallback: treat the whole message as the haiku
+        return message, ""
+    return haiku.strip(), metadata.strip()
+
+
 def render_email_html(
     message: str,
     location: str,
@@ -29,9 +41,11 @@ def render_email_html(
     change_location_url: str = "",
 ) -> str:
     """Render the HTML email while escaping untrusted text content."""
+    haiku, metadata = _split_haiku_and_metadata(message)
     html = _load_email_template()
     replacements = {
-        "{{message}}": escape(message).replace("\n", "<br>"),
+        "{{haiku}}": escape(haiku).replace("\n", "<br>"),
+        "{{metadata}}": escape(metadata).replace("\n", "<br>"),
         "{{location}}": escape(location),
         "{{sunset_time}}": escape(sunset_time),
         "{{unsubscribe_url}}": escape(unsubscribe_url or "#", quote=True),
