@@ -127,28 +127,27 @@ const SAMPLE_EMAILS = [
     time: "4:32 PM",
     quality: "Fair",
     qualityScore: 48,
-    message:
-      "A giant orange fell behind\nthe buildings and the cranes.\nIt happens right at 4:32.\nIt's very cold, so wear your coat\nor else your nose will turn quite blue.",
+    message: 
+    "Old Greta had forty-two tabs still to close,\nand a scarf she was knitting, and cold Brooklyn toes,\nand the sky wasn't much — just a thin strip of gold\nat six forty-six in the plain winter cold.\nShe said, \"Nothing to see on a clear night like this.\"\nBut nothing is still something easy to miss.",  
   },
   {
     type: "alert",
-    subject: "Sunset alert for Cape Cod, MA",
-    location: "Cape Cod, MA",
-    time: "7:54 PM",
+    subject: "Sunset alert for Boston, MA",
+    location: "Boston, MA",
+    time: "7:04 PM",
     quality: "Good",
     qualityScore: 72,
-    message:
-      "The clouds are lumpy, soft, and strange\nlike piles of unwashed socks.\nThe sun will hit them at 7:54\nwhile you stand on some rocks.\nIt's nice out.",
-  },
+    message: 
+    "There was a man in Boston who swore\nhe'd step outside at 7:04\nbut first one more email, one more little task —\nby 7:06 he didn't have to ask.\nThe sky was just the sky again, cold and bare,\nthirty-seven degrees with nothing there.",  },
   {
     type: "alert",
-    subject: "Sunset at 8:12 in San Francisco",
+    subject: "Sunset at 7:28 in San Francisco",
     location: "San Francisco, CA",
-    time: "8:12 PM",
+    time: "7:28 PM",
     quality: "Good",
     qualityScore: 64,
     message:
-      "The sun has work to do elsewhere\nso it leaves at 8:12 sharp.\nThe air is mild, the sky is wide\nand there isn't any fog to hide\nthe way the light falls down.",
+      "Old Gary had seven hundred things to do,\na leaky pipe, a bill or possibly two,\nsome clouds thin as excuses drifting west,\na sixty-degree evening at its best.\nAt 7:28 the sky went cheap and gold.\nGary's pipe is still leaking, I am told.",
   },
 ];
 
