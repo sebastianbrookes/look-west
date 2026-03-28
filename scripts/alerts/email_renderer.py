@@ -2,6 +2,7 @@
 """Helpers for safely rendering the HTML email template."""
 
 import os
+import re
 from html import escape
 from pathlib import Path
 
@@ -22,15 +23,19 @@ def _load_email_template() -> str:
 
 
 def _split_haiku_and_metadata(message: str) -> tuple[str, str]:
-    """Split the LLM message into haiku and metadata on the '---' separator."""
-    if "\n---\n" in message:
-        haiku, metadata = message.split("\n---\n", 1)
-    elif "\n---" in message:
-        haiku, metadata = message.split("\n---", 1)
-    else:
-        # Fallback: treat the whole message as the haiku
-        return message, ""
-    return haiku.strip(), metadata.strip()
+    """Split the LLM message into haiku and metadata on the '---' separator.
+
+    Tolerates trailing/leading whitespace on the separator line, which LLMs
+    sometimes produce.
+    """
+    parts = re.split(r"\n[ \t]*---[ \t]*\n", message, maxsplit=1)
+    if len(parts) == 2:
+        return parts[0].strip(), parts[1].strip()
+    # Try end-of-string variant (no trailing newline after ---)
+    parts = re.split(r"\n[ \t]*---[ \t]*$", message, maxsplit=1)
+    if len(parts) == 2:
+        return parts[0].strip(), parts[1].strip()
+    return message, ""
 
 
 def render_email_html(
