@@ -216,6 +216,7 @@ export default function App() {
     onError: (msg) => {
       setGeocodeError(msg);
     },
+    ready: !isChangeLocationPage || changeLocationState === "idle" || changeLocationState === "submitting",
   });
 
   const hasLocationChangedSinceLastGeocode = (value: string) => {

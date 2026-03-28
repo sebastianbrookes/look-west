@@ -13,6 +13,7 @@ interface UseGooglePlacesAutocompleteOptions {
   inputRef: React.RefObject<HTMLInputElement | null>;
   onPlaceSelected: (data: LocationData) => void;
   onError: (msg: string) => void;
+  ready?: boolean;
 }
 
 function resolveTimezone(lat: number, lon: number): string {
@@ -61,6 +62,7 @@ export function useGooglePlacesAutocomplete({
   inputRef,
   onPlaceSelected,
   onError,
+  ready = true,
 }: UseGooglePlacesAutocompleteOptions): { loaded: boolean } {
   const [loaded, setLoaded] = useState(false);
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
@@ -71,7 +73,7 @@ export function useGooglePlacesAutocomplete({
   onErrorRef.current = onError;
 
   useEffect(() => {
-    if (!API_KEY || !inputRef.current) return;
+    if (!API_KEY || !inputRef.current || !ready) return;
 
     let cancelled = false;
 
@@ -132,7 +134,7 @@ export function useGooglePlacesAutocomplete({
         autocompleteRef.current = null;
       }
     };
-  }, [inputRef]);
+  }, [inputRef, ready]);
 
   return { loaded };
 }
