@@ -75,6 +75,7 @@ export function buildAlertHtml(args: {
     table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
     img { -ms-interpolation-mode: bicubic; border: 0; height: auto; line-height: 100%; outline: none; text-decoration: none; }
     body { margin: 0; padding: 0; width: 100% !important; height: 100% !important; }
+    .message-text { font-family: 'EB Garamond', Georgia, 'Times New Roman', serif !important; }
     @media (prefers-color-scheme: dark) {
       .body-bg { background-color: #2a1e16 !important; }
       .card-bg { background-color: #2a1e16 !important; }
@@ -94,14 +95,14 @@ export function buildAlertHtml(args: {
     }
   </style>
 </head>
-<body style="margin: 0; padding: 0; background-color: #faf5ef; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;">
+<body style="margin: 0; padding: 0; background-color: #faf5ef; font-family: Georgia, 'Times New Roman', serif; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;">
 
   <div style="display: none; max-height: 0; overflow: hidden; font-size: 1px; line-height: 1px; color: #faf5ef;">
     Sunset at ${time}
     &#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;
   </div>
 
-  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" class="body-bg" style="background-color: #faf5ef;">
+  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" class="body-bg" style="background-color: #faf5ef; font-family: Georgia, 'Times New Roman', serif;">
     <tr>
       <td align="center" style="padding: 0;">
         <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width: 480px;">
@@ -150,7 +151,7 @@ export function buildAlertHtml(args: {
               <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
                 <tr>
                   <td class="card-inner" style="padding: 22px 34px 28px;">
-                    <p class="message-text" style="margin: 0; font-family: 'EB Garamond', Georgia, 'Times New Roman', serif; font-size: 17px; line-height: 1.55; color: #3d2b1f;">${msg}</p>
+                    <p class="message-text" style="margin: 0; font-family: Georgia, 'Times New Roman', serif; font-size: 17px; line-height: 1.55; color: #3d2b1f;">${msg}</p>
                   </td>
                 </tr>
               </table>
