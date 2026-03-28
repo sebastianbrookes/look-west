@@ -158,6 +158,7 @@ const SAMPLE_EMAILS = [
 export default function App() {
   const isUnsubscribePage = window.location.pathname === "/unsubscribe";
   const isConfirmPage = window.location.pathname === "/confirm";
+  const isChangeLocationPage = window.location.pathname === "/change-location";
   const unsubscribeToken = useMemo(getUnsubscribeTokenFromUrl, []);
   const [locationData, setLocationData] = useState<LocationData | null>(null);
   const [locationInput, setLocationInput] = useState("");
@@ -191,10 +192,18 @@ export default function App() {
     "loading" | "success" | "error"
   >("loading");
   const [confirmError, setConfirmError] = useState("");
+  const [changeLocationState, setChangeLocationState] = useState<
+    "loading" | "idle" | "submitting" | "success" | "error"
+  >("loading");
+  const [changeLocationError, setChangeLocationError] = useState("");
+  const [currentLocationName, setCurrentLocationName] = useState("");
+  const [updatedLocationName, setUpdatedLocationName] = useState("");
 
   const addUser = useMutation(api.users.addUser);
   const unsubscribeByToken = useMutation(api.users.unsubscribeByToken);
   const confirmByToken = useMutation(api.users.confirmByToken);
+  const updateLocationByToken = useMutation(api.users.updateLocationByToken);
+  const getUserLocationByToken = useMutation(api.users.getUserLocationByToken);
 
   const { loaded: placesLoaded } = useGooglePlacesAutocomplete({
     inputRef: locationInputRef,
@@ -206,6 +215,7 @@ export default function App() {
     onError: (msg) => {
       setGeocodeError(msg);
     },
+    ready: !isChangeLocationPage || changeLocationState === "idle" || changeLocationState === "submitting",
   });
 
   const hasLocationChangedSinceLastGeocode = (value: string) => {
@@ -413,6 +423,208 @@ export default function App() {
       setUnsubscribeError(getReadableErrorMessage(err));
     }
   };
+
+  /* ================================================================ */
+  /*  Change-location page                                             */
+  /* ================================================================ */
+
+  useEffect(() => {
+    if (!isChangeLocationPage) return;
+    if (!unsubscribeToken) {
+      setChangeLocationState("error");
+      setChangeLocationError("Invalid change-location link.");
+      return;
+    }
+
+    getUserLocationByToken({ token: unsubscribeToken })
+      .then((result) => {
+        setCurrentLocationName(result.locationName);
+        setChangeLocationState("idle");
+      })
+      .catch((err: unknown) => {
+        setChangeLocationState("error");
+        setChangeLocationError(getReadableErrorMessage(err));
+      });
+  }, [isChangeLocationPage, unsubscribeToken, getUserLocationByToken]);
+
+  const handleChangeLocation = async () => {
+    if (!unsubscribeToken || !locationData) return;
+    setChangeLocationState("submitting");
+    setChangeLocationError("");
+    try {
+      await updateLocationByToken({
+        token: unsubscribeToken,
+        ...locationData,
+      });
+      setUpdatedLocationName(locationData.locationName);
+      setChangeLocationState("success");
+    } catch (err: unknown) {
+      setChangeLocationState("idle");
+      setChangeLocationError(getReadableErrorMessage(err));
+    }
+  };
+
+  if (isChangeLocationPage) {
+    const isSubmitting = changeLocationState === "submitting";
+
+    return (
+      <div className="page">
+        <div className="page-left">
+          <div className="card confirmation change-location-card">
+            {changeLocationState === "loading" && (
+              <>
+                <div className="skeleton skeleton-headline" />
+                <div className="skeleton skeleton-body" />
+                <div className="skeleton skeleton-body skeleton-body-short" />
+                <div className="skeleton skeleton-input" />
+                <div className="skeleton skeleton-btn" />
+              </>
+            )}
+            {(changeLocationState === "idle" || isSubmitting) && (
+              <>
+                <h1 className="headline">Change your location</h1>
+                <p className="body">
+                  You're currently receiving sunset alerts for{" "}
+                  <strong>{currentLocationName}</strong>.
+                  Enter a new location below.
+                </p>
+
+                <div className="field field-location">
+                  <div className="input-with-icon">
+                    <input
+                      ref={locationInputRef}
+                      type="text"
+                      className="input"
+                      name="location"
+                      placeholder="City or zip code"
+                      value={locationInput}
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        setLocationInput(v);
+                        setGeocodeError(null);
+                        if (!v.trim()) setLocationData(null);
+                        else if (locationData && v !== locationData.locationName) {
+                          setLocationData(null);
+                        }
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          if (!placesLoaded) resolveManualLocation();
+                        }
+                      }}
+                      onBlur={() => {
+                        if (placesLoaded) {
+                          if (locationInput.trim() && !locationData) {
+                            setTimeout(() => {
+                              if (!locationDataRef.current) {
+                                setGeocodeError("Please select a location from the dropdown.");
+                              }
+                            }, 200);
+                          }
+                        } else {
+                          resolveManualLocation();
+                        }
+                      }}
+                      disabled={isSubmitting || geocoding || browserGeoStatus === "requesting"}
+                      autoComplete="off"
+                      aria-invalid={!!geocodeError}
+                      aria-describedby={geocodeError ? "location-geocode-error" : undefined}
+                    />
+                    {geocoding && <span className="input-spinner" aria-hidden />}
+                    <CheckIcon visible={!geocoding && !!locationData} />
+                  </div>
+                  {geocodeError && (
+                    <p className="field-error" id="location-geocode-error">{geocodeError}</p>
+                  )}
+                  {browserGeoStatus === "denied" && !locationData && (
+                    <p className="field-hint field-hint-denied">
+                      <span>Your browser blocked us :/</span>
+                      <span>Enter your city or ZIP code above instead.</span>
+                    </p>
+                  )}
+                  {browserGeoStatus !== "unsupported" && browserGeoStatus !== "denied" && !locationData && !isSubmitting && (
+                    <button
+                      type="button"
+                      className="geo-link"
+                      onClick={requestBrowserLocation}
+                      disabled={browserGeoStatus === "requesting" || geocoding}
+                    >
+                      {browserGeoStatus === "requesting" ? (
+                        <>
+                          <span className="geo-link-spinner" aria-hidden />
+                          Finding you…
+                        </>
+                      ) : (
+                        "Use my current location"
+                      )}
+                    </button>
+                  )}
+                </div>
+
+                {changeLocationError && <p className="field-error">{changeLocationError}</p>}
+
+                <button
+                  type="button"
+                  className="submit-btn"
+                  onClick={handleChangeLocation}
+                  disabled={!locationData || isSubmitting}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <span className="spinner" />
+                      <span>Updating…</span>
+                    </>
+                  ) : (
+                    "Update location"
+                  )}
+                </button>
+                <a href="/" className="link-btn unsubscribe-home-link">
+                  Back to Look West
+                </a>
+              </>
+            )}
+            {changeLocationState === "success" && (
+              <>
+                <div className="confirm-check" aria-hidden>
+                  <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                    <circle cx="16" cy="16" r="16" fill="#F9DE8E" />
+                    <path
+                      d="M10 16.4L14.2 20.6L22 11.5"
+                      stroke="#5c4030"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </div>
+                <h1 className="headline">Location updated!</h1>
+                <p className="body">
+                  You'll now receive sunset alerts for{" "}
+                  <strong>{updatedLocationName}</strong>.
+                </p>
+                <a href="/" className="link-btn unsubscribe-home-link">
+                  Back to Look West
+                </a>
+              </>
+            )}
+            {changeLocationState === "error" && (
+              <>
+                <h1 className="headline">Something went wrong</h1>
+                <p className="body">{changeLocationError}</p>
+                <a href="/" className="link-btn unsubscribe-home-link">
+                  Back to Look West
+                </a>
+              </>
+            )}
+          </div>
+        </div>
+        <div className="page-right" aria-hidden="true">
+          <img src="/background.webp" alt="" className="hero-image" width={1920} height={1280} fetchPriority="high" />
+        </div>
+      </div>
+    );
+  }
 
   /* ================================================================ */
   /*  Confirm page — auto-fires on mount                              */

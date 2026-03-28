@@ -278,6 +278,66 @@ export const confirmByToken = mutation({
   },
 });
 
+export const getUserLocationByToken = mutation({
+  args: { token: v.string() },
+  handler: async (ctx, args) => {
+    const token = args.token.trim();
+    if (!token) {
+      throw new Error("Invalid change-location link.");
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_unsubscribeToken", (q) =>
+        q.eq("unsubscribeToken", token)
+      )
+      .unique();
+
+    if (!user || !user.active) {
+      throw new Error("Invalid change-location link.");
+    }
+
+    return { locationName: user.locationName };
+  },
+});
+
+export const updateLocationByToken = mutation({
+  args: {
+    token: v.string(),
+    latitude: v.number(),
+    longitude: v.number(),
+    locationName: v.string(),
+    timezone: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const token = args.token.trim();
+    if (!token) {
+      throw new Error("Invalid change-location link.");
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_unsubscribeToken", (q) =>
+        q.eq("unsubscribeToken", token)
+      )
+      .unique();
+
+    if (!user || !user.active) {
+      throw new Error("Invalid change-location link.");
+    }
+
+    const { ok } = await rateLimit(ctx, { name: "updateLocationGlobal" });
+    if (!ok) {
+      throw new Error("Too many location-update attempts. Please try again later.");
+    }
+
+    const { token: _token, ...location } = args;
+    await ctx.db.patch(user._id, location);
+
+    return { success: true };
+  },
+});
+
 export const updateLocation = mutation({
   args: {
     userId: v.id("users"),

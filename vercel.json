@@ -7,6 +7,10 @@
     {
       "source": "/confirm",
       "destination": "/"
+    },
+    {
+      "source": "/change-location",
+      "destination": "/"
     }
   ]
 }

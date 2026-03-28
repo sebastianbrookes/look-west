@@ -388,11 +388,13 @@ export const sendPendingAlerts = internalAction({
         }
 
         const unsubscribeUrl = `${APP_BASE_URL}/unsubscribe?token=${encodeURIComponent(user.unsubscribeToken)}`;
+        const changeLocationUrl = `${APP_BASE_URL}/change-location?token=${encodeURIComponent(user.unsubscribeToken)}`;
         const html = buildAlertHtml({
           message: alert.messageSent,
           location,
           sunsetTime: sunsetLocal,
           unsubscribeUrl,
+          changeLocationUrl,
         });
 
         const subject =
@@ -404,7 +406,7 @@ export const sendPendingAlerts = internalAction({
               to: user.email,
               subject,
               html,
-              plainText: alert.messageSent,
+              plainText: `${alert.messageSent}\n\nChange location: ${changeLocationUrl}`,
               unsubscribeUrl,
             }),
           1,

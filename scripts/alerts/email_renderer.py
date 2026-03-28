@@ -26,6 +26,7 @@ def render_email_html(
     location: str,
     sunset_time: str,
     unsubscribe_url: str = "",
+    change_location_url: str = "",
 ) -> str:
     """Render the HTML email while escaping untrusted text content."""
     html = _load_email_template()
@@ -34,6 +35,7 @@ def render_email_html(
         "{{location}}": escape(location),
         "{{sunset_time}}": escape(sunset_time),
         "{{unsubscribe_url}}": escape(unsubscribe_url or "#", quote=True),
+        "{{change_location_url}}": escape(change_location_url or "#", quote=True),
         "{{background_url}}": BACKGROUND_IMAGE_URL,
     }
     for placeholder, value in replacements.items():
