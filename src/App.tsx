@@ -429,7 +429,6 @@ export default function App() {
   /*  Change-location page                                             */
   /* ================================================================ */
 
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
     if (!isChangeLocationPage) return;
     if (!unsubscribeToken) {

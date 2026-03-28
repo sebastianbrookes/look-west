@@ -8,4 +8,10 @@ export const { checkRateLimit, rateLimit, resetRateLimit } = defineRateLimits({
     period: 60 * 60 * 1000, // 1 hour
     capacity: Number(process.env.SIGNUP_RATE_LIMIT ?? 50),
   },
+  updateLocationGlobal: {
+    kind: "token bucket",
+    rate: 10,
+    period: 60 * 60 * 1000, // 1 hour
+    capacity: 10,
+  },
 });

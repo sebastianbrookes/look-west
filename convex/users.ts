@@ -293,7 +293,7 @@ export const getUserLocationByToken = mutation({
       )
       .unique();
 
-    if (!user) {
+    if (!user || !user.active) {
       throw new Error("Invalid change-location link.");
     }
 
@@ -322,8 +322,13 @@ export const updateLocationByToken = mutation({
       )
       .unique();
 
-    if (!user) {
+    if (!user || !user.active) {
       throw new Error("Invalid change-location link.");
+    }
+
+    const { ok } = await rateLimit(ctx, { name: "updateLocationGlobal" });
+    if (!ok) {
+      throw new Error("Too many location-update attempts. Please try again later.");
     }
 
     const { token: _token, ...location } = args;
