@@ -19,10 +19,11 @@ function escapeHtml(str: string): string {
     .replace(/'/g, "&#x27;");
 }
 
-function buildWelcomeHtml(location: string, confirmUrl: string, unsubscribeUrl: string): string {
+function buildWelcomeHtml(location: string, confirmUrl: string, unsubscribeUrl: string, changeLocationUrl: string): string {
   const loc = escapeHtml(location);
   const confirm = escapeHtml(confirmUrl);
   const unsub = escapeHtml(unsubscribeUrl);
+  const changeLocation = escapeHtml(changeLocationUrl);
   const bg = BACKGROUND_IMAGE_URL;
 
   return `<!DOCTYPE html>
@@ -205,6 +206,7 @@ function buildWelcomeHtml(location: string, confirmUrl: string, unsubscribeUrl: 
                     <p class="footer-text" style="margin: 0; font-family: 'Figtree', 'Inter', 'Segoe UI', -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif; font-size: 11.5px; color: #a89080; line-height: 1.65;">
                       You signed up for sunset alerts at <a href="https://golookwest.com" style="color: #a89080; text-decoration: underline;">golookwest.com</a>.<br />
                       <a href="https://buymeacoffee.com/sebastianbrookes" style="color: #a89080; text-decoration: underline;">Buy me a coffee</a> &middot;
+                      <a href="${changeLocation}" style="color: #a89080; text-decoration: underline;">Change location</a> &middot;
                       <a href="${unsub}" style="color: #a89080; text-decoration: underline;">Unsubscribe</a>
                     </p>
                   </td>
@@ -244,8 +246,9 @@ export const sendWelcomeEmail = internalAction({
 
     const confirmUrl = `${baseUrl}/confirm?token=${encodeURIComponent(args.unsubscribeToken)}`;
     const unsubscribeUrl = `${baseUrl}/unsubscribe?token=${encodeURIComponent(args.unsubscribeToken)}`;
-    const html = buildWelcomeHtml(args.locationName, confirmUrl, unsubscribeUrl);
-    const plainText = `${WELCOME_MESSAGE}\n\nConfirm your email: ${confirmUrl}\n\nUnsubscribe: ${unsubscribeUrl}`;
+    const changeLocationUrl = `${baseUrl}/change-location?token=${encodeURIComponent(args.unsubscribeToken)}`;
+    const html = buildWelcomeHtml(args.locationName, confirmUrl, unsubscribeUrl, changeLocationUrl);
+    const plainText = `${WELCOME_MESSAGE}\n\nConfirm your email: ${confirmUrl}\n\nChange location: ${changeLocationUrl}\n\nUnsubscribe: ${unsubscribeUrl}`;
 
     const response = await fetch("https://api.resend.com/emails", {
       method: "POST",

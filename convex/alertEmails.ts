@@ -24,11 +24,13 @@ export function buildAlertHtml(args: {
   location: string;
   sunsetTime: string;
   unsubscribeUrl: string;
+  changeLocationUrl: string;
 }): string {
   const msg = escapeHtml(args.message).replace(/\n/g, "<br>");
   const loc = escapeHtml(args.location);
   const time = escapeHtml(args.sunsetTime);
   const unsub = escapeHtml(args.unsubscribeUrl || "#");
+  const changeLocation = escapeHtml(args.changeLocationUrl || "#");
   const bg = BACKGROUND_IMAGE_URL;
 
   return `<!DOCTYPE html>
@@ -167,6 +169,7 @@ export function buildAlertHtml(args: {
                     <p class="footer-text" style="margin: 0; font-family: 'Figtree', 'Inter', 'Segoe UI', -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif; font-size: 11.5px; color: #a89080; line-height: 1.65;">
                       You signed up for sunset alerts at <a href="https://golookwest.com" style="color: #a89080; text-decoration: underline;">golookwest.com</a>.<br />
                       <a href="https://buymeacoffee.com/sebastianbrookes" style="color: #a89080; text-decoration: underline;">Buy me a coffee</a> &middot;
+                      <a href="${changeLocation}" style="color: #a89080; text-decoration: underline;">Change location</a> &middot;
                       <a href="${unsub}" style="color: #a89080; text-decoration: underline;">Unsubscribe</a>
                     </p>
                   </td>

@@ -71,6 +71,11 @@ def build_unsubscribe_url(token: str) -> str:
     return f"{APP_BASE_URL}/unsubscribe?{urlencode({'token': token})}"
 
 
+def build_change_location_url(token: str) -> str:
+    """Build the change-location URL for a user token."""
+    return f"{APP_BASE_URL}/change-location?{urlencode({'token': token})}"
+
+
 def retry(fn, retries=1, delay=2.0, label="API call"):
     """Call fn, retrying once on failure with a delay."""
     for attempt in range(retries + 1):
@@ -445,11 +450,13 @@ def phase_send(client):
                 sunset_local = ""
 
             unsubscribe_url = build_unsubscribe_url(user["unsubscribeToken"])
+            change_location_url = build_change_location_url(user["unsubscribeToken"])
             html_body = render_email_html(
                 message=alert["messageSent"],
                 location=location,
                 sunset_time=sunset_local,
                 unsubscribe_url=unsubscribe_url,
+                change_location_url=change_location_url,
             )
 
             email_subject = alert.get("subjectLine") or f"Sunset alert for {location}"

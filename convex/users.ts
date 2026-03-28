@@ -278,6 +278,57 @@ export const confirmByToken = mutation({
   },
 });
 
+export const getUserLocationByToken = query({
+  args: { token: v.string() },
+  handler: async (ctx, args) => {
+    const token = args.token.trim();
+    if (!token) return null;
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_unsubscribeToken", (q) =>
+        q.eq("unsubscribeToken", token)
+      )
+      .unique();
+
+    if (!user) return null;
+
+    return { locationName: user.locationName };
+  },
+});
+
+export const updateLocationByToken = mutation({
+  args: {
+    token: v.string(),
+    latitude: v.number(),
+    longitude: v.number(),
+    locationName: v.string(),
+    timezone: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const token = args.token.trim();
+    if (!token) {
+      throw new Error("Invalid change-location link.");
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_unsubscribeToken", (q) =>
+        q.eq("unsubscribeToken", token)
+      )
+      .unique();
+
+    if (!user) {
+      throw new Error("Invalid change-location link.");
+    }
+
+    const { token: _token, ...location } = args;
+    await ctx.db.patch(user._id, location);
+
+    return { success: true };
+  },
+});
+
 export const updateLocation = mutation({
   args: {
     userId: v.id("users"),
