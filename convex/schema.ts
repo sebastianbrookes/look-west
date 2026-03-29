@@ -31,4 +31,11 @@ export default defineSchema({
   })
     .index("by_status", ["status"])
     .index("by_userId", ["userId"]),
+
+  quotes: defineTable({
+    text: v.string(),
+    author: v.string(),
+    source: v.optional(v.string()),
+    year: v.optional(v.number()),
+  }),
 });
