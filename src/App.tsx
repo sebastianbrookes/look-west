@@ -1054,17 +1054,17 @@ export default function App() {
                       <span className="email-pill">{sample.time}</span>
                     </div>
                   )}
-                  <p className="email-message">{sample.message}</p>
                   {sample.type === "alert" && (
                     <>
-                      <div className="email-divider" />
                       <p className="email-metadata">
                         Suggested viewing time: {sample.viewingTime}<br />
                         Temp: {sample.temp}<br />
                         Quality: {sample.qualityScore}%
                       </p>
+                      <div className="email-divider" />
                     </>
                   )}
+                  <p className="email-message">{sample.message}</p>
                 </div>
               </div>
             ))}

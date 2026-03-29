@@ -1048,9 +1048,9 @@ h1, h2, h3, h4, h5, h6 {
 
 .email-message {
   font-family: Georgia, "Times New Roman", serif;
-  font-size: 0.875rem;
+  font-size: 0.75rem;
   line-height: 1.65;
-  color: #3d2b1f;
+  color: #5c4030;
   text-wrap: pretty;
   white-space: pre-line;
 }
@@ -1064,9 +1064,9 @@ h1, h2, h3, h4, h5, h6 {
 
 .email-metadata {
   font-family: "Figtree", sans-serif;
-  font-size: 0.75rem;
+  font-size: 0.8rem;
   line-height: 1.7;
-  color: #8b7a6a;
+  color: #2c1810;
   margin: 0;
 }
 

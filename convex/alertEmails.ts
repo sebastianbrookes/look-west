@@ -19,6 +19,22 @@ function escapeHtml(str: string): string {
     .replace(/'/g, "&#x27;");
 }
 
+function splitHaikuAndMetadata(message: string): {
+  haiku: string;
+  metadata: string;
+} {
+  const parts = message.split(/\n[ \t]*---[ \t]*\n/);
+  if (parts.length >= 2) {
+    return { haiku: parts[0].trim(), metadata: parts[1].trim() };
+  }
+  // Try end-of-string variant (no trailing newline after ---)
+  const parts2 = message.split(/\n[ \t]*---[ \t]*$/);
+  if (parts2.length >= 2) {
+    return { haiku: parts2[0].trim(), metadata: parts2[1].trim() };
+  }
+  return { haiku: message, metadata: "" };
+}
+
 export function buildAlertHtml(args: {
   message: string;
   location: string;
@@ -26,7 +42,9 @@ export function buildAlertHtml(args: {
   unsubscribeUrl: string;
   changeLocationUrl: string;
 }): string {
-  const msg = escapeHtml(args.message).replace(/\n/g, "<br>");
+  const { haiku, metadata } = splitHaikuAndMetadata(args.message);
+  const haikuHtml = escapeHtml(haiku).replace(/\n/g, "<br>");
+  const metadataHtml = escapeHtml(metadata).replace(/\n/g, "<br>");
   const loc = escapeHtml(args.location);
   const time = escapeHtml(args.sunsetTime);
   const unsub = escapeHtml(args.unsubscribeUrl || "#");
@@ -150,8 +168,24 @@ export function buildAlertHtml(args: {
 
               <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
                 <tr>
-                  <td class="card-inner" style="padding: 22px 34px 28px;">
-                    <p class="message-text" style="margin: 0; font-family: Georgia, 'Times New Roman', serif; font-size: 17px; line-height: 1.55; color: #3d2b1f;">${msg}</p>
+                  <td class="card-inner" style="padding: 22px 34px 14px;">
+                    <p class="meta-text" style="margin: 0; font-family: 'Figtree', 'Inter', 'Segoe UI', -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif; font-size: 12.5px; line-height: 1.7; color: #8b7a6a;">${metadataHtml}</p>
+                  </td>
+                </tr>
+              </table>
+
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                <tr>
+                  <td class="card-inner" style="padding: 0 34px;">
+                    <div style="height: 1px; background-color: #e6d5c3; opacity: 0.6;"></div>
+                  </td>
+                </tr>
+              </table>
+
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                <tr>
+                  <td class="card-inner" style="padding: 14px 34px 24px;">
+                    <p class="message-text" style="margin: 0; font-family: Georgia, 'Times New Roman', serif; font-size: 17px; line-height: 1.55; color: #3d2b1f;">${haikuHtml}</p>
                   </td>
                 </tr>
               </table>
