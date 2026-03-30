@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8" />
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Figtree:wght@400;500&family=Shadows+Into+Light&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    width: 1200px;
+    height: 630px;
+    overflow: hidden;
+    background: #faf5ef;
+    font-family: 'Figtree', sans-serif;
+    position: relative;
+  }
+
+  /* Warm ambient wash — bottom-right corner glow */
+  .glow {
+    position: absolute;
+    bottom: -200px;
+    right: -150px;
+    width: 900px;
+    height: 900px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(242,193,68,0.12) 0%, rgba(202,120,16,0.04) 30%, transparent 55%);
+    pointer-events: none;
+  }
+
+  /* Subtle top-left counter glow */
+  .glow-secondary {
+    position: absolute;
+    top: -280px;
+    left: -160px;
+    width: 600px;
+    height: 600px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(240,212,184,0.1) 0%, transparent 50%);
+    pointer-events: none;
+  }
+
+  .card {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 100px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .content {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .title {
+    font-family: 'Shadows Into Light', cursive;
+    font-size: 82px;
+    color: #2c1810;
+    line-height: 1.1;
+    letter-spacing: -0.5px;
+  }
+
+  .tagline {
+    font-family: 'Figtree', sans-serif;
+    font-size: 26px;
+    font-weight: 400;
+    color: #967a64;
+    line-height: 1.5;
+    max-width: 420px;
+  }
+
+  .url {
+    font-family: 'Figtree', sans-serif;
+    font-size: 17px;
+    font-weight: 500;
+    color: #b8704a;
+    letter-spacing: 0.5px;
+    margin-top: 8px;
+  }
+
+  .mark {
+    flex-shrink: 0;
+    width: 240px;
+    height: 240px;
+    opacity: 0.85;
+  }
+
+  /* Thin warm rule running across the bottom */
+  .rule {
+    position: absolute;
+    bottom: 56px;
+    left: 100px;
+    right: 100px;
+    height: 1px;
+    background: linear-gradient(90deg, rgba(184,112,74,0.25) 0%, rgba(184,112,74,0.08) 100%);
+    z-index: 1;
+  }
+</style>
+</head>
+<body>
+  <div class="glow"></div>
+  <div class="glow-secondary"></div>
+
+  <div class="card">
+    <div class="content">
+      <div class="title">Look West</div>
+      <div class="tagline">Get an email whenever the sunset in your area is worth seeing. Includes a curated quote.</div>
+      <div class="url">golookwest.com</div>
+    </div>
+
+    <!-- Inline favicon SVG as the brand mark -->
+    <svg class="mark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+      <path d="m100 6c-51.02 0-94 41.31-94 93.97 0 3.73 0.26 7.41 0.75 11.02 11.86-7.39 24.09-10.97 36.96-12.91 1.33-27.85 24.86-54.82 55.95-54.82 30.02 0 56.28 24.66 56.28 56.77 0 8.03-1.78 15.04-4.42 21.04 14.29-0.75 25.09-4.93 42.09-13.16 0.25-2.62 0.39-5.26 0.39-7.94 0-51.86-42.98-93.97-94-93.97z" fill="url(#og0)"/>
+      <path d="m144.2 121.1c4.01-8.06 4.88-15 4.6-21.03-1.35-25.88-21.79-49.52-49.33-49.52-26.15 0-47.32 21.22-48.33 46.88h5.77c16.8 0 30.84 6.25 44.99 12.8 12.91 6.27 24.27 10.64 42.3 10.87z" fill="url(#og1)"/>
+      <path d="m145 129.1c-17.75 0-30.75-4.2-44.91-11.38-13.64-6.8-26.87-12.76-46.45-12.76-15.84 0-29.5 3.97-46.2 12.67 2.17 10.67 5.65 20.13 10.77 29.2 10.96-6.05 21.65-8.63 37.95-8.63 16.14 0 29.66 5.38 41.56 11.14 13.25 6.46 24.23 12.25 45.08 12.41 11.79-0.07 22.66-3.25 33.22-7.26 8.63-11.67 14.14-23.3 16.67-37.26-14.54 8.23-28.55 11.87-47.69 11.87z" fill="url(#og2)"/>
+      <path d="m141.9 169.3c-17.39 0-31.02-5.16-42.59-10.96-13.56-6.87-24.36-12.25-43.63-12.44-12.42 0-22.78 2.55-33.23 7.65 16.86 23.3 40.23 40.06 76.73 40.06 26.87 0 47.98-10.62 67.22-27.03-7.44 1.89-14.52 2.72-24.5 2.72z" fill="url(#og3)"/>
+      <defs>
+        <linearGradient id="og0" x1="99.47" x2="99.47" y1="6" y2="121.1" gradientUnits="userSpaceOnUse">
+          <stop stop-color="#F2C144" offset="0"/>
+          <stop stop-color="#CA7810" offset="1"/>
+        </linearGradient>
+        <linearGradient id="og1" x1="100" x2="100" y1="50.54" y2="121.1" gradientUnits="userSpaceOnUse">
+          <stop stop-color="#FEE685" offset="0"/>
+          <stop stop-color="#F9B141" offset="1"/>
+        </linearGradient>
+        <linearGradient id="og2" x1="100" x2="100" y1="105" y2="161.7" gradientUnits="userSpaceOnUse">
+          <stop stop-color="#F1C043" offset="0"/>
+          <stop stop-color="#C66C0E" offset="1"/>
+        </linearGradient>
+        <linearGradient id="og3" x1="94.45" x2="94.45" y1="145.9" y2="193.6" gradientUnits="userSpaceOnUse">
+          <stop stop-color="#D3891E" offset="0"/>
+          <stop stop-color="#BB5A07" offset="1"/>
+        </linearGradient>
+      </defs>
+    </svg>
+  </div>
+
+  <div class="rule"></div>
+</body>
+</html>
