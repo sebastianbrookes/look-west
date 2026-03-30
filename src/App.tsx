@@ -125,8 +125,8 @@ const SAMPLE_EMAILS = [
     subject: "Sunset at 6:46 PM in Brooklyn, NY",
     location: "📍 Brooklyn, NY",
     time: "🌅 6:46 PM",
-    quote: "The sun was now in its death throes, bruising the sky a coiling purple and orange.",
-    attribution: "— Harlan Coben, Tell No One",
+    quote: "Can you see the sunset real good on the West side? You can see it on the East side too.",
+    attribution: "— S.E. Hinton, The Outsiders",
     metadata: "View at 6:16 PM  ·  34°F  ·  Quality 48%",
   },
   {
@@ -134,8 +134,8 @@ const SAMPLE_EMAILS = [
     subject: "Sunset at 7:04 PM in Boston, MA",
     location: "📍 Boston, MA",
     time: "🌅 7:04 PM",
-    quote: "The breeze across the desert as the light died was so sweet she could almost drink it.",
-    attribution: "— Mike Bond, The Last Savanna",
+    quote: "Then they lay on the pier and drank cheap sodas and watched the sun set for free.",
+    attribution: "— Fredrik Backman, My Friends",
     metadata: "View at 6:34 PM  ·  37°F  ·  Quality 72%",
   },
   {
@@ -143,8 +143,8 @@ const SAMPLE_EMAILS = [
     subject: "Sunset at 7:28 PM in San Francisco",
     location: "📍 San Francisco, CA",
     time: "🌅 7:28 PM",
-    quote: "They sipped until the sun, as golden and syrupy as the bourbon, slipped into the sea.",
-    attribution: "— Delia Owens, Where the Crawdads Sing",
+    quote: "It does no harm to the romance of the sunset to know a little about it.",
+    attribution: "— Carl Sagan, Pale Blue Dot",
     metadata: "View at 6:58 PM  ·  61°F  ·  Quality 64%",
   },
 ];
