@@ -1,4 +1,4 @@
-import { internalMutation, internalQuery } from "./_generated/server";
+import { internalMutation, internalQuery, mutation } from "./_generated/server";
 import { v } from "convex/values";
 
 export const insertQuote = internalMutation({
@@ -26,9 +26,10 @@ export const getRandomQuote = internalQuery({
   args: {},
   handler: async (ctx) => {
     const quotes = await ctx.db.query("quotes").collect();
-    if (quotes.length === 0) return null;
-    const index = Math.floor(Math.random() * quotes.length);
-    return quotes[index];
+    const visible = quotes.filter((q) => !q.hidden);
+    if (visible.length === 0) return null;
+    const index = Math.floor(Math.random() * visible.length);
+    return visible[index];
   },
 });
 
@@ -37,5 +38,12 @@ export const getQuoteCount = internalQuery({
   handler: async (ctx) => {
     const quotes = await ctx.db.query("quotes").collect();
     return quotes.length;
+  },
+});
+
+export const hideQuote = internalMutation({
+  args: { id: v.id("quotes") },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.id, { hidden: true });
   },
 });

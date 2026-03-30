@@ -37,5 +37,6 @@ export default defineSchema({
     author: v.string(),
     source: v.optional(v.string()),
     year: v.optional(v.number()),
+    hidden: v.optional(v.boolean()),
   }),
 });
