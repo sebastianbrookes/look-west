@@ -257,6 +257,33 @@ def generate_message(
     return {"message": message, "subject": subject}
 
 
+def build_quote_message(quote, sunset_time_local, temp_f, quality_score, location_name):
+    """Build a message and subject line from a Convex quote record."""
+    sunset_dt = datetime.strptime(sunset_time_local, "%I:%M %p")
+    viewing_time = (sunset_dt - timedelta(minutes=30)).strftime("%-I:%M %p")
+
+    attribution = f"\u2014 {quote['author']}"
+    if quote.get("source"):
+        attribution += f", {quote['source']}"
+
+    message = "\n".join(
+        [
+            f"\u201c{quote['text']}\u201d",
+            attribution,
+            "",
+            "---",
+            "",
+            f"Suggested viewing time: {viewing_time}",
+            f"Temp: {temp_f}\u00b0F",
+            f"Quality: {quality_score}%",
+        ]
+    )
+
+    subject = f"Sunset at {sunset_time_local} in {location_name}"[:40]
+
+    return {"message": message, "subject": subject}
+
+
 # ---------------------------------------------------------------------------
 # Phase 1 — Score Check & Queue
 # ---------------------------------------------------------------------------
@@ -351,19 +378,18 @@ def phase_check(client, test_email=None):
                     weather_desc = "unknown"
                     cloud_cover = 0
 
-                result = generate_message(
-                    score,
-                    label,
-                    location,
-                    sunset_local,
-                    temp_f,
-                    weather_desc,
-                    cloud_cover,
+                quote = client.query("quotes:getRandomQuote")
+                if not quote:
+                    logger.error(f"[{location}] No quotes in database, skipping")
+                    continue
+
+                result = build_quote_message(
+                    quote, sunset_local, temp_f, score, location
                 )
                 message = result["message"]
                 subject = result["subject"]
                 logger.info(f"[{location}] Subject: {subject}")
-                logger.info(f"[{location}] Message: {message}")
+                logger.info(f"[{location}] Quote: {quote['text'][:60]}...")
 
                 alert_data = {
                     "userId": user["_id"],

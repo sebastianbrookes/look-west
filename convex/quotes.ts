@@ -22,6 +22,16 @@ export const insertQuote = internalMutation({
   },
 });
 
+export const getRandomQuote = internalQuery({
+  args: {},
+  handler: async (ctx) => {
+    const quotes = await ctx.db.query("quotes").collect();
+    if (quotes.length === 0) return null;
+    const index = Math.floor(Math.random() * quotes.length);
+    return quotes[index];
+  },
+});
+
 export const getQuoteCount = internalQuery({
   args: {},
   handler: async (ctx) => {

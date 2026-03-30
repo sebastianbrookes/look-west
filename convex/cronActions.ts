@@ -8,7 +8,6 @@ import {
   fetchOwmScore,
   fetchCurrentWeather,
 } from "./sunsetScoring";
-import { SYSTEM_PROMPT, buildUserPrompt } from "./prompts";
 import { buildAlertHtml, sendAlertEmail } from "./alertEmails";
 
 // ---------------------------------------------------------------------------
@@ -86,69 +85,34 @@ function computeViewingTime(sunsetTimeLocal: string): string {
   return `${displayH}:${String(viewM).padStart(2, "0")} ${viewAmPm}`;
 }
 
-async function generateMessage(args: {
-  qualityScore: number;
-  locationName: string;
+function buildQuoteMessage(args: {
+  quoteText: string;
+  quoteAuthor: string;
+  quoteSource?: string;
   sunsetTimeLocal: string;
   tempF: string | number;
-  weatherDescription: string;
-  cloudCover: number;
-}): Promise<{ message: string; subject: string }> {
-  const apiKey = process.env.OPENROUTER_API_KEY;
-  if (!apiKey) throw new Error("Missing OPENROUTER_API_KEY env var");
-
+  qualityScore: number;
+  locationName: string;
+}): { message: string; subject: string } {
   const viewingTime = computeViewingTime(args.sunsetTimeLocal);
 
-  const userPrompt = buildUserPrompt({
-    location: args.locationName,
-    sunsetTime: args.sunsetTimeLocal,
-    viewingTime,
-    weatherDescription: args.weatherDescription,
-    temperature: args.tempF,
-    cloudCover: args.cloudCover,
-    qualityScore: args.qualityScore,
-  });
+  // Attribution line: "— Author, Source" or "— Author"
+  const attribution = args.quoteSource
+    ? `\u2014 ${args.quoteAuthor}, ${args.quoteSource}`
+    : `\u2014 ${args.quoteAuthor}`;
 
-  const resp = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: process.env.OPENROUTER_MODEL ?? "moonshotai/kimi-k2-0905",
-      messages: [
-        { role: "system", content: SYSTEM_PROMPT },
-        { role: "user", content: userPrompt },
-      ],
-      max_tokens: 1000,
-    }),
-  });
+  const message = [
+    `\u201c${args.quoteText}\u201d`,
+    attribution,
+    "",
+    "---",
+    "",
+    `Suggested viewing time: ${viewingTime}`,
+    `Temp: ${args.tempF}\u00B0F`,
+    `Quality: ${args.qualityScore}%`,
+  ].join("\n");
 
-  if (!resp.ok) {
-    throw new Error(`OpenRouter error: ${resp.status} ${await resp.text()}`);
-  }
-
-  const data = await resp.json();
-  const content = data.choices?.[0]?.message?.content;
-  if (!content) {
-    throw new Error(
-      `OpenRouter returned no content: ${JSON.stringify(data).slice(0, 500)}`
-    );
-  }
-  const raw: string = content.trim();
-
-  // Parse subject line
-  let message = raw;
-  let subject = `Sunset alert for ${args.locationName}`;
-  for (const line of raw.split("\n")) {
-    if (line.trim().toUpperCase().startsWith("SUBJECT:")) {
-      subject = line.trim().split(":").slice(1).join(":").trim().slice(0, 40);
-      subject = subject.replace(/\u2014/g, "-").replace(/\u2013/g, "-");
-      message = raw.replace(line, "").trim();
-      break;
-    }
-  }
+  const subject = `Sunset at ${args.sunsetTimeLocal} in ${args.locationName}`.slice(0, 40);
 
   return { message, subject };
 }
@@ -286,24 +250,27 @@ export const sunsetScoreCheck = internalAction({
             );
           }
 
-          // Generate message
-          const result = await retry(
-            () =>
-              generateMessage({
-                qualityScore: score,
-                locationName: location,
-                sunsetTimeLocal: sunsetLocal,
-                tempF,
-                weatherDescription: weatherDesc,
-                cloudCover,
-              }),
-            1,
-            2000,
-            "OpenRouter"
+          // Pick a random quote
+          const quote = await ctx.runQuery(
+            internal.quotes.getRandomQuote
           );
+          if (!quote) {
+            console.error(`[${location}] No quotes in database, skipping`);
+            continue;
+          }
+
+          const result = buildQuoteMessage({
+            quoteText: quote.text,
+            quoteAuthor: quote.author,
+            quoteSource: quote.source,
+            sunsetTimeLocal: sunsetLocal,
+            tempF,
+            qualityScore: score,
+            locationName: location,
+          });
 
           console.log(`[${location}] Subject: ${result.subject}`);
-          console.log(`[${location}] Message: ${result.message}`);
+          console.log(`[${location}] Quote: ${quote.text.slice(0, 60)}...`);
 
           await ctx.runMutation(internal.alerts.logAlert, {
             userId: user._id,

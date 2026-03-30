@@ -19,20 +19,38 @@ function escapeHtml(str: string): string {
     .replace(/'/g, "&#x27;");
 }
 
-function splitHaikuAndMetadata(message: string): {
-  haiku: string;
+function splitMessageParts(message: string): {
+  quoteText: string;
+  attribution: string;
   metadata: string;
 } {
+  // Split on --- separator to get quote block and metadata
+  let quoteBlock = message;
+  let metadata = "";
   const parts = message.split(/\n[ \t]*---[ \t]*\n/);
   if (parts.length >= 2) {
-    return { haiku: parts[0].trim(), metadata: parts[1].trim() };
+    quoteBlock = parts[0].trim();
+    metadata = parts[1].trim();
+  } else {
+    const parts2 = message.split(/\n[ \t]*---[ \t]*$/);
+    if (parts2.length >= 2) {
+      quoteBlock = parts2[0].trim();
+      metadata = parts2[1].trim();
+    }
   }
-  // Try end-of-string variant (no trailing newline after ---)
-  const parts2 = message.split(/\n[ \t]*---[ \t]*$/);
-  if (parts2.length >= 2) {
-    return { haiku: parts2[0].trim(), metadata: parts2[1].trim() };
+
+  // Split quote block into quote text and attribution (line starting with —)
+  const lines = quoteBlock.split("\n");
+  const attrIndex = lines.findIndex((l) => l.trimStart().startsWith("\u2014"));
+  if (attrIndex >= 0) {
+    return {
+      quoteText: lines.slice(0, attrIndex).join("\n").trim(),
+      attribution: lines.slice(attrIndex).join("\n").trim(),
+      metadata,
+    };
   }
-  return { haiku: message, metadata: "" };
+
+  return { quoteText: quoteBlock, attribution: "", metadata };
 }
 
 export function buildAlertHtml(args: {
@@ -42,8 +60,9 @@ export function buildAlertHtml(args: {
   unsubscribeUrl: string;
   changeLocationUrl: string;
 }): string {
-  const { haiku, metadata } = splitHaikuAndMetadata(args.message);
-  const haikuHtml = escapeHtml(haiku).replace(/\n/g, "<br>");
+  const { quoteText, attribution, metadata } = splitMessageParts(args.message);
+  const quoteHtml = escapeHtml(quoteText).replace(/\n/g, "<br>");
+  const attributionHtml = escapeHtml(attribution);
   const metadataHtml = escapeHtml(metadata).replace(/\n/g, "<br>");
   const loc = escapeHtml(args.location);
   const time = escapeHtml(args.sunsetTime);
@@ -99,6 +118,7 @@ export function buildAlertHtml(args: {
       .card-bg { background-color: #2a1e16 !important; }
       .brand-text { color: #e8c4a0 !important; }
       .message-text { color: #e8d8c8 !important; }
+      .attribution-text { color: #b8a898 !important; }
       .meta-text { color: #c4967a !important; }
       .footer-text { color: #7a6a5a !important; }
       .divider { background-color: #3a2a1e !important; }
@@ -184,11 +204,19 @@ export function buildAlertHtml(args: {
 
               <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
                 <tr>
-                  <td class="card-inner" style="padding: 14px 34px 24px;">
-                    <p class="message-text" style="margin: 0; font-family: Georgia, 'Times New Roman', serif; font-size: 17px; line-height: 1.55; color: #3d2b1f;">${haikuHtml}</p>
+                  <td class="card-inner" style="padding: 14px 34px ${attribution ? "10px" : "24px"};">
+                    <p class="message-text" style="margin: 0; font-family: Georgia, 'Times New Roman', serif; font-size: 17px; line-height: 1.55; color: #3d2b1f; font-style: italic;">${quoteHtml}</p>
                   </td>
                 </tr>
-              </table>
+              </table>${attribution ? `
+
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                <tr>
+                  <td class="card-inner" style="padding: 0 34px 24px;">
+                    <p class="attribution-text" style="margin: 0; font-family: Georgia, 'Times New Roman', serif; font-size: 14px; line-height: 1.5; color: #6b5a4e;">${attributionHtml}</p>
+                  </td>
+                </tr>
+              </table>` : ""}
 
               <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
                 <tr>
