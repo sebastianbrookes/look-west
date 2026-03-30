@@ -16,30 +16,6 @@
     position: relative;
   }
 
-  /* Warm ambient wash — bottom-right corner glow */
-  .glow {
-    position: absolute;
-    bottom: -200px;
-    right: -150px;
-    width: 900px;
-    height: 900px;
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba(242,193,68,0.12) 0%, rgba(202,120,16,0.04) 30%, transparent 55%);
-    pointer-events: none;
-  }
-
-  /* Subtle top-left counter glow */
-  .glow-secondary {
-    position: absolute;
-    top: -280px;
-    left: -160px;
-    width: 600px;
-    height: 600px;
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba(240,212,184,0.1) 0%, transparent 50%);
-    pointer-events: none;
-  }
-
   .card {
     width: 100%;
     height: 100%;
@@ -67,16 +43,16 @@
 
   .tagline {
     font-family: 'Figtree', sans-serif;
-    font-size: 26px;
+    font-size: 34px;
     font-weight: 400;
     color: #967a64;
-    line-height: 1.5;
-    max-width: 420px;
+    line-height: 1.45;
+    max-width: 540px;
   }
 
   .url {
     font-family: 'Figtree', sans-serif;
-    font-size: 17px;
+    font-size: 22px;
     font-weight: 500;
     color: #b8704a;
     letter-spacing: 0.5px;
@@ -103,9 +79,6 @@
 </style>
 </head>
 <body>
-  <div class="glow"></div>
-  <div class="glow-secondary"></div>
-
   <div class="card">
     <div class="content">
       <div class="title">Look West</div>
