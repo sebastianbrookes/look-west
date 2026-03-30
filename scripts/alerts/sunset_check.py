@@ -3,6 +3,7 @@
 
 import argparse
 import logging
+import random
 import sys
 import os
 import time
@@ -360,7 +361,7 @@ def phase_check(client, test_email=None):
                     weather_desc = "unknown"
                     cloud_cover = 0
 
-                quote = client.query("quotes:getRandomQuote")
+                quote = client.query("quotes:getRandomQuote", {"nonce": random.random()})
                 if not quote:
                     logger.error(f"[{location}] No quotes in database, skipping")
                     continue

@@ -23,7 +23,7 @@ export const insertQuote = internalMutation({
 });
 
 export const getRandomQuote = internalQuery({
-  args: {},
+  args: { nonce: v.optional(v.number()) },
   handler: async (ctx) => {
     const quotes = await ctx.db.query("quotes").collect();
     const visible = quotes.filter((q) => !q.hidden);

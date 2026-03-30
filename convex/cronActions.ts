@@ -248,9 +248,10 @@ export const sunsetScoreCheck = internalAction({
             );
           }
 
-          // Pick a random quote
+          // Pick a random quote (nonce busts Convex query cache so each user gets a different quote)
           const quote = await ctx.runQuery(
-            internal.quotes.getRandomQuote
+            internal.quotes.getRandomQuote,
+            { nonce: Math.random() }
           );
           if (!quote) {
             console.error(`[${location}] No quotes in database, skipping`);
