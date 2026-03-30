@@ -1046,27 +1046,37 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 
-.email-message {
+.email-quote {
   font-family: Georgia, "Times New Roman", serif;
-  font-size: 0.75rem;
+  font-size: 0.875rem;
   line-height: 1.65;
-  color: #5c4030;
+  color: #3d2b1f;
+  font-style: italic;
   text-wrap: pretty;
-  white-space: pre-line;
+  margin: 0;
+}
+
+.email-attribution {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 0.6875rem;
+  line-height: 1.4;
+  color: #8b7a6a;
+  margin: 0.625rem 0 0;
+  letter-spacing: 0.01em;
 }
 
 .email-divider {
   height: 1px;
   background-color: #e6d5c3;
-  opacity: 0.6;
-  margin: 0.875rem 0 0.75rem;
+  margin: 0.875rem 0 0.625rem;
 }
 
 .email-metadata {
   font-family: "Figtree", sans-serif;
-  font-size: 0.8rem;
-  line-height: 1.7;
-  color: #2c1810;
+  font-size: 0.625rem;
+  line-height: 1;
+  color: #a89080;
+  letter-spacing: 0.02em;
   margin: 0;
 }
 
@@ -1520,7 +1530,7 @@ h1, h2, h3, h4, h5, h6 {
     gap: 1rem;
   }
 
-  .email-message {
+  .email-quote {
     font-size: 0.8125rem;
   }
 

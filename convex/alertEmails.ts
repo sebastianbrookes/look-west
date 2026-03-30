@@ -3,7 +3,6 @@
 /**
  * Alert email rendering and sending via Resend.
  * Follows the same pattern as convex/emails.ts (welcome email).
- * Template ported from scripts/alerts/email_template.html.
  */
 
 const BACKGROUND_IMAGE_URL =
@@ -19,20 +18,38 @@ function escapeHtml(str: string): string {
     .replace(/'/g, "&#x27;");
 }
 
-function splitHaikuAndMetadata(message: string): {
-  haiku: string;
+function splitMessageParts(message: string): {
+  quoteText: string;
+  attribution: string;
   metadata: string;
 } {
+  // Split on --- separator to get quote block and metadata
+  let quoteBlock = message;
+  let metadata = "";
   const parts = message.split(/\n[ \t]*---[ \t]*\n/);
   if (parts.length >= 2) {
-    return { haiku: parts[0].trim(), metadata: parts[1].trim() };
+    quoteBlock = parts[0].trim();
+    metadata = parts[1].trim();
+  } else {
+    const parts2 = message.split(/\n[ \t]*---[ \t]*$/);
+    if (parts2.length >= 2) {
+      quoteBlock = parts2[0].trim();
+      metadata = parts2[1].trim();
+    }
   }
-  // Try end-of-string variant (no trailing newline after ---)
-  const parts2 = message.split(/\n[ \t]*---[ \t]*$/);
-  if (parts2.length >= 2) {
-    return { haiku: parts2[0].trim(), metadata: parts2[1].trim() };
+
+  // Split quote block into quote text and attribution (line starting with —)
+  const lines = quoteBlock.split("\n");
+  const attrIndex = lines.findIndex((l) => l.trimStart().startsWith("\u2014"));
+  if (attrIndex >= 0) {
+    return {
+      quoteText: lines.slice(0, attrIndex).join("\n").trim(),
+      attribution: lines.slice(attrIndex).join("\n").trim(),
+      metadata,
+    };
   }
-  return { haiku: message, metadata: "" };
+
+  return { quoteText: quoteBlock, attribution: "", metadata };
 }
 
 export function buildAlertHtml(args: {
@@ -42,14 +59,18 @@ export function buildAlertHtml(args: {
   unsubscribeUrl: string;
   changeLocationUrl: string;
 }): string {
-  const { haiku, metadata } = splitHaikuAndMetadata(args.message);
-  const haikuHtml = escapeHtml(haiku).replace(/\n/g, "<br>");
+  const { quoteText, attribution, metadata } = splitMessageParts(args.message);
+  const quoteHtml = escapeHtml(quoteText).replace(/\n/g, "<br>");
+  const attributionHtml = escapeHtml(attribution);
   const metadataHtml = escapeHtml(metadata).replace(/\n/g, "<br>");
   const loc = escapeHtml(args.location);
   const time = escapeHtml(args.sunsetTime);
   const unsub = escapeHtml(args.unsubscribeUrl || "#");
   const changeLocation = escapeHtml(args.changeLocationUrl || "#");
   const bg = BACKGROUND_IMAGE_URL;
+  // Strip curly quotes from quote text for a clean preheader
+  const preheaderQuote = quoteText.replace(/[\u201c\u201d]/g, "").slice(0, 120);
+  const preheader = escapeHtml(`${loc} \u00B7 Sunset at ${time} \u2014 ${preheaderQuote}`);
 
   return `<!DOCTYPE html>
 <html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
@@ -99,6 +120,7 @@ export function buildAlertHtml(args: {
       .card-bg { background-color: #2a1e16 !important; }
       .brand-text { color: #e8c4a0 !important; }
       .message-text { color: #e8d8c8 !important; }
+      .attribution-text { color: #b8a898 !important; }
       .meta-text { color: #c4967a !important; }
       .footer-text { color: #7a6a5a !important; }
       .divider { background-color: #3a2a1e !important; }
@@ -116,8 +138,8 @@ export function buildAlertHtml(args: {
 <body style="margin: 0; padding: 0; background-color: #faf5ef; font-family: Georgia, 'Times New Roman', serif; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;">
 
   <div style="display: none; max-height: 0; overflow: hidden; font-size: 1px; line-height: 1px; color: #faf5ef;">
-    Sunset at ${time}
-    &#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;
+    ${preheader}
+    ${"&#847;&zwnj;&nbsp;".repeat(80)}
   </div>
 
   <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" class="body-bg" style="background-color: #faf5ef; font-family: Georgia, 'Times New Roman', serif;">
@@ -168,24 +190,32 @@ export function buildAlertHtml(args: {
 
               <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
                 <tr>
-                  <td class="card-inner" style="padding: 22px 34px 14px;">
-                    <p class="meta-text" style="margin: 0; font-family: 'Figtree', 'Inter', 'Segoe UI', -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif; font-size: 12.5px; line-height: 1.7; color: #8b7a6a;">${metadataHtml}</p>
+                  <td class="card-inner" style="padding: 24px 34px ${attribution ? "6px" : "28px"};">
+                    <p class="message-text" style="margin: 0; font-family: Georgia, 'Times New Roman', serif; font-size: 19px; line-height: 1.65; color: #3d2b1f; font-style: italic;">${quoteHtml}</p>
                   </td>
                 </tr>
-              </table>
+              </table>${attribution ? `
+
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                <tr>
+                  <td class="card-inner" style="padding: 16px 34px 28px;">
+                    <p class="attribution-text" style="margin: 0; font-family: Georgia, 'Times New Roman', serif; font-size: 13.5px; line-height: 1.4; color: #8b7a6a; letter-spacing: 0.01em;">${attributionHtml}</p>
+                  </td>
+                </tr>
+              </table>` : ""}
 
               <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
                 <tr>
                   <td class="card-inner" style="padding: 0 34px;">
-                    <div style="height: 1px; background-color: #e6d5c3; opacity: 0.6;"></div>
+                    <div class="divider" style="height: 1px; background-color: #e6d5c3;"></div>
                   </td>
                 </tr>
               </table>
 
               <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
                 <tr>
-                  <td class="card-inner" style="padding: 14px 34px 24px;">
-                    <p class="message-text" style="margin: 0; font-family: Georgia, 'Times New Roman', serif; font-size: 17px; line-height: 1.55; color: #3d2b1f;">${haikuHtml}</p>
+                  <td class="card-inner" style="padding: 14px 34px 14px;">
+                    <p class="meta-text" style="margin: 0; font-family: 'Figtree', 'Inter', 'Segoe UI', -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif; font-size: 11.5px; line-height: 1; color: #a89080; letter-spacing: 0.02em;">${metadataHtml}</p>
                   </td>
                 </tr>
               </table>
