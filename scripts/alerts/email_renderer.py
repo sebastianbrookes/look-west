@@ -22,20 +22,34 @@ def _load_email_template() -> str:
     return _EMAIL_TEMPLATE
 
 
-def _split_haiku_and_metadata(message: str) -> tuple[str, str]:
-    """Split the LLM message into haiku and metadata on the '---' separator.
+def _split_message_parts(message: str) -> tuple[str, str, str]:
+    """Split message into (quote_text, attribution, metadata) on '---' separator.
 
-    Tolerates trailing/leading whitespace on the separator line, which LLMs
-    sometimes produce.
+    Attribution is identified as lines starting with an em dash (\u2014).
     """
+    quote_block = message
+    metadata = ""
+
     parts = re.split(r"\n[ \t]*---[ \t]*\n", message, maxsplit=1)
     if len(parts) == 2:
-        return parts[0].strip(), parts[1].strip()
-    # Try end-of-string variant (no trailing newline after ---)
-    parts = re.split(r"\n[ \t]*---[ \t]*$", message, maxsplit=1)
-    if len(parts) == 2:
-        return parts[0].strip(), parts[1].strip()
-    return message, ""
+        quote_block, metadata = parts[0].strip(), parts[1].strip()
+    else:
+        parts = re.split(r"\n[ \t]*---[ \t]*$", message, maxsplit=1)
+        if len(parts) == 2:
+            quote_block, metadata = parts[0].strip(), parts[1].strip()
+
+    lines = quote_block.split("\n")
+    attr_index = next(
+        (i for i, l in enumerate(lines) if l.lstrip().startswith("\u2014")), -1
+    )
+    if attr_index >= 0:
+        quote_text = "\n".join(lines[:attr_index]).strip()
+        attribution = "\n".join(lines[attr_index:]).strip()
+    else:
+        quote_text = quote_block
+        attribution = ""
+
+    return quote_text, attribution, metadata
 
 
 def render_email_html(
@@ -47,10 +61,11 @@ def render_email_html(
     quality_score: int | str = "",
 ) -> str:
     """Render the HTML email while escaping untrusted text content."""
-    haiku, metadata = _split_haiku_and_metadata(message)
+    quote_text, attribution, metadata = _split_message_parts(message)
     html = _load_email_template()
     replacements = {
-        "{{haiku}}": escape(haiku).replace("\n", "<br>"),
+        "{{quote_text}}": escape(quote_text).replace("\n", "<br>"),
+        "{{attribution}}": escape(attribution),
         "{{metadata}}": escape(metadata).replace("\n", "<br>"),
         "{{location}}": escape(location),
         "{{sunset_time}}": escape(sunset_time),

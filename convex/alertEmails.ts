@@ -188,35 +188,35 @@ export function buildAlertHtml(args: {
 
               <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
                 <tr>
-                  <td class="card-inner" style="padding: 22px 34px 14px;">
-                    <p class="meta-text" style="margin: 0; font-family: 'Figtree', 'Inter', 'Segoe UI', -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif; font-size: 12.5px; line-height: 1.7; color: #8b7a6a;">${metadataHtml}</p>
-                  </td>
-                </tr>
-              </table>
-
-              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
-                <tr>
-                  <td class="card-inner" style="padding: 0 34px;">
-                    <div style="height: 1px; background-color: #e6d5c3; opacity: 0.6;"></div>
-                  </td>
-                </tr>
-              </table>
-
-              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
-                <tr>
-                  <td class="card-inner" style="padding: 14px 34px ${attribution ? "10px" : "24px"};">
-                    <p class="message-text" style="margin: 0; font-family: Georgia, 'Times New Roman', serif; font-size: 17px; line-height: 1.55; color: #3d2b1f; font-style: italic;">${quoteHtml}</p>
+                  <td class="card-inner" style="padding: 24px 34px ${attribution ? "6px" : "28px"};">
+                    <p class="message-text" style="margin: 0; font-family: Georgia, 'Times New Roman', serif; font-size: 19px; line-height: 1.65; color: #3d2b1f; font-style: italic;">${quoteHtml}</p>
                   </td>
                 </tr>
               </table>${attribution ? `
 
               <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
                 <tr>
-                  <td class="card-inner" style="padding: 0 34px 24px;">
-                    <p class="attribution-text" style="margin: 0; font-family: Georgia, 'Times New Roman', serif; font-size: 14px; line-height: 1.5; color: #6b5a4e;">${attributionHtml}</p>
+                  <td class="card-inner" style="padding: 16px 34px 28px;">
+                    <p class="attribution-text" style="margin: 0; font-family: Georgia, 'Times New Roman', serif; font-size: 13.5px; line-height: 1.4; color: #8b7a6a; letter-spacing: 0.01em;">${attributionHtml}</p>
                   </td>
                 </tr>
               </table>` : ""}
+
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                <tr>
+                  <td class="card-inner" style="padding: 0 34px;">
+                    <div class="divider" style="height: 1px; background-color: #e6d5c3;"></div>
+                  </td>
+                </tr>
+              </table>
+
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                <tr>
+                  <td class="card-inner" style="padding: 14px 34px 14px;">
+                    <p class="meta-text" style="margin: 0; font-family: 'Figtree', 'Inter', 'Segoe UI', -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif; font-size: 11.5px; line-height: 1; color: #a89080; letter-spacing: 0.02em;">${metadataHtml}</p>
+                  </td>
+                </tr>
+              </table>
 
               <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
                 <tr>

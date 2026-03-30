@@ -107,9 +107,7 @@ function buildQuoteMessage(args: {
     "",
     "---",
     "",
-    `Suggested viewing time: ${viewingTime}`,
-    `Temp: ${args.tempF}\u00B0F`,
-    `Quality: ${args.qualityScore}%`,
+    `View at ${viewingTime}  \u00B7  ${args.tempF}\u00B0F  \u00B7  Quality ${args.qualityScore}%`,
   ].join("\n");
 
   const subject = `Sunset at ${args.sunsetTimeLocal} in ${args.locationName}`.slice(0, 40);

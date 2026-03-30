@@ -6,18 +6,15 @@ import logging
 import sys
 import os
 import time
-from urllib.parse import urlencode
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
 import requests
-import resend
 from astral import LocationInfo
 from astral.sun import sun
 from convex import ConvexClient
 from dotenv import load_dotenv
 
-from email_renderer import render_email_html
 from fallback_scorer import calculate_owm_score
 from prompts import SYSTEM_PROMPT, USER_PROMPT_TEMPLATE
 
@@ -36,13 +33,10 @@ CONVEX_URL = os.getenv("CONVEX_URL")
 CONVEX_ADMIN_KEY = os.getenv("CONVEX_ADMIN_KEY", "")
 SUNSETHUE_API_KEY = os.getenv("SUNSETHUE_API_KEY", "")
 OPENWEATHERMAP_API_KEY = os.getenv("OPENWEATHERMAP_API_KEY", "")
-RESEND_API_KEY = os.getenv("RESEND_API_KEY", "")
-RESEND_FROM_EMAIL = os.getenv("RESEND_FROM_EMAIL", "")
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
 SUNSET_QUALITY_THRESHOLD = int(os.getenv("SUNSET_QUALITY_THRESHOLD", "40"))
 OPENROUTER_MODEL = os.getenv("OPENROUTER_MODEL", "moonshotai/kimi-k2-0905")
 SUNSET_SCORER = os.getenv("SUNSET_SCORER", "sunsethue")
-APP_BASE_URL = os.getenv("APP_BASE_URL", "https://golookwest.com").rstrip("/")
 
 
 def get_convex_client():
@@ -64,16 +58,6 @@ def get_convex_client():
     except Exception as e:
         logger.error(f"Failed to connect to Convex: {e}")
         sys.exit(1)
-
-
-def build_unsubscribe_url(token: str) -> str:
-    """Build the unsubscribe confirmation URL for a user token."""
-    return f"{APP_BASE_URL}/unsubscribe?{urlencode({'token': token})}"
-
-
-def build_change_location_url(token: str) -> str:
-    """Build the change-location URL for a user token."""
-    return f"{APP_BASE_URL}/change-location?{urlencode({'token': token})}"
 
 
 def retry(fn, retries=1, delay=2.0, label="API call"):
@@ -273,9 +257,7 @@ def build_quote_message(quote, sunset_time_local, temp_f, quality_score, locatio
             "",
             "---",
             "",
-            f"Suggested viewing time: {viewing_time}",
-            f"Temp: {temp_f}\u00b0F",
-            f"Quality: {quality_score}%",
+            f"View at {viewing_time}  \u00b7  {temp_f}\u00b0F  \u00b7  Quality {quality_score}%",
         ]
     )
 
@@ -433,103 +415,10 @@ def phase_check(client, test_email=None):
 
 
 def phase_send(client):
-    """Send all pending alerts whose scheduledSendTime has passed."""
+    """Send all pending alerts via the production Convex action."""
     logger.info("=== Phase 2: Send Pending Alerts ===")
-
-    client.mutation("users:backfillMissingUnsubscribeTokens")
-    alerts = client.query("alerts:getPendingAlerts")
-    if not alerts:
-        logger.info("No pending alerts to send.")
-        return
-
-    logger.info(f"Found {len(alerts)} pending alert(s).")
-
-    # Build user lookup from active users
-    users = client.query("users:getActiveUsersForDelivery")
-    user_map = {u["_id"]: u for u in users}
-
-    resend.api_key = RESEND_API_KEY
-
-    for alert in alerts:
-        user = user_map.get(alert["userId"])
-        location = user.get("locationName", "Unknown") if user else "Unknown"
-
-        if not user:
-            logger.error(f"[{location}] User {alert['userId']} not found or inactive")
-            client.mutation(
-                "alerts:updateAlertStatus",
-                {
-                    "alertId": alert["_id"],
-                    "status": "error",
-                    "errorMessage": "User not found or inactive",
-                },
-            )
-            continue
-
-        try:
-            # Parse sunset time from ISO string for display
-            try:
-                sunset_dt = datetime.fromisoformat(alert["sunsetTime"])
-                user_tz = ZoneInfo(user.get("timezone", "UTC"))
-                sunset_local = sunset_dt.astimezone(user_tz).strftime("%-I:%M %p")
-            except Exception:
-                sunset_local = ""
-
-            unsubscribe_url = build_unsubscribe_url(user["unsubscribeToken"])
-            change_location_url = build_change_location_url(user["unsubscribeToken"])
-            html_body = render_email_html(
-                message=alert["messageSent"],
-                location=location,
-                sunset_time=sunset_local,
-                unsubscribe_url=unsubscribe_url,
-                change_location_url=change_location_url,
-                quality_score=alert.get("qualityScore", ""),
-            )
-
-            email_subject = alert.get("subjectLine") or f"Sunset alert for {location}"
-
-            def _send_email(
-                body=alert["messageSent"],
-                html=html_body,
-                to=user["email"],
-                subj=email_subject,
-                unsub=unsubscribe_url,
-            ):
-                return resend.Emails.send(
-                    {
-                        "from": RESEND_FROM_EMAIL,
-                        "to": [to],
-                        "subject": subj,
-                        "text": body,
-                        "html": html,
-                        "headers": {
-                            "List-Unsubscribe": f"<{unsub}>",
-                            "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
-                        },
-                    }
-                )
-
-            retry(_send_email, retries=1, delay=2.0, label=f"Resend [{location}]")
-
-            client.mutation(
-                "alerts:updateAlertStatus",
-                {
-                    "alertId": alert["_id"],
-                    "status": "sent",
-                },
-            )
-            logger.info(f"[{location}] Email sent to {user['email']}")
-
-        except Exception as e:
-            logger.error(f"[{location}] Failed to send email: {e}")
-            client.mutation(
-                "alerts:updateAlertStatus",
-                {
-                    "alertId": alert["_id"],
-                    "status": "error",
-                    "errorMessage": str(e),
-                },
-            )
+    client.action("cronActions:sendPendingAlerts")
+    logger.info("Done — alerts sent via Convex.")
 
 
 # ---------------------------------------------------------------------------
