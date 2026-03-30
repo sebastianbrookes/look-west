@@ -122,39 +122,30 @@ function CheckIcon({ visible = false }: { visible?: boolean }) {
 const SAMPLE_EMAILS = [
   {
     type: "alert",
-    subject: "Tonight's sunset in Brooklyn, NY",
+    subject: "Sunset at 6:46 PM in Brooklyn, NY",
     location: "📍 Brooklyn, NY",
     time: "🌅 6:46 PM",
-    message:
-      "fire escape shadow\ncuts across the wall at six\nforty-six — then gone",
-    viewingTime: "6:16 PM",
-    temp: "34°F",
-    quality: "Fair",
-    qualityScore: 48,
+    quote: "The sun was now in its death throes, bruising the sky a coiling purple and orange.",
+    attribution: "— Harlan Coben, Tell No One",
+    metadata: "View at 6:16 PM  ·  34°F  ·  Quality 48%",
   },
   {
     type: "alert",
-    subject: "Sunset alert for Boston, MA",
+    subject: "Sunset at 7:04 PM in Boston, MA",
     location: "📍 Boston, MA",
     time: "🌅 7:04 PM",
-    message:
-      "cold wind off the harbor\nbroken clouds at 7:04\none lit window half",
-    viewingTime: "6:34 PM",
-    temp: "37°F",
-    quality: "Good",
-    qualityScore: 72,
+    quote: "The breeze across the desert as the light died was so sweet she could almost drink it.",
+    attribution: "— Mike Bond, The Last Savanna",
+    metadata: "View at 6:34 PM  ·  37°F  ·  Quality 72%",
   },
   {
     type: "alert",
-    subject: "Sunset at 7:28 in San Francisco",
+    subject: "Sunset at 7:28 PM in San Francisco",
     location: "📍 San Francisco, CA",
     time: "🌅 7:28 PM",
-    message:
-      "fog bank at the bridge\nseven twenty-eight, the gap\nfills with tangerine",
-    viewingTime: "6:58 PM",
-    temp: "61°F",
-    quality: "Good",
-    qualityScore: 64,
+    quote: "They sipped until the sun, as golden and syrupy as the bourbon, slipped into the sea.",
+    attribution: "— Delia Owens, Where the Crawdads Sing",
+    metadata: "View at 6:58 PM  ·  61°F  ·  Quality 64%",
   },
 ];
 
@@ -866,7 +857,7 @@ export default function App() {
           <div className="hero-content">
             <h1 className="hero-title">Look West</h1>
             <p className="hero-subtitle">
-              Get an email whenever the sunset in your location is worth seeing. Includes a haiku.
+              Get an email whenever the sunset in your location is worth seeing. Includes a curated quote.
             </p>
 
             <form onSubmit={handleSubmit} className="hero-form">
@@ -1037,7 +1028,7 @@ export default function App() {
         <div className="section-inner">
           <h2 className="section-title">What you'll get</h2>
           <p className="section-desc">
-            When conditions are right, you'll receive an email like one of these. Each one is a short poem with your local sunset time and weather baked in.
+            When conditions are right, you'll receive an email like one of these — a sunset quote paired with your local conditions.
           </p>
 
           <div className="email-samples">
@@ -1048,23 +1039,14 @@ export default function App() {
                 </div>
                 <div className="email-gradient-strip" />
                 <div className="email-body">
-                  {sample.type === "alert" && (
-                    <div className="email-pills">
-                      <span className="email-pill">{sample.location}</span>
-                      <span className="email-pill">{sample.time}</span>
-                    </div>
-                  )}
-                  {sample.type === "alert" && (
-                    <>
-                      <p className="email-metadata">
-                        Suggested viewing time: {sample.viewingTime}<br />
-                        Temp: {sample.temp}<br />
-                        Quality: {sample.qualityScore}%
-                      </p>
-                      <div className="email-divider" />
-                    </>
-                  )}
-                  <p className="email-message">{sample.message}</p>
+                  <div className="email-pills">
+                    <span className="email-pill">{sample.location}</span>
+                    <span className="email-pill">{sample.time}</span>
+                  </div>
+                  <p className="email-quote">{"\u201c"}{sample.quote}{"\u201d"}</p>
+                  <p className="email-attribution">{sample.attribution}</p>
+                  <div className="email-divider" />
+                  <p className="email-metadata">{sample.metadata}</p>
                 </div>
               </div>
             ))}
