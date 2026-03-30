@@ -1,6 +1,6 @@
 # Look West
 
-Get a short, funny poem whenever the sunset in your area is predicted to be worth seeing.
+Get an email whenever the sunset in your location is worth seeing. Includes a curated quote.
 
 ![Look West preview](public/lookwest-preview.png)
 
