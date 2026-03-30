@@ -3,7 +3,6 @@
 /**
  * Alert email rendering and sending via Resend.
  * Follows the same pattern as convex/emails.ts (welcome email).
- * Template ported from scripts/alerts/email_template.html.
  */
 
 const BACKGROUND_IMAGE_URL =
