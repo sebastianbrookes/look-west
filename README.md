@@ -2,7 +2,7 @@
 
 Get an email whenever the sunset in your location is worth seeing. Includes a curated quote.
 
-![Look West preview](public/lookwest-preview.png)
+![Look West preview](public/web-preview.png)
 
 <!--
 ## Setup
