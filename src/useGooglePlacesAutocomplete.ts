@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { setOptions, importLibrary } from "@googlemaps/js-api-loader";
 import tzLookup from "tz-lookup";
 
@@ -48,6 +48,7 @@ function parseGoogleAddress(place: google.maps.places.PlaceResult): string {
 }
 
 const API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY ?? "";
+const PLACE_FIELDS = ["geometry", "name", "address_components"] as const;
 
 let configured = false;
 
@@ -58,12 +59,56 @@ function ensureConfigured() {
   }
 }
 
+function createUsBounds() {
+  return new google.maps.LatLngBounds(
+    { lat: 24.396, lng: -125.0 },
+    { lat: 49.384, lng: -66.934 }
+  );
+}
+
+function createLocationData(place: google.maps.places.PlaceResult): LocationData | null {
+  if (!place.geometry?.location) {
+    return null;
+  }
+
+  const latitude = place.geometry.location.lat();
+  const longitude = place.geometry.location.lng();
+  const locationName = parseGoogleAddress(place);
+  const timezone = resolveTimezone(latitude, longitude);
+
+  return {
+    latitude,
+    longitude,
+    locationName,
+    timezone,
+  };
+}
+
+async function loadPlacesLibrary() {
+  ensureConfigured();
+  await importLibrary("places");
+}
+
+let placesServiceInstance: google.maps.places.PlacesService | null = null;
+
+function getPlacesService(): google.maps.places.PlacesService {
+  if (!placesServiceInstance) {
+    placesServiceInstance = new google.maps.places.PlacesService(
+      document.createElement("div")
+    );
+  }
+  return placesServiceInstance;
+}
+
 export function useGooglePlacesAutocomplete({
   inputRef,
   onPlaceSelected,
   onError,
   ready = true,
-}: UseGooglePlacesAutocompleteOptions): { loaded: boolean } {
+}: UseGooglePlacesAutocompleteOptions): {
+  loaded: boolean;
+  resolveTypedLocation: (input: string) => Promise<LocationData | null>;
+} {
   const [loaded, setLoaded] = useState(false);
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
   const onPlaceSelectedRef = useRef(onPlaceSelected);
@@ -72,13 +117,83 @@ export function useGooglePlacesAutocomplete({
   onPlaceSelectedRef.current = onPlaceSelected;
   onErrorRef.current = onError;
 
+  const resolveTypedLocation = useCallback(
+    async (input: string): Promise<LocationData | null> => {
+      const trimmed = input.trim();
+
+      if (!API_KEY || !ready || !trimmed) {
+        return null;
+      }
+
+      await loadPlacesLibrary();
+
+      if (!google.maps.places) {
+        return null;
+      }
+
+      const prediction = await new Promise<google.maps.places.AutocompletePrediction | null>(
+        (resolve) => {
+          const autocompleteService = new google.maps.places.AutocompleteService();
+
+          autocompleteService.getPlacePredictions(
+            {
+              input: trimmed,
+              types: ["(regions)"],
+              bounds: createUsBounds(),
+              componentRestrictions: { country: "us" },
+            },
+            (predictions, status) => {
+              if (
+                status !== google.maps.places.PlacesServiceStatus.OK ||
+                !predictions?.length
+              ) {
+                resolve(null);
+                return;
+              }
+
+              resolve(predictions[0]);
+            }
+          );
+        }
+      );
+
+      if (!prediction?.place_id) {
+        return null;
+      }
+
+      const place = await new Promise<google.maps.places.PlaceResult | null>(
+        (resolve) => {
+          getPlacesService().getDetails(
+            {
+              placeId: prediction.place_id,
+              fields: [...PLACE_FIELDS],
+            },
+            (details, status) => {
+              if (
+                status !== google.maps.places.PlacesServiceStatus.OK ||
+                !details
+              ) {
+                resolve(null);
+                return;
+              }
+
+              resolve(details);
+            }
+          );
+        }
+      );
+
+      return place ? createLocationData(place) : null;
+    },
+    [ready]
+  );
+
   useEffect(() => {
     if (!API_KEY || !inputRef.current || !ready) return;
 
     let cancelled = false;
 
-    ensureConfigured();
-    importLibrary("places")
+    loadPlacesLibrary()
       .then(() => {
         if (cancelled || !inputRef.current) return;
 
@@ -86,35 +201,24 @@ export function useGooglePlacesAutocomplete({
           inputRef.current,
           {
             types: ["(regions)"],
-            fields: ["geometry", "name", "address_components"],
-            bounds: new google.maps.LatLngBounds(
-              { lat: 24.396, lng: -125.0 },
-              { lat: 49.384, lng: -66.934 }
-            ),
+            fields: [...PLACE_FIELDS],
+            bounds: createUsBounds(),
+            componentRestrictions: { country: "us" },
           }
         );
 
         autocomplete.addListener("place_changed", () => {
           const place = autocomplete.getPlace();
+          const locationData = createLocationData(place);
 
-          if (!place.geometry?.location) {
+          if (!locationData) {
             onErrorRef.current(
               "Couldn't find that location. Please select from the dropdown."
             );
             return;
           }
 
-          const latitude = place.geometry.location.lat();
-          const longitude = place.geometry.location.lng();
-          const locationName = parseGoogleAddress(place);
-          const timezone = resolveTimezone(latitude, longitude);
-
-          onPlaceSelectedRef.current({
-            latitude,
-            longitude,
-            locationName,
-            timezone,
-          });
+          onPlaceSelectedRef.current(locationData);
         });
 
         autocompleteRef.current = autocomplete;
@@ -136,5 +240,5 @@ export function useGooglePlacesAutocomplete({
     };
   }, [inputRef, ready]);
 
-  return { loaded };
+  return { loaded, resolveTypedLocation };
 }

@@ -181,10 +181,16 @@ export default function App() {
   const [confirmedEmail, setConfirmedEmail] = useState("");
   const [confirmedLocation, setConfirmedLocation] = useState("");
   const [copied, setCopied] = useState(false);
-  const manualGeocodeInFlightRef = useRef(false);
   const locationInputRef = useRef<HTMLInputElement>(null);
   const locationDataRef = useRef(locationData);
+  const locationInputValueRef = useRef(locationInput);
+  const locationBlurTimeoutRef = useRef<number | null>(null);
+  const locationResolutionInFlightRef = useRef<{
+    promise: Promise<LocationData | null>;
+    forValue: string;
+  } | null>(null);
   locationDataRef.current = locationData;
+  locationInputValueRef.current = locationInput;
   const [unsubscribeState, setUnsubscribeState] = useState<
     "idle" | "submitting" | "success" | "error"
   >("idle");
@@ -206,7 +212,7 @@ export default function App() {
   const updateLocationByToken = useMutation(api.users.updateLocationByToken);
   const getUserLocationByToken = useMutation(api.users.getUserLocationByToken);
 
-  const { loaded: placesLoaded } = useGooglePlacesAutocomplete({
+  const { loaded: placesLoaded, resolveTypedLocation } = useGooglePlacesAutocomplete({
     inputRef: locationInputRef,
     onPlaceSelected: (data) => {
       setLocationData(data);
@@ -218,14 +224,6 @@ export default function App() {
     },
     ready: !isChangeLocationPage || changeLocationState === "idle" || changeLocationState === "submitting",
   });
-
-  const hasLocationChangedSinceLastGeocode = (value: string) => {
-    const normalizedInput = value.trim().toLowerCase();
-    const normalizedGeocodedLocation =
-      locationData?.locationName.trim().toLowerCase() ?? "";
-
-    return !!normalizedInput && normalizedInput !== normalizedGeocodedLocation;
-  };
 
   const requestBrowserLocation = useCallback(async () => {
     setGeocodeError(null);
@@ -267,53 +265,36 @@ export default function App() {
     );
   }, []);
 
-  const geocodeManual = useCallback(async (q: string) => {
-    if (!q.trim() || manualGeocodeInFlightRef.current) return;
+  const geocodeManual = useCallback(async (q: string): Promise<LocationData | null> => {
+    const trimmed = q.trim();
+    if (!trimmed) return null;
 
-    manualGeocodeInFlightRef.current = true;
-    setGeocoding(true);
-    setGeocodeError(null);
-    try {
-      const trimmed = q.trim();
-      const isZip = /^\d{5}(-\d{4})?$/.test(trimmed);
-      const params = new URLSearchParams({
-        format: "json",
-        limit: "1",
-        addressdetails: "1",
-        ...(isZip
-          ? { postalcode: trimmed.slice(0, 5), countrycodes: "us" }
-          : { q: trimmed }),
-      });
-      const res = await fetch(
-        `https://nominatim.openstreetmap.org/search?${params}`,
-        { headers: NOMINATIM_HEADERS }
-      );
-      const results = await res.json();
-      if (!results.length) {
-        setGeocodeError(
-          "Couldn't find that location. Try a city name or zip code."
-        );
-        setLocationData(null);
-        return;
-      }
-      const r = results[0];
-      const latitude = parseFloat(r.lat);
-      const longitude = parseFloat(r.lon);
-      const data: LocationData = {
-        latitude,
-        longitude,
-        locationName: parseAddress(r.address || {}, r.display_name),
-        timezone: resolveTimezone(latitude, longitude),
-      };
-      setLocationData(data);
-      setLocationInput(data.locationName);
-    } catch {
-      setGeocodeError("Something went wrong looking up that location.");
-      setLocationData(null);
-    } finally {
-      manualGeocodeInFlightRef.current = false;
-      setGeocoding(false);
+    const isZip = /^\d{5}(-\d{4})?$/.test(trimmed);
+    const params = new URLSearchParams({
+      format: "json",
+      limit: "1",
+      addressdetails: "1",
+      ...(isZip
+        ? { postalcode: trimmed.slice(0, 5), countrycodes: "us" }
+        : { q: trimmed }),
+    });
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/search?${params}`,
+      { headers: NOMINATIM_HEADERS }
+    );
+    const results = await res.json();
+    if (!results.length) {
+      return null;
     }
+    const r = results[0];
+    const latitude = parseFloat(r.lat);
+    const longitude = parseFloat(r.lon);
+    return {
+      latitude,
+      longitude,
+      locationName: parseAddress(r.address || {}, r.display_name),
+      timezone: resolveTimezone(latitude, longitude),
+    };
   }, []);
 
   useEffect(() => {
@@ -338,20 +319,82 @@ export default function App() {
     return () => window.clearTimeout(timeoutId);
   }, [email]);
 
-  const resolveManualLocation = useCallback(() => {
-    const trimmed = locationInput.trim();
-    if (!trimmed) {
-      setLocationData(null);
-      setGeocodeError(null);
-      return;
+  const clearLocationBlurTimeout = useCallback(() => {
+    if (locationBlurTimeoutRef.current !== null) {
+      window.clearTimeout(locationBlurTimeoutRef.current);
+      locationBlurTimeoutRef.current = null;
     }
-    if (locationData?.locationName === trimmed) return;
-    geocodeManual(trimmed);
-  }, [geocodeManual, locationData, locationInput]);
+  }, []);
+
+  const resolveLocationInput = useCallback(
+    async (value?: string): Promise<LocationData | null> => {
+      const trimmed = (value ?? locationInputValueRef.current).trim();
+
+      if (!trimmed) {
+        setLocationData(null);
+        setGeocodeError(null);
+        return null;
+      }
+
+      const normalizedGeocodedLocation =
+        locationDataRef.current?.locationName.trim().toLowerCase() ?? "";
+      if (trimmed.toLowerCase() === normalizedGeocodedLocation) {
+        return locationDataRef.current;
+      }
+
+      if (locationResolutionInFlightRef.current?.forValue === trimmed) {
+        return locationResolutionInFlightRef.current.promise;
+      }
+
+      const resolutionPromise = (async () => {
+        setGeocoding(true);
+        setGeocodeError(null);
+
+        try {
+          const googleResolved = placesLoaded
+            ? await resolveTypedLocation(trimmed)
+            : null;
+          const resolved = googleResolved ?? (await geocodeManual(trimmed));
+
+          if (!resolved) {
+            setLocationData(null);
+            setGeocodeError(
+              "Couldn't find that location. Try a city name or zip code."
+            );
+            return null;
+          }
+
+          setLocationData(resolved);
+          setLocationInput(resolved.locationName);
+          return resolved;
+        } catch {
+          setLocationData(null);
+          setGeocodeError("Something went wrong looking up that location.");
+          return null;
+        } finally {
+          locationResolutionInFlightRef.current = null;
+          setGeocoding(false);
+        }
+      })();
+
+      locationResolutionInFlightRef.current = { promise: resolutionPromise, forValue: trimmed };
+      return resolutionPromise;
+    },
+    [geocodeManual, placesLoaded, resolveTypedLocation]
+  );
+
+  const scheduleLocationResolution = useCallback(() => {
+    clearLocationBlurTimeout();
+    locationBlurTimeoutRef.current = window.setTimeout(() => {
+      void resolveLocationInput();
+    }, placesLoaded ? 200 : 0);
+  }, [clearLocationBlurTimeout, placesLoaded, resolveLocationInput]);
 
   const closeDuplicateEmailModal = useCallback(() => {
     setDuplicateEmailModalOpen(false);
   }, []);
+
+  useEffect(() => clearLocationBlurTimeout, [clearLocationBlurTimeout]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -359,7 +402,9 @@ export default function App() {
     setEmailError("");
     setDuplicateEmailModalOpen(false);
 
-    if (!locationData) {
+    const resolvedLocation = await resolveLocationInput();
+
+    if (!resolvedLocation) {
       setSubmitError("Please set your location first.");
       return;
     }
@@ -377,10 +422,10 @@ export default function App() {
       await addUser({
         name: name.trim(),
         email: email.trim(),
-        ...locationData,
+        ...resolvedLocation,
       });
       setConfirmedEmail(email.trim());
-      setConfirmedLocation(locationData.locationName);
+      setConfirmedLocation(resolvedLocation.locationName);
       setSubmitted(true);
     } catch (err: unknown) {
       const readableError = getReadableErrorMessage(err, GENERIC_SUBMIT_ERROR);
@@ -449,15 +494,19 @@ export default function App() {
   }, [isChangeLocationPage, unsubscribeToken, getUserLocationByToken]);
 
   const handleChangeLocation = async () => {
-    if (!unsubscribeToken || !locationData) return;
+    if (!unsubscribeToken) return;
+
+    const resolvedLocation = await resolveLocationInput();
+    if (!resolvedLocation) return;
+
     setChangeLocationState("submitting");
     setChangeLocationError("");
     try {
       await updateLocationByToken({
         token: unsubscribeToken,
-        ...locationData,
+        ...resolvedLocation,
       });
-      setUpdatedLocationName(locationData.locationName);
+      setUpdatedLocationName(resolvedLocation.locationName);
       setChangeLocationState("success");
     } catch (err: unknown) {
       setChangeLocationState("idle");
@@ -511,22 +560,10 @@ export default function App() {
                       onKeyDown={(e) => {
                         if (e.key === "Enter") {
                           e.preventDefault();
-                          if (!placesLoaded) resolveManualLocation();
+                          void resolveLocationInput(e.currentTarget.value);
                         }
                       }}
-                      onBlur={() => {
-                        if (placesLoaded) {
-                          if (locationInput.trim() && !locationData) {
-                            setTimeout(() => {
-                              if (!locationDataRef.current) {
-                                setGeocodeError("Please select a location from the dropdown.");
-                              }
-                            }, 200);
-                          }
-                        } else {
-                          resolveManualLocation();
-                        }
-                      }}
+                      onBlur={scheduleLocationResolution}
                       disabled={isSubmitting || geocoding || browserGeoStatus === "requesting"}
                       autoComplete="off"
                       aria-invalid={!!geocodeError}
@@ -569,7 +606,12 @@ export default function App() {
                   type="button"
                   className="submit-btn"
                   onClick={handleChangeLocation}
-                  disabled={!locationData || isSubmitting}
+                  disabled={
+                    !locationInput.trim() ||
+                    isSubmitting ||
+                    geocoding ||
+                    browserGeoStatus === "requesting"
+                  }
                 >
                   {isSubmitting ? (
                     <>
@@ -887,22 +929,10 @@ export default function App() {
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
                       e.preventDefault();
-                      if (!placesLoaded) resolveManualLocation();
+                      void resolveLocationInput(e.currentTarget.value);
                     }
                   }}
-                  onBlur={() => {
-                    if (placesLoaded) {
-                      if (locationInput.trim() && !locationData) {
-                        setTimeout(() => {
-                          if (!locationDataRef.current) {
-                            setGeocodeError("Please select a location from the dropdown.");
-                          }
-                        }, 200);
-                      }
-                    } else {
-                      resolveManualLocation();
-                    }
-                  }}
+                  onBlur={scheduleLocationResolution}
                   disabled={geocoding || browserGeoStatus === "requesting"}
                   autoComplete="off"
                   aria-invalid={!!geocodeError}
