@@ -102,10 +102,10 @@ function getReadableErrorMessage(
 
   if (
     !readableMessage ||
-    isInternalConvexError(err.message) ||
     isInternalConvexError(readableMessage)
   ) {
     return fallback;
+  }
   }
 
   return readableMessage;
