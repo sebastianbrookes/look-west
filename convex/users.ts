@@ -6,7 +6,7 @@ import {
 } from "./_generated/server";
 import { internal } from "./_generated/api";
 import type { Doc } from "./_generated/dataModel";
-import { v } from "convex/values";
+import { ConvexError, v } from "convex/values";
 import { generateUnsubscribeToken } from "./unsubscribeTokens";
 import { rateLimit } from "./rateLimit";
 
@@ -64,7 +64,7 @@ export const addUser = mutation({
     const normalizedEmail = normalizeEmail(args.email);
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(normalizedEmail)) {
-      throw new Error("Please enter a valid email address.");
+      throw new ConvexError("Please enter a valid email address.");
     }
 
     const users = await ctx.db.query("users").collect();
@@ -73,12 +73,12 @@ export const addUser = mutation({
 
     if (existing) {
       if (existing.active) {
-        throw new Error(DUPLICATE_ACTIVE_EMAIL_ERROR);
+        throw new ConvexError(DUPLICATE_ACTIVE_EMAIL_ERROR);
       }
 
       const { ok } = await rateLimit(ctx, { name: "signupGlobal" });
       if (!ok) {
-        throw new Error(RATE_LIMIT_ERROR);
+        throw new ConvexError(RATE_LIMIT_ERROR);
       }
 
       const unsubscribeToken = await issueUnsubscribeToken(ctx);
@@ -103,7 +103,7 @@ export const addUser = mutation({
 
     const { ok } = await rateLimit(ctx, { name: "signupGlobal" });
     if (!ok) {
-      throw new Error(RATE_LIMIT_ERROR);
+      throw new ConvexError(RATE_LIMIT_ERROR);
     }
 
     const unsubscribeToken = await issueUnsubscribeToken(ctx);
@@ -150,7 +150,7 @@ export const unsubscribeByToken = mutation({
   handler: async (ctx, args) => {
     const token = args.token.trim();
     if (!token) {
-      throw new Error(INVALID_UNSUBSCRIBE_TOKEN_ERROR);
+      throw new ConvexError(INVALID_UNSUBSCRIBE_TOKEN_ERROR);
     }
 
     const user = await ctx.db
@@ -161,7 +161,7 @@ export const unsubscribeByToken = mutation({
       .unique();
 
     if (!user) {
-      throw new Error(INVALID_UNSUBSCRIBE_TOKEN_ERROR);
+      throw new ConvexError(INVALID_UNSUBSCRIBE_TOKEN_ERROR);
     }
 
     if (user.active) {
@@ -177,7 +177,7 @@ export const confirmByToken = mutation({
   handler: async (ctx, args) => {
     const token = args.token.trim();
     if (!token) {
-      throw new Error("Invalid confirmation link.");
+      throw new ConvexError("Invalid confirmation link.");
     }
 
     const user = await ctx.db
@@ -188,7 +188,7 @@ export const confirmByToken = mutation({
       .unique();
 
     if (!user) {
-      throw new Error("Invalid confirmation link.");
+      throw new ConvexError("Invalid confirmation link.");
     }
 
     if (!user.active) {
@@ -204,7 +204,7 @@ export const getUserLocationByToken = mutation({
   handler: async (ctx, args) => {
     const token = args.token.trim();
     if (!token) {
-      throw new Error("Invalid change-location link.");
+      throw new ConvexError("Invalid change-location link.");
     }
 
     const user = await ctx.db
@@ -215,7 +215,7 @@ export const getUserLocationByToken = mutation({
       .unique();
 
     if (!user || !user.active) {
-      throw new Error("Invalid change-location link.");
+      throw new ConvexError("Invalid change-location link.");
     }
 
     return { locationName: user.locationName };
@@ -233,7 +233,7 @@ export const updateLocationByToken = mutation({
   handler: async (ctx, args) => {
     const token = args.token.trim();
     if (!token) {
-      throw new Error("Invalid change-location link.");
+      throw new ConvexError("Invalid change-location link.");
     }
 
     const user = await ctx.db
@@ -244,12 +244,12 @@ export const updateLocationByToken = mutation({
       .unique();
 
     if (!user || !user.active) {
-      throw new Error("Invalid change-location link.");
+      throw new ConvexError("Invalid change-location link.");
     }
 
     const { ok } = await rateLimit(ctx, { name: "updateLocationGlobal" });
     if (!ok) {
-      throw new Error("Too many location-update attempts. Please try again later.");
+      throw new ConvexError("Too many location-update attempts. Please try again later.");
     }
 
     const { token: _token, ...location } = args;
