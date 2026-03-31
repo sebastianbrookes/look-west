@@ -42,9 +42,9 @@ await sharp(path.join(ROOT, "public", "background.webp"))
   .resize(WIDTH, HEIGHT, { fit: "cover", position: "center" })
   .composite([{ input: textBuffer, top: 0, left: 0 }])
   .png({ quality: 90 })
-  .toFile(path.join(ROOT, "public", "og-image.png"));
+  .toFile(path.join(ROOT, "public", "og.png"));
 
-console.log("✅ Created public/og-image.png (1200×630)");
+console.log("✅ Created public/og.png (1200×630)");
 
 // Clean up font file
 execSync(`rm "${fontPath}"`);

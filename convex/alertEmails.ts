@@ -7,7 +7,7 @@
 
 const BACKGROUND_IMAGE_URL =
   process.env.EMAIL_BACKGROUND_URL ??
-  "https://look-west.vercel.app/background.webp";
+  "https://golookwest.com/background.webp";
 
 function escapeHtml(str: string): string {
   return str
