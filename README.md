@@ -113,7 +113,7 @@ public/
   _redirects
   background.webp
   favicon.svg
-  og.png
+  og-image.png
   web-preview.png
 
 scripts/
