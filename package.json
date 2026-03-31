@@ -1,13 +1,14 @@
 {
   "name": "look-west",
   "version": "1.0.0",
-  "description": "",
+  "description": "Sunset email alerts with a React frontend, Convex backend, and Python scoring pipeline.",
   "main": "index.js",
   "scripts": {
     "dev": "vite",
     "dev:backend": "convex dev",
     "build": "vite build",
     "preview": "vite preview",
+    "generate:og": "node scripts/generate-og-image.mjs",
     "test": "vitest",
     "test:once": "vitest run"
   },
@@ -15,8 +16,14 @@
     "type": "git",
     "url": "git+https://github.com/sebastianbrookes/look-west.git"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "sunset",
+    "react",
+    "convex",
+    "vite",
+    "portfolio-project"
+  ],
+  "author": "Sebastian Brookes",
   "license": "ISC",
   "type": "commonjs",
   "bugs": {
