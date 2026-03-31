@@ -183,11 +183,13 @@ export default function App() {
   const [copied, setCopied] = useState(false);
   const locationInputRef = useRef<HTMLInputElement>(null);
   const locationDataRef = useRef(locationData);
+  const locationInputValueRef = useRef(locationInput);
   const locationBlurTimeoutRef = useRef<number | null>(null);
   const locationResolutionInFlightRef = useRef<Promise<LocationData | null> | null>(
     null
   );
   locationDataRef.current = locationData;
+  locationInputValueRef.current = locationInput;
   const [unsubscribeState, setUnsubscribeState] = useState<
     "idle" | "submitting" | "success" | "error"
   >("idle");
@@ -221,14 +223,6 @@ export default function App() {
     },
     ready: !isChangeLocationPage || changeLocationState === "idle" || changeLocationState === "submitting",
   });
-
-  const hasLocationChangedSinceLastGeocode = (value: string) => {
-    const normalizedInput = value.trim().toLowerCase();
-    const normalizedGeocodedLocation =
-      locationData?.locationName.trim().toLowerCase() ?? "";
-
-    return !!normalizedInput && normalizedInput !== normalizedGeocodedLocation;
-  };
 
   const requestBrowserLocation = useCallback(async () => {
     setGeocodeError(null);
@@ -332,8 +326,8 @@ export default function App() {
   }, []);
 
   const resolveLocationInput = useCallback(
-    async (value = locationInput): Promise<LocationData | null> => {
-      const trimmed = value.trim();
+    async (value?: string): Promise<LocationData | null> => {
+      const trimmed = (value ?? locationInputValueRef.current).trim();
 
       if (!trimmed) {
         setLocationData(null);
@@ -341,7 +335,9 @@ export default function App() {
         return null;
       }
 
-      if (!hasLocationChangedSinceLastGeocode(trimmed)) {
+      const normalizedGeocodedLocation =
+        locationDataRef.current?.locationName.trim().toLowerCase() ?? "";
+      if (trimmed.toLowerCase() === normalizedGeocodedLocation) {
         return locationDataRef.current;
       }
 
@@ -383,7 +379,7 @@ export default function App() {
       locationResolutionInFlightRef.current = resolutionPromise;
       return resolutionPromise;
     },
-    [geocodeManual, hasLocationChangedSinceLastGeocode, locationInput, placesLoaded, resolveTypedLocation]
+    [geocodeManual, placesLoaded, resolveTypedLocation]
   );
 
   const scheduleLocationResolution = useCallback(() => {
