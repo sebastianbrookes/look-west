@@ -23,7 +23,7 @@ type BrowserGeoStatus = "idle" | "requesting" | "denied" | "unsupported";
 /* ------------------------------------------------------------------ */
 
 const NOMINATIM_HEADERS = { "User-Agent": "LookWest/1.0" };
-const DUPLICATE_EMAIL_ERROR = "Email already registered";
+const DUPLICATE_EMAIL_ERROR = "Account already active";
 const GENERIC_ERROR = "Something went wrong. Please try again.";
 const GENERIC_SUBMIT_ERROR =
   "We couldn't complete your sign-up right now. Please try again in a moment.";
@@ -1220,10 +1220,10 @@ export default function App() {
             onClick={(e) => e.stopPropagation()}
           >
             <h2 className="modal-title" id="duplicate-email-title">
-              Email already registered
+              Account already active
             </h2>
             <p className="modal-body">
-              That email is already registered with an active account.
+              That email is already connected to an active account.
             </p>
             <button
               type="button"
