@@ -277,6 +277,41 @@ describe("users confirm flow", () => {
   });
 });
 
+describe("active user duplicate signup protection", () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("does not mutate an active user when the same email signs up again", async () => {
+    const t = convexTest(schema, modules);
+    const userId = await t.mutation(api.users.addUser, BASE_USER);
+    const createdUser = await t.run((ctx) => ctx.db.get(userId));
+
+    await t.mutation(api.users.confirmByToken, {
+      token: createdUser!.unsubscribeToken,
+    });
+
+    await expect(
+      t.mutation(api.users.addUser, {
+        ...BASE_USER,
+        name: "Mallory",
+        locationName: "San Francisco, CA",
+        latitude: 37.7749,
+        longitude: -122.4194,
+        timezone: "America/Los_Angeles",
+      })
+    ).rejects.toThrowError("Email already registered");
+
+    const unchangedUser = await t.run((ctx) => ctx.db.get(userId));
+    expect(unchangedUser?.name).toBe(BASE_USER.name);
+    expect(unchangedUser?.locationName).toBe(BASE_USER.locationName);
+    expect(unchangedUser?.latitude).toBe(BASE_USER.latitude);
+    expect(unchangedUser?.longitude).toBe(BASE_USER.longitude);
+    expect(unchangedUser?.timezone).toBe(BASE_USER.timezone);
+    expect(unchangedUser?.active).toBe(true);
+  });
+});
+
 describe("signup global rate limiting", () => {
   beforeEach(() => {
     vi.restoreAllMocks();

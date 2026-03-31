@@ -2,7 +2,6 @@ import {
   internalMutation,
   internalQuery,
   mutation,
-  query,
   type MutationCtx,
 } from "./_generated/server";
 import { internal } from "./_generated/api";
@@ -19,39 +18,7 @@ function normalizeEmail(email: string) {
   return email.trim().toLowerCase();
 }
 
-function normalizeLocationName(locationName: string) {
-  return locationName.trim().toLowerCase();
-}
-
-function hasLocationChanged(
-  existing: {
-    latitude: number;
-    longitude: number;
-    locationName: string;
-    timezone: string;
-  },
-  next: {
-    latitude: number;
-    longitude: number;
-    locationName: string;
-    timezone: string;
-  }
-) {
-  return (
-    existing.latitude !== next.latitude ||
-    existing.longitude !== next.longitude ||
-    existing.timezone !== next.timezone ||
-    normalizeLocationName(existing.locationName) !==
-      normalizeLocationName(next.locationName)
-  );
-}
-
 type UserWithMaybeToken = Doc<"users">;
-
-function withoutUnsubscribeToken(user: UserWithMaybeToken) {
-  const { unsubscribeToken: _unsubscribeToken, ...safeUser } = user;
-  return safeUser;
-}
 
 async function issueUnsubscribeToken(ctx: MutationCtx) {
   while (true) {
@@ -69,18 +36,6 @@ async function issueUnsubscribeToken(ctx: MutationCtx) {
   }
 }
 
-export const getActiveUsers = query({
-  args: {},
-  handler: async (ctx) => {
-    const users = await ctx.db
-      .query("users")
-      .filter((q) => q.eq(q.field("active"), true))
-      .collect();
-
-    return users.map(withoutUnsubscribeToken);
-  },
-});
-
 export const getActiveUsersForDelivery = internalQuery({
   args: {},
   handler: async (ctx) => {
@@ -93,19 +48,6 @@ export const getActiveUsersForDelivery = internalQuery({
       (user): user is UserWithMaybeToken & { unsubscribeToken: string } =>
         typeof user.unsubscribeToken === "string" && user.unsubscribeToken.length > 0
     );
-  },
-});
-
-export const getUserByEmail = query({
-  args: { email: v.string() },
-  handler: async (ctx, args) => {
-    const normalizedEmail = normalizeEmail(args.email);
-    const users = await ctx.db.query("users").collect();
-    const user =
-      users.find((existingUser) => normalizeEmail(existingUser.email) === normalizedEmail) ??
-      null;
-
-    return user ? withoutUnsubscribeToken(user) : null;
   },
 });
 
@@ -131,28 +73,7 @@ export const addUser = mutation({
 
     if (existing) {
       if (existing.active) {
-        const updates: Partial<Doc<"users">> = {
-          name: args.name,
-          email: normalizedEmail,
-          latitude: args.latitude,
-          longitude: args.longitude,
-          locationName: args.locationName,
-          timezone: args.timezone,
-        };
-
-        if (!existing.unsubscribeToken) {
-          updates.unsubscribeToken = await issueUnsubscribeToken(ctx);
-        }
-
-        if (!hasLocationChanged(existing, args)) {
-          if (updates.unsubscribeToken) {
-            await ctx.db.patch(existing._id, updates);
-          }
-          throw new Error(DUPLICATE_ACTIVE_EMAIL_ERROR);
-        }
-
-        await ctx.db.patch(existing._id, updates);
-        return existing._id;
+        throw new Error(DUPLICATE_ACTIVE_EMAIL_ERROR);
       }
 
       const { ok } = await rateLimit(ctx, { name: "signupGlobal" });
@@ -335,21 +256,5 @@ export const updateLocationByToken = mutation({
     await ctx.db.patch(user._id, location);
 
     return { success: true };
-  },
-});
-
-export const updateLocation = mutation({
-  args: {
-    userId: v.id("users"),
-    latitude: v.number(),
-    longitude: v.number(),
-    locationName: v.string(),
-    timezone: v.string(),
-  },
-  handler: async (ctx, args) => {
-    const { userId, ...location } = args;
-    const user = await ctx.db.get(userId);
-    if (!user) throw new Error("User not found");
-    await ctx.db.patch(userId, location);
   },
 });
