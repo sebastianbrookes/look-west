@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { useMutation } from "convex/react";
+import { ConvexError } from "convex/values";
 import tzLookup from "tz-lookup";
 import { api } from "../convex/_generated/api";
 import { useGooglePlacesAutocomplete } from "./useGooglePlacesAutocomplete";
@@ -81,13 +82,10 @@ function validateEmail(email: string): boolean {
 }
 
 function getReadableErrorMessage(err: unknown): string {
-  if (!(err instanceof Error)) return GENERIC_SUBMIT_ERROR;
-
-  const convexMessageMatch = err.message.match(
-    /Uncaught Error:\s*(.+?)(?:\s+at handler|\s+Called by client|$)/s
-  );
-
-  return convexMessageMatch?.[1].trim() || err.message || GENERIC_SUBMIT_ERROR;
+  if (err instanceof ConvexError) {
+    return typeof err.data === "string" ? err.data : GENERIC_SUBMIT_ERROR;
+  }
+  return GENERIC_SUBMIT_ERROR;
 }
 
 function getUnsubscribeTokenFromUrl() {
