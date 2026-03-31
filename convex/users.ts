@@ -10,7 +10,7 @@ import { v } from "convex/values";
 import { generateUnsubscribeToken } from "./unsubscribeTokens";
 import { rateLimit } from "./rateLimit";
 
-const DUPLICATE_ACTIVE_EMAIL_ERROR = "Email already registered";
+const DUPLICATE_ACTIVE_EMAIL_ERROR = "Account already active";
 const RATE_LIMIT_ERROR = "Too many signup attempts. Please try again later.";
 const INVALID_UNSUBSCRIBE_TOKEN_ERROR = "Invalid unsubscribe link.";
 

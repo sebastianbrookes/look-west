@@ -23,8 +23,10 @@ type BrowserGeoStatus = "idle" | "requesting" | "denied" | "unsupported";
 /* ------------------------------------------------------------------ */
 
 const NOMINATIM_HEADERS = { "User-Agent": "LookWest/1.0" };
-const DUPLICATE_EMAIL_ERROR = "Email already registered";
-const GENERIC_SUBMIT_ERROR = "Something went wrong. Please try again.";
+const DUPLICATE_EMAIL_ERROR = "Account already active";
+const GENERIC_ERROR = "Something went wrong. Please try again.";
+const GENERIC_SUBMIT_ERROR =
+  "We couldn't complete your sign-up right now. Please try again in a moment.";
 const INVALID_UNSUBSCRIBE_TOKEN_ERROR = "Invalid unsubscribe link.";
 
 function resolveTimezone(lat: number, lon: number): string {
@@ -80,14 +82,33 @@ function validateEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
 }
 
-function getReadableErrorMessage(err: unknown): string {
-  if (!(err instanceof Error)) return GENERIC_SUBMIT_ERROR;
+function isInternalConvexError(message: string): boolean {
+  return (
+    message.startsWith("[CONVEX ") ||
+    message.includes("Server Error Called by client")
+  );
+}
+
+function getReadableErrorMessage(
+  err: unknown,
+  fallback = GENERIC_ERROR
+): string {
+  if (!(err instanceof Error)) return fallback;
 
   const convexMessageMatch = err.message.match(
     /Uncaught Error:\s*(.+?)(?:\s+at handler|\s+Called by client|$)/s
   );
+  const readableMessage = convexMessageMatch?.[1].trim() || err.message.trim();
 
-  return convexMessageMatch?.[1].trim() || err.message || GENERIC_SUBMIT_ERROR;
+  if (
+    !readableMessage ||
+    isInternalConvexError(readableMessage)
+  ) {
+    return fallback;
+  }
+  }
+
+  return readableMessage;
 }
 
 function getUnsubscribeTokenFromUrl() {
@@ -380,7 +401,7 @@ export default function App() {
       setConfirmedLocation(locationData.locationName);
       setSubmitted(true);
     } catch (err: unknown) {
-      const readableError = getReadableErrorMessage(err);
+      const readableError = getReadableErrorMessage(err, GENERIC_SUBMIT_ERROR);
 
       if (readableError === DUPLICATE_EMAIL_ERROR) {
         setDuplicateEmailModalOpen(true);
@@ -1199,10 +1220,10 @@ export default function App() {
             onClick={(e) => e.stopPropagation()}
           >
             <h2 className="modal-title" id="duplicate-email-title">
-              Email already registered
+              Account already active
             </h2>
             <p className="modal-body">
-              That email is already registered with an active account.
+              That email is already connected to an active account.
             </p>
             <button
               type="button"
