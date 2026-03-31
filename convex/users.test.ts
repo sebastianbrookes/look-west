@@ -300,7 +300,7 @@ describe("active user duplicate signup protection", () => {
         longitude: -122.4194,
         timezone: "America/Los_Angeles",
       })
-    ).rejects.toThrowError("Email already registered");
+    ).rejects.toThrowError("Account already active");
 
     const unchangedUser = await t.run((ctx) => ctx.db.get(userId));
     expect(unchangedUser?.name).toBe(BASE_USER.name);
