@@ -83,33 +83,14 @@ function validateEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
 }
 
-function isInternalConvexError(message: string): boolean {
-  return (
-    message.startsWith("[CONVEX ") ||
-    message.includes("Server Error Called by client")
-  );
-}
-
 function getReadableErrorMessage(
   err: unknown,
   fallback = GENERIC_ERROR
 ): string {
-  if (!(err instanceof Error)) return fallback;
-
-  const convexMessageMatch = err.message.match(
-    /Uncaught Error:\s*(.+?)(?:\s+at handler|\s+Called by client|$)/s
-  );
-  const readableMessage = convexMessageMatch?.[1].trim() || err.message.trim();
-
-  if (
-    !readableMessage ||
-    isInternalConvexError(readableMessage)
-  ) {
-    return fallback;
+  if (err instanceof ConvexError) {
+    return typeof err.data === "string" ? err.data : fallback;
   }
-  }
-
-  return readableMessage;
+  return fallback;
 }
 
 function getUnsubscribeTokenFromUrl() {
