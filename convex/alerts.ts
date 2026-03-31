@@ -1,4 +1,4 @@
-import { query, internalQuery, internalMutation } from "./_generated/server";
+import { internalQuery, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
 
 export const getPendingAlerts = internalQuery({
@@ -36,21 +36,6 @@ export const expireStalePendingAlerts = internalMutation({
     if (stale.length) {
       console.log(`Expired ${stale.length} stale pending alert(s)`);
     }
-  },
-});
-
-export const getAlertHistory = query({
-  args: {
-    userId: v.id("users"),
-    limit: v.optional(v.number()),
-  },
-  handler: async (ctx, args) => {
-    const limit = args.limit ?? 20;
-    return await ctx.db
-      .query("alerts")
-      .withIndex("by_userId", (q) => q.eq("userId", args.userId))
-      .order("desc")
-      .take(limit);
   },
 });
 
