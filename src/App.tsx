@@ -185,9 +185,10 @@ export default function App() {
   const locationDataRef = useRef(locationData);
   const locationInputValueRef = useRef(locationInput);
   const locationBlurTimeoutRef = useRef<number | null>(null);
-  const locationResolutionInFlightRef = useRef<Promise<LocationData | null> | null>(
-    null
-  );
+  const locationResolutionInFlightRef = useRef<{
+    promise: Promise<LocationData | null>;
+    forValue: string;
+  } | null>(null);
   locationDataRef.current = locationData;
   locationInputValueRef.current = locationInput;
   const [unsubscribeState, setUnsubscribeState] = useState<
@@ -341,8 +342,8 @@ export default function App() {
         return locationDataRef.current;
       }
 
-      if (locationResolutionInFlightRef.current) {
-        return locationResolutionInFlightRef.current;
+      if (locationResolutionInFlightRef.current?.forValue === trimmed) {
+        return locationResolutionInFlightRef.current.promise;
       }
 
       const resolutionPromise = (async () => {
@@ -376,7 +377,7 @@ export default function App() {
         }
       })();
 
-      locationResolutionInFlightRef.current = resolutionPromise;
+      locationResolutionInFlightRef.current = { promise: resolutionPromise, forValue: trimmed };
       return resolutionPromise;
     },
     [geocodeManual, placesLoaded, resolveTypedLocation]

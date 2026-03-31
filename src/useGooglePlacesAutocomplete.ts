@@ -89,6 +89,17 @@ async function loadPlacesLibrary() {
   await importLibrary("places");
 }
 
+let placesServiceInstance: google.maps.places.PlacesService | null = null;
+
+function getPlacesService(): google.maps.places.PlacesService {
+  if (!placesServiceInstance) {
+    placesServiceInstance = new google.maps.places.PlacesService(
+      document.createElement("div")
+    );
+  }
+  return placesServiceInstance;
+}
+
 export function useGooglePlacesAutocomplete({
   inputRef,
   onPlaceSelected,
@@ -152,11 +163,7 @@ export function useGooglePlacesAutocomplete({
 
       const place = await new Promise<google.maps.places.PlaceResult | null>(
         (resolve) => {
-          const placesService = new google.maps.places.PlacesService(
-            document.createElement("div")
-          );
-
-          placesService.getDetails(
+          getPlacesService().getDetails(
             {
               placeId: prediction.place_id,
               fields: [...PLACE_FIELDS],
