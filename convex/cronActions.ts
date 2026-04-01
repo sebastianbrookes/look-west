@@ -18,6 +18,10 @@ const SUNSET_QUALITY_THRESHOLD = Number(
   process.env.SUNSET_QUALITY_THRESHOLD ?? "40"
 );
 const SUNSET_SCORER = process.env.SUNSET_SCORER ?? "sunsethue";
+const DEFAULT_ALERT_MINUTES_BEFORE_SUNSET = Number(
+  process.env.DEFAULT_ALERT_MINUTES_BEFORE_SUNSET ?? "60"
+);
+const CRON_INTERVAL_MINUTES = 15;
 const APP_BASE_URL = (
   process.env.APP_BASE_URL ?? "https://golookwest.com"
 ).replace(/\/+$/, "");
@@ -144,11 +148,13 @@ export const sunsetScoreCheck = internalAction({
           user.longitude,
           user.timezone
         );
+        const alertMinutes =
+          user.alertMinutesBefore ?? DEFAULT_ALERT_MINUTES_BEFORE_SUNSET;
         const minutesUntil =
           (sunset.getTime() - now.getTime()) / (1000 * 60);
 
-        // Timing filter: 60-75 minutes before sunset
-        if (minutesUntil < 60 || minutesUntil > 75) {
+        // Timing filter: [alertMinutes, alertMinutes + cronInterval] before sunset
+        if (minutesUntil < alertMinutes || minutesUntil > alertMinutes + CRON_INTERVAL_MINUTES) {
           console.log(
             `[${location}] Sunset in ${Math.round(minutesUntil)}m — outside window, skipping`
           );
@@ -219,7 +225,7 @@ export const sunsetScoreCheck = internalAction({
 
         const sunsetIso = sunset.toISOString();
         const sendTime = new Date(
-          sunset.getTime() - 60 * 60 * 1000
+          sunset.getTime() - alertMinutes * 60 * 1000
         ).toISOString();
 
         if (score >= SUNSET_QUALITY_THRESHOLD) {
