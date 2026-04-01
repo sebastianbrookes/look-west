@@ -18,7 +18,7 @@ function escapeHtml(str: string): string {
     .replace(/'/g, "&#x27;");
 }
 
-function splitMessageParts(message: string): {
+export function splitMessageParts(message: string): {
   quoteText: string;
   attribution: string;
   metadata: string;
