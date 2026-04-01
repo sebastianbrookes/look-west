@@ -8,10 +8,12 @@
  * @module
  */
 
+import type * as adminDigest from "../adminDigest.js";
 import type * as alertEmails from "../alertEmails.js";
 import type * as alerts from "../alerts.js";
 import type * as cronActions from "../cronActions.js";
 import type * as crons from "../crons.js";
+import type * as digestQueries from "../digestQueries.js";
 import type * as emails from "../emails.js";
 import type * as prompts from "../prompts.js";
 import type * as quotes from "../quotes.js";
@@ -27,10 +29,12 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  adminDigest: typeof adminDigest;
   alertEmails: typeof alertEmails;
   alerts: typeof alerts;
   cronActions: typeof cronActions;
   crons: typeof crons;
+  digestQueries: typeof digestQueries;
   emails: typeof emails;
   prompts: typeof prompts;
   quotes: typeof quotes;

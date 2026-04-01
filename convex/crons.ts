@@ -15,4 +15,10 @@ crons.interval(
   internal.cronActions.sendPendingAlerts
 );
 
+crons.daily(
+  "adminDailyDigest",
+  { hourUTC: 0, minuteUTC: 0 }, // midnight UTC ≈ 7pm EST / 8pm EDT
+  internal.adminDigest.sendDailyDigest
+);
+
 export default crons;
