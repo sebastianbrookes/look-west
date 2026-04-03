@@ -3,6 +3,7 @@ import { useMutation } from "convex/react";
 import { ConvexError } from "convex/values";
 import tzLookup from "tz-lookup";
 import { api } from "../convex/_generated/api";
+import { parseNominatimAddress } from "./locationAddress";
 import { useGooglePlacesAutocomplete } from "./useGooglePlacesAutocomplete";
 import "./App.css";
 
@@ -38,33 +39,6 @@ function resolveTimezone(lat: number, lon: number): string {
   }
 }
 
-function parseAddress(
-  addr: Record<string, string>,
-  displayName?: string
-): string {
-  const city =
-    addr.city_district ||
-    addr.city ||
-    addr.town ||
-    addr.village ||
-    addr.municipality ||
-    addr.suburb ||
-    addr.hamlet ||
-    addr.county;
-
-  if (!city) {
-    if (displayName) {
-      const parts = displayName.split(", ");
-      return parts.length >= 2 ? `${parts[0]}, ${parts[1]}` : parts[0];
-    }
-    return "Your area";
-  }
-
-  const iso = addr["ISO3166-2-lvl4"] || "";
-  const state = iso.startsWith("US-") ? iso.slice(3) : addr.state;
-  return state ? `${city}, ${state}` : city;
-}
-
 async function reverseGeocode(lat: number, lon: number): Promise<LocationData> {
   const res = await fetch(
     `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&addressdetails=1`,
@@ -74,7 +48,7 @@ async function reverseGeocode(lat: number, lon: number): Promise<LocationData> {
   return {
     latitude: lat,
     longitude: lon,
-    locationName: parseAddress(data.address || {}, data.display_name),
+    locationName: parseNominatimAddress(data.address || {}, data.display_name),
     timezone: resolveTimezone(lat, lon),
   };
 }
@@ -292,7 +266,7 @@ export default function App() {
     return {
       latitude,
       longitude,
-      locationName: parseAddress(r.address || {}, r.display_name),
+      locationName: parseNominatimAddress(r.address || {}, r.display_name),
       timezone: resolveTimezone(latitude, longitude),
     };
   }, []);
@@ -359,7 +333,7 @@ export default function App() {
           if (!resolved) {
             setLocationData(null);
             setGeocodeError(
-              "Couldn't find that location. Try a city name or zip code."
+              "Couldn't find that location. Try a city and country, or a US ZIP code."
             );
             return null;
           }
@@ -546,7 +520,7 @@ export default function App() {
                       type="text"
                       className="input"
                       name="location"
-                      placeholder="City or zip code"
+                      placeholder="City, country, or US ZIP"
                       value={locationInput}
                       onChange={(e) => {
                         const v = e.target.value;
@@ -915,7 +889,7 @@ export default function App() {
                   type="text"
                   className="input"
                   name="location"
-                  placeholder="City or zip code"
+                  placeholder="City, country, or US ZIP"
                   value={locationInput}
                   onChange={(e) => {
                     const v = e.target.value;

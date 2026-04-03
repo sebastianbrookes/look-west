@@ -29,6 +29,8 @@ function parseGoogleAddress(place: google.maps.places.PlaceResult): string {
 
   let city = "";
   let state = "";
+  let countryShort = "";
+  let countryLong = "";
 
   for (const component of components) {
     if (component.types.includes("locality")) {
@@ -37,6 +39,9 @@ function parseGoogleAddress(place: google.maps.places.PlaceResult): string {
       city = component.long_name;
     } else if (component.types.includes("administrative_area_level_1")) {
       state = component.short_name;
+    } else if (component.types.includes("country")) {
+      countryShort = component.short_name;
+      countryLong = component.long_name;
     }
   }
 
@@ -44,7 +49,11 @@ function parseGoogleAddress(place: google.maps.places.PlaceResult): string {
     city = place.name || "Your area";
   }
 
-  return state ? `${city}, ${state}` : city;
+  if (countryShort === "US") {
+    return state ? `${city}, ${state}` : city;
+  }
+
+  return countryLong ? `${city}, ${countryLong}` : city;
 }
 
 const API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY ?? "";
@@ -57,13 +66,6 @@ function ensureConfigured() {
     setOptions({ key: API_KEY, v: "weekly" });
     configured = true;
   }
-}
-
-function createUsBounds() {
-  return new google.maps.LatLngBounds(
-    { lat: 24.396, lng: -125.0 },
-    { lat: 49.384, lng: -66.934 }
-  );
 }
 
 function createLocationData(place: google.maps.places.PlaceResult): LocationData | null {
@@ -99,6 +101,8 @@ function getPlacesService(): google.maps.places.PlacesService {
   }
   return placesServiceInstance;
 }
+
+const REGION_TYPES: string[] = ["(regions)"];
 
 export function useGooglePlacesAutocomplete({
   inputRef,
@@ -138,9 +142,7 @@ export function useGooglePlacesAutocomplete({
           autocompleteService.getPlacePredictions(
             {
               input: trimmed,
-              types: ["(regions)"],
-              bounds: createUsBounds(),
-              componentRestrictions: { country: "us" },
+              types: REGION_TYPES,
             },
             (predictions, status) => {
               if (
@@ -200,10 +202,8 @@ export function useGooglePlacesAutocomplete({
         const autocomplete = new google.maps.places.Autocomplete(
           inputRef.current,
           {
-            types: ["(regions)"],
+            types: REGION_TYPES,
             fields: [...PLACE_FIELDS],
-            bounds: createUsBounds(),
-            componentRestrictions: { country: "us" },
           }
         );
 
