@@ -27,7 +27,7 @@ export function parseNominatimAddress(
   const countryCode = (addr.country_code || "").toLowerCase();
   if (countryCode === "us") {
     const iso = addr["ISO3166-2-lvl4"] || "";
-    const state = iso.startsWith("US-") ? iso.slice(3) : addr.state;
+    const state = iso.startsWith("US-") ? iso.slice(3) : undefined;
     return state ? `${city}, ${state}` : city;
   }
 

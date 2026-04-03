@@ -53,7 +53,7 @@ function parseGoogleAddress(place: google.maps.places.PlaceResult): string {
     return state ? `${city}, ${state}` : city;
   }
 
-  return countryLong ? `${city}, ${countryLong}` : city;
+  return countryLong ? `${city}, ${countryLong}` : countryShort ? `${city}, ${countryShort}` : city;
 }
 
 const API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY ?? "";
