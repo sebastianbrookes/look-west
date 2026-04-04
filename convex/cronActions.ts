@@ -22,6 +22,7 @@ const DEFAULT_ALERT_MINUTES_BEFORE_SUNSET = Number(
   process.env.DEFAULT_ALERT_MINUTES_BEFORE_SUNSET ?? "60"
 );
 const CRON_INTERVAL_MINUTES = 15;
+const WINDOW_BUFFER_MINUTES = 5;
 const APP_BASE_URL = (
   process.env.APP_BASE_URL ?? "https://golookwest.com"
 ).replace(/\/+$/, "");
@@ -154,7 +155,7 @@ export const sunsetScoreCheck = internalAction({
           (sunset.getTime() - now.getTime()) / (1000 * 60);
 
         // Timing filter: [alertMinutes, alertMinutes + cronInterval] before sunset
-        if (minutesUntil < alertMinutes || minutesUntil > alertMinutes + CRON_INTERVAL_MINUTES) {
+        if (minutesUntil < alertMinutes || minutesUntil > alertMinutes + CRON_INTERVAL_MINUTES + WINDOW_BUFFER_MINUTES) {
           console.log(
             `[${location}] Sunset in ${Math.round(minutesUntil)}m — outside window, skipping`
           );
