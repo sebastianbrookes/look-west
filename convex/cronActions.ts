@@ -22,6 +22,9 @@ const DEFAULT_ALERT_MINUTES_BEFORE_SUNSET = Number(
   process.env.DEFAULT_ALERT_MINUTES_BEFORE_SUNSET ?? "60"
 );
 const CRON_INTERVAL_MINUTES = 15;
+const RESEND_THROTTLE_MS = Number(
+  process.env.RESEND_THROTTLE_MS ?? "250"
+);
 const APP_BASE_URL = (
   process.env.APP_BASE_URL ?? "https://golookwest.com"
 ).replace(/\/+$/, "");
@@ -391,9 +394,6 @@ export const sendPendingAlerts = internalAction({
           status: "sent",
         });
         console.log(`[${location}] Email sent to ${user.email}`);
-
-        // Throttle to stay under Resend's 5 req/s rate limit
-        await new Promise((r) => setTimeout(r, 250));
       } catch (e) {
         console.error(`[${location}] Failed to send email: ${e}`);
         await ctx.runMutation(internal.alerts.updateAlertStatus, {
@@ -401,6 +401,9 @@ export const sendPendingAlerts = internalAction({
           status: "error",
           errorMessage: String(e),
         });
+      } finally {
+        // Throttle to stay under Resend's 5 req/s rate limit
+        await new Promise((r) => setTimeout(r, RESEND_THROTTLE_MS));
       }
     }
   },
