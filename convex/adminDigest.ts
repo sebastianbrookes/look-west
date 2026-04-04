@@ -80,6 +80,33 @@ function formatShortDate(timezone: string): string {
 }
 
 // ---------------------------------------------------------------------------
+// Retry helper for transient errors (e.g. WorkerOverloaded)
+// ---------------------------------------------------------------------------
+
+async function withRetry<T>(
+  fn: () => Promise<T>,
+  { retries = 3, baseDelayMs = 1000 } = {}
+): Promise<T> {
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      return await fn();
+    } catch (error: unknown) {
+      const isRetryable =
+        error instanceof Error &&
+        (error.message.includes("WorkerOverloaded") ||
+          error.message.includes("overloaded"));
+      if (!isRetryable || attempt === retries) throw error;
+      const delayMs = baseDelayMs * 2 ** attempt;
+      console.warn(
+        `Transient error (attempt ${attempt + 1}/${retries + 1}), retrying in ${delayMs}ms: ${error.message}`
+      );
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+    }
+  }
+  throw new Error("unreachable");
+}
+
+// ---------------------------------------------------------------------------
 // Email Template
 // ---------------------------------------------------------------------------
 
@@ -372,17 +399,19 @@ export const sendDailyDigest = internalAction({
       `Computing daily digest for ${dateLabel} (${startTime} \u2013 ${endTime})`
     );
 
-    const [sentAlerts, newSignups, totalActiveUsers] = await Promise.all([
-      ctx.runQuery(internal.digestQueries.getAlertsSentInRange, {
-        startTime,
-        endTime,
-      }),
-      ctx.runQuery(internal.digestQueries.getNewSignupsInRange, {
-        startTime,
-        endTime,
-      }),
-      ctx.runQuery(internal.digestQueries.getTotalActiveUsers, {}),
-    ]);
+    const [sentAlerts, newSignups, totalActiveUsers] = await withRetry(() =>
+      Promise.all([
+        ctx.runQuery(internal.digestQueries.getAlertsSentInRange, {
+          startTime,
+          endTime,
+        }),
+        ctx.runQuery(internal.digestQueries.getNewSignupsInRange, {
+          startTime,
+          endTime,
+        }),
+        ctx.runQuery(internal.digestQueries.getTotalActiveUsers, {}),
+      ])
+    );
 
     // Extract and deduplicate quotes from sent alerts
     const seenQuotes = new Set<string>();
