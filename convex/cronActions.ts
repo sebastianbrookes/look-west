@@ -391,6 +391,9 @@ export const sendPendingAlerts = internalAction({
           status: "sent",
         });
         console.log(`[${location}] Email sent to ${user.email}`);
+
+        // Throttle to stay under Resend's 5 req/s rate limit
+        await new Promise((r) => setTimeout(r, 250));
       } catch (e) {
         console.error(`[${location}] Failed to send email: ${e}`);
         await ctx.runMutation(internal.alerts.updateAlertStatus, {
