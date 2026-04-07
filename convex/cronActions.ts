@@ -22,6 +22,9 @@ const DEFAULT_ALERT_MINUTES_BEFORE_SUNSET = Number(
   process.env.DEFAULT_ALERT_MINUTES_BEFORE_SUNSET ?? "60"
 );
 const CRON_INTERVAL_MINUTES = 15;
+const RESEND_THROTTLE_MS = Number(
+  process.env.RESEND_THROTTLE_MS ?? "250"
+);
 const WINDOW_BUFFER_MINUTES = 5;
 const APP_BASE_URL = (
   process.env.APP_BASE_URL ?? "https://golookwest.com"
@@ -399,6 +402,9 @@ export const sendPendingAlerts = internalAction({
           status: "error",
           errorMessage: String(e),
         });
+      } finally {
+        // Throttle to stay under Resend's 5 req/s rate limit
+        await new Promise((r) => setTimeout(r, RESEND_THROTTLE_MS));
       }
     }
   },
