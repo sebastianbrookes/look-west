@@ -17,7 +17,7 @@ crons.interval(
 
 crons.daily(
   "adminDailyDigest",
-  { hourUTC: 0, minuteUTC: 0 }, // midnight UTC ≈ 7pm EST / 8pm EDT
+  { hourUTC: 3, minuteUTC: 0 }, // 3am UTC ≈ 10pm EST / 11pm EDT
   internal.adminDigest.sendDailyDigest
 );
 
