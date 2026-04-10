@@ -1,5 +1,17 @@
-import { internalQuery, internalMutation } from "./_generated/server";
+import { query, internalQuery, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
+
+export const getAlertsSentCount = query({
+  args: {},
+  handler: async (ctx) => {
+    const alerts = await ctx.db
+      .query("alerts")
+      .withIndex("by_status", (q) => q.eq("status", "sent"))
+      .collect();
+
+    return alerts.filter((a) => a.test !== true).length;
+  },
+});
 
 export const getPendingAlerts = internalQuery({
   args: {},
