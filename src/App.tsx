@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useMemo, useRef } from "react";
-import { useMutation } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { ConvexError } from "convex/values";
 import tzLookup from "tz-lookup";
 import { api } from "../convex/_generated/api";
@@ -180,6 +180,7 @@ export default function App() {
   const [currentLocationName, setCurrentLocationName] = useState("");
   const [updatedLocationName, setUpdatedLocationName] = useState("");
 
+  const alertsSentCount = useQuery(api.alerts.getAlertsSentCount);
   const addUser = useMutation(api.users.addUser);
   const unsubscribeByToken = useMutation(api.users.unsubscribeByToken);
   const confirmByToken = useMutation(api.users.confirmByToken);
@@ -1015,6 +1016,16 @@ export default function App() {
             >
               Sebastian Brookes
             </a>.</p>
+
+          {alertsSentCount !== undefined && (
+            <div className="alerts-sent-ticker">
+              <span className="ticker-pulse" aria-hidden="true" />
+              <span className="ticker-text">
+                <span className="ticker-count">{alertsSentCount.toLocaleString()}</span>{" "}
+                sunset alerts sent
+              </span>
+            </div>
+          )}
           </div>
 
           <a href="#how-it-works" className="scroll-hint" aria-label="Scroll to learn more">
