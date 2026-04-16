@@ -270,7 +270,6 @@ def get_current_weather(lat, lon):
 
 def generate_message(
     quality_percent,
-    quality_label,
     location_name,
     sunset_time_local,
     temp_f,
