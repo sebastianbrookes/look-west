@@ -214,8 +214,8 @@ export function buildAlertHtml(args: {
 
               <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
                 <tr>
-                  <td class="card-inner" style="padding: 18px 34px 18px;">
-                    <p class="meta-text" style="margin: 0; font-family: 'Figtree', 'Inter', 'Segoe UI', -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif; font-size: 13.5px; line-height: 1.45; color: #7a6654; letter-spacing: 0.015em;">${metadataHtml}</p>
+                  <td class="card-inner" style="padding: 14px 34px 14px;">
+                    <p class="meta-text" style="margin: 0; font-family: 'Figtree', 'Inter', 'Segoe UI', -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif; font-size: 11.5px; line-height: 1; color: #a89080; letter-spacing: 0.02em;">${metadataHtml}</p>
                   </td>
                 </tr>
               </table>
