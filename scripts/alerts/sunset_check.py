@@ -4,6 +4,7 @@
 import argparse
 import logging
 import random
+import re
 import sys
 import os
 import time
@@ -13,6 +14,7 @@ from zoneinfo import ZoneInfo
 import requests
 from astral import LocationInfo
 from astral.sun import sun
+from bs4 import BeautifulSoup
 from convex import ConvexClient
 from dotenv import load_dotenv
 
@@ -32,7 +34,6 @@ logger = logging.getLogger("sunset_check")
 # Environment
 CONVEX_URL = os.getenv("CONVEX_URL")
 CONVEX_ADMIN_KEY = os.getenv("CONVEX_ADMIN_KEY", "")
-SUNSETHUE_API_KEY = os.getenv("SUNSETHUE_API_KEY", "")
 OPENWEATHERMAP_API_KEY = os.getenv("OPENWEATHERMAP_API_KEY", "")
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
 SUNSET_QUALITY_THRESHOLD = int(os.getenv("SUNSET_QUALITY_THRESHOLD", "40"))
@@ -95,40 +96,57 @@ def get_sunset_time(lat, lon, tz_name):
 
 
 def get_sunsethue_score(lat, lon, cache, tz_name="UTC"):
-    """Fetch sunset quality from SunsetHue API with geo-caching."""
+    """Scrape sunset quality (v3 "new model") from the SunsetHue web page.
+
+    The public API still returns the old model; the new model is only exposed in
+    the rendered web page, so we fetch the HTML and parse the score span.
+    """
     cache_key = (round(lat, 2), round(lon, 2))
     if cache_key in cache:
         return cache[cache_key]
 
-    today = datetime.now(ZoneInfo(tz_name)).strftime("%Y-%m-%d")
+    now = datetime.now(ZoneInfo(tz_name))
+    date_str = now.strftime("%Y.%m.%d")
+    offset = now.utcoffset()
+    offset_hours = int(offset.total_seconds() // 3600) if offset else 0
 
     def _fetch():
         resp = requests.get(
-            "https://api.sunsethue.com/event",
+            "https://sunsethue.com/app/event",
             params={
                 "latitude": lat,
                 "longitude": lon,
-                "date": today,
+                "date": date_str,
                 "type": "sunset",
+                "timezone": offset_hours,
             },
-            headers={"x-api-key": SUNSETHUE_API_KEY},
-            timeout=10,
+            headers={
+                "User-Agent": (
+                    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+                    "AppleWebKit/537.36 (KHTML, like Gecko) "
+                    "Chrome/121.0.0.0 Safari/537.36"
+                ),
+            },
+            timeout=15,
         )
         resp.raise_for_status()
-        return resp.json()
+        return resp.text
 
-    data = retry(_fetch, retries=1, delay=2.0, label="SunsetHue")
+    html = retry(_fetch, retries=1, delay=2.0, label="SunsetHue")
 
-    event_data = data.get("data")
-    if not event_data:
-        raise ValueError("No quality data returned from SunsetHue")
+    soup = BeautifulSoup(html, "html.parser")
+    for span in soup.select("span.font-bold.text-lg.mr-2"):
+        text = span.get_text(" ", strip=True)
+        m = re.match(r"(\d+)%\s*\(\s*([a-zA-Z]+)\s*\)", text)
+        if m:
+            result = {
+                "score": int(m.group(1)),
+                "label": m.group(2).lower().capitalize(),
+            }
+            cache[cache_key] = result
+            return result
 
-    result = {
-        "score": round(event_data.get("quality", 0) * 100),
-        "label": event_data.get("quality_text", "Poor"),
-    }
-    cache[cache_key] = result
-    return result
+    raise ValueError("Could not extract v3 score from SunsetHue page")
 
 
 def get_owm_score(lat, lon, cache):
@@ -361,7 +379,9 @@ def phase_check(client, test_email=None):
                     weather_desc = "unknown"
                     cloud_cover = 0
 
-                quote = client.query("quotes:getRandomQuote", {"nonce": random.random()})
+                quote = client.query(
+                    "quotes:getRandomQuote", {"nonce": random.random()}
+                )
                 if not quote:
                     logger.error(f"[{location}] No quotes in database, skipping")
                     continue

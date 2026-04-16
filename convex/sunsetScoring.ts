@@ -30,43 +30,77 @@ export function getSunsetTime(lat: number, lon: number, timezone: string): Date 
 }
 
 // ---------------------------------------------------------------------------
-// SunsetHue scorer
+// SunsetHue scorer — scrapes the v3 "new model" score from the public web page
+// because the public API still returns the old model.
 // ---------------------------------------------------------------------------
+
+function getTimezoneOffsetHours(timezone: string, when: Date): number {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: timezone,
+    timeZoneName: "shortOffset",
+  }).formatToParts(when);
+  const name = parts.find((p) => p.type === "timeZoneName")?.value ?? "GMT";
+  const m = name.match(/GMT([+-])(\d+)(?::(\d+))?/);
+  if (!m) return 0;
+  const sign = m[1] === "-" ? -1 : 1;
+  const h = Number(m[2]);
+  const min = Number(m[3] ?? 0);
+  return sign * (h + min / 60);
+}
 
 export async function fetchSunsetHueScore(
   lat: number,
   lon: number,
-  timezone: string,
-  apiKey: string
+  timezone: string
 ): Promise<{ score: number; label: string }> {
   const now = new Date();
-  const formatter = new Intl.DateTimeFormat("en-CA", { timeZone: timezone });
-  const today = formatter.format(now); // "YYYY-MM-DD"
+
+  const dateParts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: timezone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(now);
+  const y = dateParts.find((p) => p.type === "year")!.value;
+  const mo = dateParts.find((p) => p.type === "month")!.value;
+  const d = dateParts.find((p) => p.type === "day")!.value;
+  const date = `${y}.${mo}.${d}`;
+
+  const offsetHours = Math.round(getTimezoneOffsetHours(timezone, now));
 
   const params = new URLSearchParams({
     latitude: String(lat),
     longitude: String(lon),
-    date: today,
+    date,
     type: "sunset",
+    timezone: String(offsetHours),
   });
 
-  const resp = await fetch(`https://api.sunsethue.com/event?${params}`, {
-    headers: { "x-api-key": apiKey },
+  const resp = await fetch(`https://sunsethue.com/app/event?${params}`, {
+    headers: {
+      "User-Agent":
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
+    },
   });
   if (!resp.ok) {
-    throw new Error(`SunsetHue API error: ${resp.status} ${await resp.text()}`);
+    throw new Error(`SunsetHue page error: ${resp.status}`);
   }
 
-  const data = await resp.json();
-  const eventData = data?.data;
-  if (!eventData) {
-    throw new Error("No quality data returned from SunsetHue");
+  const html = (await resp.text()).replace(/<!--[^>]*-->/g, "");
+
+  // The v3 score renders as:
+  //   <span class="font-bold text-lg mr-2">29% <span ...>(fair)</span></span>
+  const pattern =
+    /<span[^>]*class="(?=[^"]*\bfont-bold\b)(?=[^"]*\btext-lg\b)(?=[^"]*\bmr-2\b)[^"]*"[^>]*>\s*(\d+)%\s*<span[^>]*>\(\s*([a-zA-Z]+)\s*\)<\/span>/;
+  const match = html.match(pattern);
+  if (!match) {
+    throw new Error("Could not extract v3 score from SunsetHue page");
   }
 
-  return {
-    score: Math.round((eventData.quality ?? 0) * 100),
-    label: eventData.quality_text ?? "Poor",
-  };
+  const score = Number(match[1]);
+  const labelRaw = match[2].toLowerCase();
+  const label = labelRaw[0].toUpperCase() + labelRaw.slice(1);
+  return { score, label };
 }
 
 // ---------------------------------------------------------------------------
