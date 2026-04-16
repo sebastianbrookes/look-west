@@ -96,6 +96,25 @@ def get_sunset_time(lat, lon, tz_name):
 # ---------------------------------------------------------------------------
 
 
+def _iso_to_local_12h(iso_str, tz_name):
+    """Format an ISO-8601 UTC timestamp as 12h local time (e.g. '7:21 PM')."""
+    try:
+        dt = datetime.fromisoformat(iso_str.replace("Z", "+00:00"))
+        local = dt.astimezone(ZoneInfo(tz_name))
+        return local.strftime("%-I:%M %p")
+    except (ValueError, TypeError):
+        return None
+
+
+def _extract_highlight_time(html, tz_name):
+    """Pull the 'highlight' ISO datetime from the API payload embedded in the
+    page's RSC stream. Returns a 12h local string, or None when absent/null."""
+    m = re.search(r'"highlight":"([^"]+)"', html)
+    if not m:
+        return None
+    return _iso_to_local_12h(m.group(1), tz_name)
+
+
 def _scrape_sunsethue_v3(lat, lon, tz_name):
     """Scrape the v3 "new model" score from the SunsetHue web page."""
     now = datetime.now(ZoneInfo(tz_name))
@@ -135,6 +154,7 @@ def _scrape_sunsethue_v3(lat, lon, tz_name):
             return {
                 "score": int(m.group(1)),
                 "label": m.group(2).lower().capitalize(),
+                "highlight_time": _extract_highlight_time(html, tz_name),
             }
 
     raise ValueError("Could not extract v3 score from SunsetHue page")
@@ -168,9 +188,11 @@ def _fetch_sunsethue_api(lat, lon, tz_name):
     if not event_data:
         raise ValueError("No quality data returned from SunsetHue API")
 
+    highlight = event_data.get("highlight")
     return {
         "score": round(event_data.get("quality", 0) * 100),
         "label": event_data.get("quality_text", "Poor"),
+        "highlight_time": _iso_to_local_12h(highlight, tz_name) if highlight else None,
     }
 
 
@@ -305,7 +327,14 @@ def generate_message(
     return {"message": message, "subject": subject}
 
 
-def build_quote_message(quote, sunset_time_local, temp_f, quality_score, location_name):
+def build_quote_message(
+    quote,
+    sunset_time_local,
+    temp_f,
+    quality_score,
+    location_name,
+    highlight_time=None,
+):
     """Build a message and subject line from a Convex quote record."""
     sunset_dt = datetime.strptime(sunset_time_local, "%I:%M %p")
     viewing_time = (sunset_dt - timedelta(minutes=30)).strftime("%-I:%M %p")
@@ -314,6 +343,13 @@ def build_quote_message(quote, sunset_time_local, temp_f, quality_score, locatio
     if quote.get("source"):
         attribution += f", {quote['source']}"
 
+    meta_parts = [f"View at {viewing_time}"]
+    if highlight_time:
+        meta_parts.append(f"Peak at {highlight_time}")
+    meta_parts.append(f"{temp_f}\u00b0F")
+    meta_parts.append(f"Quality {quality_score}%")
+    meta_line = "  \u00b7  ".join(meta_parts)
+
     message = "\n".join(
         [
             f"\u201c{quote['text']}\u201d",
@@ -321,7 +357,7 @@ def build_quote_message(quote, sunset_time_local, temp_f, quality_score, locatio
             "",
             "---",
             "",
-            f"View at {viewing_time}  \u00b7  {temp_f}\u00b0F  \u00b7  Quality {quality_score}%",
+            meta_line,
         ]
     )
 
@@ -432,7 +468,12 @@ def phase_check(client, test_email=None):
                     continue
 
                 result = build_quote_message(
-                    quote, sunset_local, temp_f, score, location
+                    quote,
+                    sunset_local,
+                    temp_f,
+                    score,
+                    location,
+                    highlight_time=quality.get("highlight_time"),
                 )
                 message = result["message"]
                 subject = result["subject"]
