@@ -28,7 +28,7 @@ Live site: https://golookwest.com
 
    ```bash
    npm install
-   pip install -r requirements.txt
+   uv sync
    ```
 
 2. Create local environment variables:

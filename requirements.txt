@@ -1,6 +1,0 @@
-convex
-resend
-astral
-requests
-python-dotenv
-beautifulsoup4

@@ -30,18 +30,120 @@ export function getSunsetTime(lat: number, lon: number, timezone: string): Date 
 }
 
 // ---------------------------------------------------------------------------
-// SunsetHue scorer
+// SunsetHue scorer — prefers the v3 "new model" score scraped from the public
+// web page; falls back to the public API (old model) if scraping fails.
+// Both paths also extract the optional "highlight" time (peak sunset moment).
 // ---------------------------------------------------------------------------
 
-export async function fetchSunsetHueScore(
+function getTimezoneOffsetHours(timezone: string, when: Date): number {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: timezone,
+    timeZoneName: "shortOffset",
+  }).formatToParts(when);
+  const name = parts.find((p) => p.type === "timeZoneName")?.value ?? "GMT";
+  const m = name.match(/GMT([+-])(\d+)(?::(\d+))?/);
+  if (!m) return 0;
+  const sign = m[1] === "-" ? -1 : 1;
+  const h = Number(m[2]);
+  const min = Number(m[3] ?? 0);
+  return sign * (h + min / 60);
+}
+
+function formatLocal12h(iso: string, timezone: string): string | null {
+  const dt = new Date(iso);
+  if (Number.isNaN(dt.getTime())) return null;
+  return dt.toLocaleTimeString("en-US", {
+    timeZone: timezone,
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
+}
+
+export type SunsetQuality = {
+  score: number;
+  label: string;
+  highlightTime?: string;
+};
+
+async function scrapeSunsetHueV3(
+  lat: number,
+  lon: number,
+  timezone: string
+): Promise<SunsetQuality> {
+  const now = new Date();
+
+  const dateParts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: timezone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(now);
+  const y = dateParts.find((p) => p.type === "year")!.value;
+  const mo = dateParts.find((p) => p.type === "month")!.value;
+  const d = dateParts.find((p) => p.type === "day")!.value;
+  const date = `${y}.${mo}.${d}`;
+
+  const offsetHours = Math.round(getTimezoneOffsetHours(timezone, now));
+
+  const params = new URLSearchParams({
+    latitude: String(lat),
+    longitude: String(lon),
+    date,
+    type: "sunset",
+    timezone: String(offsetHours),
+  });
+
+  const resp = await fetch(`https://sunsethue.com/app/event?${params}`, {
+    headers: {
+      "User-Agent":
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
+    },
+  });
+  if (!resp.ok) {
+    throw new Error(`SunsetHue page error: ${resp.status}`);
+  }
+
+  const rawHtml = await resp.text();
+  const html = rawHtml.replace(/<!--[^>]*-->/g, "");
+
+  // The v3 score renders as:
+  //   <span class="font-bold text-lg mr-2">29% <span ...>(fair)</span></span>
+  const pattern =
+    /<span[^>]*class="(?=[^"]*\bfont-bold\b)(?=[^"]*\btext-lg\b)(?=[^"]*\bmr-2\b)[^"]*"[^>]*>\s*(\d+)%\s*<span[^>]*>\(\s*([a-zA-Z]+)\s*\)<\/span>/;
+  const match = html.match(pattern);
+  if (!match) {
+    throw new Error("Could not extract v3 score from SunsetHue page");
+  }
+
+  const score = Number(match[1]);
+  const labelRaw = match[2].toLowerCase();
+  const label = labelRaw[0].toUpperCase() + labelRaw.slice(1);
+
+  // The old-model API payload is embedded in the RSC stream. Pull the
+  // "highlight" ISO datetime out of it when non-null — that's the peak sunset
+  // moment the page renders as "Highlight time".
+  let highlightTime: string | undefined;
+  const highlightMatch = rawHtml.match(/"highlight":"([^"]+)"/);
+  if (highlightMatch) {
+    const formatted = formatLocal12h(highlightMatch[1], timezone);
+    if (formatted) highlightTime = formatted;
+  }
+
+  return { score, label, highlightTime };
+}
+
+async function fetchSunsetHueApi(
   lat: number,
   lon: number,
   timezone: string,
   apiKey: string
-): Promise<{ score: number; label: string }> {
-  const now = new Date();
+): Promise<SunsetQuality> {
+  if (!apiKey) {
+    throw new Error("SUNSETHUE_API_KEY not set");
+  }
   const formatter = new Intl.DateTimeFormat("en-CA", { timeZone: timezone });
-  const today = formatter.format(now); // "YYYY-MM-DD"
+  const today = formatter.format(new Date()); // "YYYY-MM-DD"
 
   const params = new URLSearchParams({
     latitude: String(lat),
@@ -63,10 +165,31 @@ export async function fetchSunsetHueScore(
     throw new Error("No quality data returned from SunsetHue");
   }
 
+  let highlightTime: string | undefined;
+  if (eventData.highlight) {
+    const formatted = formatLocal12h(eventData.highlight, timezone);
+    if (formatted) highlightTime = formatted;
+  }
+
   return {
     score: Math.round((eventData.quality ?? 0) * 100),
     label: eventData.quality_text ?? "Poor",
+    highlightTime,
   };
+}
+
+export async function fetchSunsetHueScore(
+  lat: number,
+  lon: number,
+  timezone: string,
+  apiKey: string
+): Promise<SunsetQuality> {
+  try {
+    return await scrapeSunsetHueV3(lat, lon, timezone);
+  } catch (e) {
+    console.warn(`SunsetHue scrape failed (${e}), falling back to API`);
+    return await fetchSunsetHueApi(lat, lon, timezone, apiKey);
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -100,7 +223,7 @@ export async function fetchOwmScore(
   lat: number,
   lon: number,
   apiKey: string
-): Promise<{ score: number; label: string }> {
+): Promise<SunsetQuality> {
   // Current weather
   const weatherParams = new URLSearchParams({
     lat: String(lat),

@@ -4,6 +4,7 @@
 import argparse
 import logging
 import random
+import re
 import sys
 import os
 import time
@@ -13,6 +14,7 @@ from zoneinfo import ZoneInfo
 import requests
 from astral import LocationInfo
 from astral.sun import sun
+from bs4 import BeautifulSoup
 from convex import ConvexClient
 from dotenv import load_dotenv
 
@@ -94,11 +96,74 @@ def get_sunset_time(lat, lon, tz_name):
 # ---------------------------------------------------------------------------
 
 
-def get_sunsethue_score(lat, lon, cache, tz_name="UTC"):
-    """Fetch sunset quality from SunsetHue API with geo-caching."""
-    cache_key = (round(lat, 2), round(lon, 2))
-    if cache_key in cache:
-        return cache[cache_key]
+def _iso_to_local_12h(iso_str, tz_name):
+    """Format an ISO-8601 UTC timestamp as 12h local time (e.g. '7:21 PM')."""
+    try:
+        dt = datetime.fromisoformat(iso_str.replace("Z", "+00:00"))
+        local = dt.astimezone(ZoneInfo(tz_name))
+        return local.strftime("%-I:%M %p")
+    except (ValueError, TypeError):
+        return None
+
+
+def _extract_highlight_time(html, tz_name):
+    """Pull the 'highlight' ISO datetime from the API payload embedded in the
+    page's RSC stream. Returns a 12h local string, or None when absent/null."""
+    m = re.search(r'"highlight":"([^"]+)"', html)
+    if not m:
+        return None
+    return _iso_to_local_12h(m.group(1), tz_name)
+
+
+def _scrape_sunsethue_v3(lat, lon, tz_name):
+    """Scrape the v3 "new model" score from the SunsetHue web page."""
+    now = datetime.now(ZoneInfo(tz_name))
+    date_str = now.strftime("%Y.%m.%d")
+    offset = now.utcoffset()
+    offset_hours = int(offset.total_seconds() // 3600) if offset else 0
+
+    def _fetch():
+        resp = requests.get(
+            "https://sunsethue.com/app/event",
+            params={
+                "latitude": lat,
+                "longitude": lon,
+                "date": date_str,
+                "type": "sunset",
+                "timezone": offset_hours,
+            },
+            headers={
+                "User-Agent": (
+                    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+                    "AppleWebKit/537.36 (KHTML, like Gecko) "
+                    "Chrome/121.0.0.0 Safari/537.36"
+                ),
+            },
+            timeout=15,
+        )
+        resp.raise_for_status()
+        return resp.text
+
+    html = retry(_fetch, retries=1, delay=2.0, label="SunsetHue scrape")
+
+    soup = BeautifulSoup(html, "html.parser")
+    for span in soup.select("span.font-bold.text-lg.mr-2"):
+        text = span.get_text(" ", strip=True)
+        m = re.match(r"(\d+)%\s*\(\s*([a-zA-Z]+)\s*\)", text)
+        if m:
+            return {
+                "score": int(m.group(1)),
+                "label": m.group(2).lower().capitalize(),
+                "highlight_time": _extract_highlight_time(html, tz_name),
+            }
+
+    raise ValueError("Could not extract v3 score from SunsetHue page")
+
+
+def _fetch_sunsethue_api(lat, lon, tz_name):
+    """Fetch the old-model score from the public SunsetHue API."""
+    if not SUNSETHUE_API_KEY:
+        raise ValueError("SUNSETHUE_API_KEY not set")
 
     today = datetime.now(ZoneInfo(tz_name)).strftime("%Y-%m-%d")
 
@@ -117,16 +182,36 @@ def get_sunsethue_score(lat, lon, cache, tz_name="UTC"):
         resp.raise_for_status()
         return resp.json()
 
-    data = retry(_fetch, retries=1, delay=2.0, label="SunsetHue")
+    data = retry(_fetch, retries=1, delay=2.0, label="SunsetHue API")
 
     event_data = data.get("data")
     if not event_data:
-        raise ValueError("No quality data returned from SunsetHue")
+        raise ValueError("No quality data returned from SunsetHue API")
 
-    result = {
+    highlight = event_data.get("highlight")
+    return {
         "score": round(event_data.get("quality", 0) * 100),
         "label": event_data.get("quality_text", "Poor"),
+        "highlight_time": _iso_to_local_12h(highlight, tz_name) if highlight else None,
     }
+
+
+def get_sunsethue_score(lat, lon, cache, tz_name="UTC"):
+    """Return SunsetHue quality, preferring the scraped v3 model.
+
+    Falls back to the public API (old model) if scraping fails — still better
+    than the OWM heuristic. Geo-caches results per run.
+    """
+    cache_key = (round(lat, 2), round(lon, 2))
+    if cache_key in cache:
+        return cache[cache_key]
+
+    try:
+        result = _scrape_sunsethue_v3(lat, lon, tz_name)
+    except Exception as e:
+        logger.warning(f"SunsetHue scrape failed ({e}), falling back to API")
+        result = _fetch_sunsethue_api(lat, lon, tz_name)
+
     cache[cache_key] = result
     return result
 
@@ -242,7 +327,14 @@ def generate_message(
     return {"message": message, "subject": subject}
 
 
-def build_quote_message(quote, sunset_time_local, temp_f, quality_score, location_name):
+def build_quote_message(
+    quote,
+    sunset_time_local,
+    temp_f,
+    quality_score,
+    location_name,
+    highlight_time=None,
+):
     """Build a message and subject line from a Convex quote record."""
     sunset_dt = datetime.strptime(sunset_time_local, "%I:%M %p")
     viewing_time = (sunset_dt - timedelta(minutes=30)).strftime("%-I:%M %p")
@@ -251,6 +343,13 @@ def build_quote_message(quote, sunset_time_local, temp_f, quality_score, locatio
     if quote.get("source"):
         attribution += f", {quote['source']}"
 
+    meta_parts = [f"View at {viewing_time}"]
+    if highlight_time:
+        meta_parts.append(f"Peak at {highlight_time}")
+    meta_parts.append(f"{temp_f}\u00b0F")
+    meta_parts.append(f"Quality {quality_score}%")
+    meta_line = "  \u00b7  ".join(meta_parts)
+
     message = "\n".join(
         [
             f"\u201c{quote['text']}\u201d",
@@ -258,7 +357,7 @@ def build_quote_message(quote, sunset_time_local, temp_f, quality_score, locatio
             "",
             "---",
             "",
-            f"View at {viewing_time}  \u00b7  {temp_f}\u00b0F  \u00b7  Quality {quality_score}%",
+            meta_line,
         ]
     )
 
@@ -361,13 +460,20 @@ def phase_check(client, test_email=None):
                     weather_desc = "unknown"
                     cloud_cover = 0
 
-                quote = client.query("quotes:getRandomQuote", {"nonce": random.random()})
+                quote = client.query(
+                    "quotes:getRandomQuote", {"nonce": random.random()}
+                )
                 if not quote:
                     logger.error(f"[{location}] No quotes in database, skipping")
                     continue
 
                 result = build_quote_message(
-                    quote, sunset_local, temp_f, score, location
+                    quote,
+                    sunset_local,
+                    temp_f,
+                    score,
+                    location,
+                    highlight_time=quality.get("highlight_time"),
                 )
                 message = result["message"]
                 subject = result["subject"]

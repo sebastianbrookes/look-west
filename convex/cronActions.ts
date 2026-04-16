@@ -101,6 +101,7 @@ function buildQuoteMessage(args: {
   tempF: string | number;
   qualityScore: number;
   locationName: string;
+  highlightTime?: string;
 }): { message: string; subject: string } {
   const viewingTime = computeViewingTime(args.sunsetTimeLocal);
 
@@ -109,13 +110,18 @@ function buildQuoteMessage(args: {
     ? `\u2014 ${args.quoteAuthor}, ${args.quoteSource}`
     : `\u2014 ${args.quoteAuthor}`;
 
+  const metaParts = [`View at ${viewingTime}`];
+  if (args.highlightTime) metaParts.push(`Peak at ${args.highlightTime}`);
+  metaParts.push(`${args.tempF}\u00B0F`, `Quality ${args.qualityScore}%`);
+  const metaLine = metaParts.join("  \u00B7  ");
+
   const message = [
     `\u201c${args.quoteText}\u201d`,
     attribution,
     "",
     "---",
     "",
-    `View at ${viewingTime}  \u00B7  ${args.tempF}\u00B0F  \u00B7  Quality ${args.qualityScore}%`,
+    metaLine,
   ].join("\n");
 
   const subject = `Sunset at ${args.sunsetTimeLocal} in ${args.locationName}`.slice(0, 40);
@@ -276,6 +282,7 @@ export const sunsetScoreCheck = internalAction({
             tempF,
             qualityScore: score,
             locationName: location,
+            highlightTime: quality.highlightTime,
           });
 
           console.log(`[${location}] Subject: ${result.subject}`);

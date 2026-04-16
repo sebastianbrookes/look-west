@@ -1,0 +1,13 @@
+[project]
+name = "look-west-alerts"
+version = "0.1.0"
+description = "Look West sunset alert scripts (checker, sender, quote scraping)."
+requires-python = ">=3.11"
+dependencies = [
+    "astral",
+    "beautifulsoup4",
+    "convex",
+    "python-dotenv",
+    "requests",
+    "resend",
+]
