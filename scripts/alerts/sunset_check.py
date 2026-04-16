@@ -34,6 +34,7 @@ logger = logging.getLogger("sunset_check")
 # Environment
 CONVEX_URL = os.getenv("CONVEX_URL")
 CONVEX_ADMIN_KEY = os.getenv("CONVEX_ADMIN_KEY", "")
+SUNSETHUE_API_KEY = os.getenv("SUNSETHUE_API_KEY", "")
 OPENWEATHERMAP_API_KEY = os.getenv("OPENWEATHERMAP_API_KEY", "")
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
 SUNSET_QUALITY_THRESHOLD = int(os.getenv("SUNSET_QUALITY_THRESHOLD", "40"))
@@ -95,16 +96,8 @@ def get_sunset_time(lat, lon, tz_name):
 # ---------------------------------------------------------------------------
 
 
-def get_sunsethue_score(lat, lon, cache, tz_name="UTC"):
-    """Scrape sunset quality (v3 "new model") from the SunsetHue web page.
-
-    The public API still returns the old model; the new model is only exposed in
-    the rendered web page, so we fetch the HTML and parse the score span.
-    """
-    cache_key = (round(lat, 2), round(lon, 2))
-    if cache_key in cache:
-        return cache[cache_key]
-
+def _scrape_sunsethue_v3(lat, lon, tz_name):
+    """Scrape the v3 "new model" score from the SunsetHue web page."""
     now = datetime.now(ZoneInfo(tz_name))
     date_str = now.strftime("%Y.%m.%d")
     offset = now.utcoffset()
@@ -132,21 +125,73 @@ def get_sunsethue_score(lat, lon, cache, tz_name="UTC"):
         resp.raise_for_status()
         return resp.text
 
-    html = retry(_fetch, retries=1, delay=2.0, label="SunsetHue")
+    html = retry(_fetch, retries=1, delay=2.0, label="SunsetHue scrape")
 
     soup = BeautifulSoup(html, "html.parser")
     for span in soup.select("span.font-bold.text-lg.mr-2"):
         text = span.get_text(" ", strip=True)
         m = re.match(r"(\d+)%\s*\(\s*([a-zA-Z]+)\s*\)", text)
         if m:
-            result = {
+            return {
                 "score": int(m.group(1)),
                 "label": m.group(2).lower().capitalize(),
             }
-            cache[cache_key] = result
-            return result
 
     raise ValueError("Could not extract v3 score from SunsetHue page")
+
+
+def _fetch_sunsethue_api(lat, lon, tz_name):
+    """Fetch the old-model score from the public SunsetHue API."""
+    if not SUNSETHUE_API_KEY:
+        raise ValueError("SUNSETHUE_API_KEY not set")
+
+    today = datetime.now(ZoneInfo(tz_name)).strftime("%Y-%m-%d")
+
+    def _fetch():
+        resp = requests.get(
+            "https://api.sunsethue.com/event",
+            params={
+                "latitude": lat,
+                "longitude": lon,
+                "date": today,
+                "type": "sunset",
+            },
+            headers={"x-api-key": SUNSETHUE_API_KEY},
+            timeout=10,
+        )
+        resp.raise_for_status()
+        return resp.json()
+
+    data = retry(_fetch, retries=1, delay=2.0, label="SunsetHue API")
+
+    event_data = data.get("data")
+    if not event_data:
+        raise ValueError("No quality data returned from SunsetHue API")
+
+    return {
+        "score": round(event_data.get("quality", 0) * 100),
+        "label": event_data.get("quality_text", "Poor"),
+    }
+
+
+def get_sunsethue_score(lat, lon, cache, tz_name="UTC"):
+    """Return SunsetHue quality, preferring the scraped v3 model.
+
+    Falls back to the public API (old model) if scraping fails — still better
+    than the OWM heuristic. Geo-caches results per run.
+    """
+    cache_key = (round(lat, 2), round(lon, 2))
+    if cache_key in cache:
+        return cache[cache_key]
+
+    try:
+        result = _scrape_sunsethue_v3(lat, lon, tz_name)
+    except Exception as e:
+        logger.warning(f"SunsetHue scrape failed ({e}), falling back to API")
+        result = _fetch_sunsethue_api(lat, lon, tz_name)
+
+    cache[cache_key] = result
+    return result
 
 
 def get_owm_score(lat, lon, cache):

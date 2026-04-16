@@ -185,6 +185,7 @@ export const sunsetScoreCheck = internalAction({
         let quality = scoreCache.get(cacheKey);
 
         if (!quality) {
+          const sunsethueKey = process.env.SUNSETHUE_API_KEY ?? "";
           const owmKey = process.env.OPENWEATHERMAP_API_KEY ?? "";
 
           if (SUNSET_SCORER === "openweathermap") {
@@ -201,7 +202,8 @@ export const sunsetScoreCheck = internalAction({
                   fetchSunsetHueScore(
                     user.latitude,
                     user.longitude,
-                    user.timezone
+                    user.timezone,
+                    sunsethueKey
                   ),
                 1,
                 2000,

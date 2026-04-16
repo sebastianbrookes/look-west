@@ -30,8 +30,8 @@ export function getSunsetTime(lat: number, lon: number, timezone: string): Date 
 }
 
 // ---------------------------------------------------------------------------
-// SunsetHue scorer — scrapes the v3 "new model" score from the public web page
-// because the public API still returns the old model.
+// SunsetHue scorer — prefers the v3 "new model" score scraped from the public
+// web page; falls back to the public API (old model) if scraping fails.
 // ---------------------------------------------------------------------------
 
 function getTimezoneOffsetHours(timezone: string, when: Date): number {
@@ -48,7 +48,7 @@ function getTimezoneOffsetHours(timezone: string, when: Date): number {
   return sign * (h + min / 60);
 }
 
-export async function fetchSunsetHueScore(
+async function scrapeSunsetHueV3(
   lat: number,
   lon: number,
   timezone: string
@@ -101,6 +101,58 @@ export async function fetchSunsetHueScore(
   const labelRaw = match[2].toLowerCase();
   const label = labelRaw[0].toUpperCase() + labelRaw.slice(1);
   return { score, label };
+}
+
+async function fetchSunsetHueApi(
+  lat: number,
+  lon: number,
+  timezone: string,
+  apiKey: string
+): Promise<{ score: number; label: string }> {
+  if (!apiKey) {
+    throw new Error("SUNSETHUE_API_KEY not set");
+  }
+  const formatter = new Intl.DateTimeFormat("en-CA", { timeZone: timezone });
+  const today = formatter.format(new Date()); // "YYYY-MM-DD"
+
+  const params = new URLSearchParams({
+    latitude: String(lat),
+    longitude: String(lon),
+    date: today,
+    type: "sunset",
+  });
+
+  const resp = await fetch(`https://api.sunsethue.com/event?${params}`, {
+    headers: { "x-api-key": apiKey },
+  });
+  if (!resp.ok) {
+    throw new Error(`SunsetHue API error: ${resp.status} ${await resp.text()}`);
+  }
+
+  const data = await resp.json();
+  const eventData = data?.data;
+  if (!eventData) {
+    throw new Error("No quality data returned from SunsetHue");
+  }
+
+  return {
+    score: Math.round((eventData.quality ?? 0) * 100),
+    label: eventData.quality_text ?? "Poor",
+  };
+}
+
+export async function fetchSunsetHueScore(
+  lat: number,
+  lon: number,
+  timezone: string,
+  apiKey: string
+): Promise<{ score: number; label: string }> {
+  try {
+    return await scrapeSunsetHueV3(lat, lon, timezone);
+  } catch (e) {
+    console.warn(`SunsetHue scrape failed (${e}), falling back to API`);
+    return await fetchSunsetHueApi(lat, lon, timezone, apiKey);
+  }
 }
 
 // ---------------------------------------------------------------------------
