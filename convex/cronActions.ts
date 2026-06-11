@@ -7,6 +7,7 @@ import {
   fetchSunsetHueScore,
   fetchOwmScore,
   fetchCurrentWeather,
+  type SunsetQuality,
 } from "./sunsetScoring";
 import { buildAlertHtml, sendAlertEmail } from "./alertEmails";
 
@@ -148,7 +149,7 @@ export const sunsetScoreCheck = internalAction({
     console.log(`Found ${users.length} active user(s).`);
 
     const now = new Date();
-    const scoreCache = new Map<string, { score: number; label: string }>();
+    const scoreCache = new Map<string, SunsetQuality>();
 
     for (const user of users) {
       const location = user.locationName ?? "Unknown";
