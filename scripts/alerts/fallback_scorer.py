@@ -15,11 +15,11 @@ def _cloud_score(pct):
     if pct <= 10:
         return 30
     if pct <= 30:
-        return 30 + (pct - 10) * 3          # 30 → 90
+        return 30 + (pct - 10) * 3  # 30 → 90
     if pct <= 70:
         return 90 + (min(pct, 50) - 30) * 0.5  # ~90-100
     if pct <= 85:
-        return 90 - (pct - 70) * 4           # 90 → 30
+        return 90 - (pct - 70) * 4  # 90 → 30
     return max(10, 30 - (pct - 85))
 
 

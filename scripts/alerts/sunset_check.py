@@ -4,7 +4,6 @@
 import argparse
 import logging
 import random
-import re
 import sys
 import os
 import time
@@ -14,7 +13,6 @@ from zoneinfo import ZoneInfo
 import requests
 from astral import LocationInfo
 from astral.sun import sun
-from bs4 import BeautifulSoup
 from convex import ConvexClient
 from dotenv import load_dotenv
 
@@ -106,62 +104,8 @@ def _iso_to_local_12h(iso_str, tz_name):
         return None
 
 
-def _extract_highlight_time(html, tz_name):
-    """Pull the 'highlight' ISO datetime from the API payload embedded in the
-    page's RSC stream. Returns a 12h local string, or None when absent/null."""
-    m = re.search(r'"highlight":"([^"]+)"', html)
-    if not m:
-        return None
-    return _iso_to_local_12h(m.group(1), tz_name)
-
-
-def _scrape_sunsethue_v3(lat, lon, tz_name):
-    """Scrape the v3 "new model" score from the SunsetHue web page."""
-    now = datetime.now(ZoneInfo(tz_name))
-    date_str = now.strftime("%Y.%m.%d")
-    offset = now.utcoffset()
-    offset_hours = int(offset.total_seconds() // 3600) if offset else 0
-
-    def _fetch():
-        resp = requests.get(
-            "https://sunsethue.com/app/event",
-            params={
-                "latitude": lat,
-                "longitude": lon,
-                "date": date_str,
-                "type": "sunset",
-                "timezone": offset_hours,
-            },
-            headers={
-                "User-Agent": (
-                    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
-                    "AppleWebKit/537.36 (KHTML, like Gecko) "
-                    "Chrome/121.0.0.0 Safari/537.36"
-                ),
-            },
-            timeout=15,
-        )
-        resp.raise_for_status()
-        return resp.text
-
-    html = retry(_fetch, retries=1, delay=2.0, label="SunsetHue scrape")
-
-    soup = BeautifulSoup(html, "html.parser")
-    for span in soup.select("span.font-bold.text-lg.mr-2"):
-        text = span.get_text(" ", strip=True)
-        m = re.match(r"(\d+)%\s*\(\s*([a-zA-Z]+)\s*\)", text)
-        if m:
-            return {
-                "score": int(m.group(1)),
-                "label": m.group(2).lower().capitalize(),
-                "highlight_time": _extract_highlight_time(html, tz_name),
-            }
-
-    raise ValueError("Could not extract v3 score from SunsetHue page")
-
-
 def _fetch_sunsethue_api(lat, lon, tz_name):
-    """Fetch the old-model score from the public SunsetHue API."""
+    """Fetch the score from the public SunsetHue API."""
     if not SUNSETHUE_API_KEY:
         raise ValueError("SUNSETHUE_API_KEY not set")
 
@@ -197,21 +141,12 @@ def _fetch_sunsethue_api(lat, lon, tz_name):
 
 
 def get_sunsethue_score(lat, lon, cache, tz_name="UTC"):
-    """Return SunsetHue quality, preferring the scraped v3 model.
-
-    Falls back to the public API (old model) if scraping fails — still better
-    than the OWM heuristic. Geo-caches results per run.
-    """
+    """Fetch SunsetHue quality from the public API with geo-caching."""
     cache_key = (round(lat, 2), round(lon, 2))
     if cache_key in cache:
         return cache[cache_key]
 
-    try:
-        result = _scrape_sunsethue_v3(lat, lon, tz_name)
-    except Exception as e:
-        logger.warning(f"SunsetHue scrape failed ({e}), falling back to API")
-        result = _fetch_sunsethue_api(lat, lon, tz_name)
-
+    result = _fetch_sunsethue_api(lat, lon, tz_name)
     cache[cache_key] = result
     return result
 
@@ -270,7 +205,6 @@ def get_current_weather(lat, lon):
 
 def generate_message(
     quality_percent,
-    quality_label,
     location_name,
     sunset_time_local,
     temp_f,

@@ -11,3 +11,8 @@ dependencies = [
     "requests",
     "resend",
 ]
+
+[dependency-groups]
+dev = [
+    "vulture>=2.16",
+]
