@@ -98,31 +98,34 @@ function CheckIcon({ visible = false }: { visible?: boolean }) {
 
 const SAMPLE_EMAILS = [
   {
-    type: "alert",
     subject: "Sunset at 6:46 PM in Brooklyn, NY",
-    location: "📍 Brooklyn, NY",
-    time: "🌅 6:46 PM",
+    location: "Brooklyn, NY",
+    time: "6:46 PM",
     quote: "Can you see the sunset real good on the West side? You can see it on the East side too.",
     attribution: "— S.E. Hinton, The Outsiders",
-    metadata: "View at 6:16 PM  ·  34°F  ·  Quality 48%",
+    viewTime: "6:16 PM",
+    temperature: "34°F",
+    quality: "48%",
   },
   {
-    type: "alert",
     subject: "Sunset at 7:04 PM in Boston, MA",
-    location: "📍 Boston, MA",
-    time: "🌅 7:04 PM",
+    location: "Boston, MA",
+    time: "7:04 PM",
     quote: "Then they lay on the pier and drank cheap sodas and watched the sun set for free.",
     attribution: "— Fredrik Backman, My Friends",
-    metadata: "View at 6:34 PM  ·  37°F  ·  Quality 72%",
+    viewTime: "6:34 PM",
+    temperature: "37°F",
+    quality: "72%",
   },
   {
-    type: "alert",
     subject: "Sunset at 7:28 PM in San Francisco",
-    location: "📍 San Francisco, CA",
-    time: "🌅 7:28 PM",
+    location: "San Francisco, CA",
+    time: "7:28 PM",
     quote: "It does no harm to the romance of the sunset to know a little about it.",
     attribution: "— Carl Sagan, Pale Blue Dot",
-    metadata: "View at 6:58 PM  ·  61°F  ·  Quality 64%",
+    viewTime: "6:58 PM",
+    temperature: "61°F",
+    quality: "64%",
   },
 ];
 
@@ -1039,23 +1042,33 @@ export default function App() {
           </p>
 
           <div className="email-samples">
-            {SAMPLE_EMAILS.map((sample, i) => (
-              <div className="email-card" key={i}>
+            {SAMPLE_EMAILS.map((sample) => (
+              <article className="email-card" key={sample.location} aria-label={sample.subject}>
                 <div className="email-header">
-                  <div className="email-subject">{sample.subject}</div>
+                  <span className="email-from">Look West</span>
                 </div>
-                <div className="email-gradient-strip" />
                 <div className="email-body">
-                  <div className="email-pills">
-                    <span className="email-pill">{sample.location}</span>
-                    <span className="email-pill">{sample.time}</span>
+                  <div className="email-sunset">
+                    <div>
+                      <h3 className="email-location">{sample.location}</h3>
+                      <p className="email-time">Sunset at <time>{sample.time}</time></p>
+                    </div>
+                    <svg className="email-sunset-icon" width="36" height="36" viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" aria-hidden="true">
+                      <path d="M8 22a8 8 0 0 1 16 0" />
+                      <path d="M3 22h26M7 27h18M16 5v4M4 11l3 3M28 11l-3 3" />
+                    </svg>
                   </div>
-                  <p className="email-quote">{"\u201c"}{sample.quote}{"\u201d"}</p>
-                  <p className="email-attribution">{sample.attribution}</p>
-                  <div className="email-divider" />
-                  <p className="email-metadata">{sample.metadata}</p>
+                  <figure className="email-quotation">
+                    <blockquote className="email-quote">{"\u201c"}{sample.quote}{"\u201d"}</blockquote>
+                    <figcaption className="email-attribution">{sample.attribution}</figcaption>
+                  </figure>
+                  <dl className="email-metadata">
+                    <div><dt>Head outside</dt><dd>{sample.viewTime}</dd></div>
+                    <div><dt>Temperature</dt><dd>{sample.temperature}</dd></div>
+                    <div><dt>Quality</dt><dd>{sample.quality}</dd></div>
+                  </dl>
                 </div>
-              </div>
+              </article>
             ))}
           </div>
         </div>

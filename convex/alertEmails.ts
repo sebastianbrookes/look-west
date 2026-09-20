@@ -5,10 +5,6 @@
  * Follows the same pattern as convex/emails.ts (welcome email).
  */
 
-const BACKGROUND_IMAGE_URL =
-  process.env.EMAIL_BACKGROUND_URL ??
-  "https://golookwest.com/background.webp";
-
 function escapeHtml(str: string): string {
   return str
     .replace(/&/g, "&amp;")
@@ -62,193 +58,106 @@ export function buildAlertHtml(args: {
   const { quoteText, attribution, metadata } = splitMessageParts(args.message);
   const quoteHtml = escapeHtml(quoteText).replace(/\n/g, "<br>");
   const attributionHtml = escapeHtml(attribution);
-  const metadataHtml = escapeHtml(metadata).replace(/\n/g, "<br>");
   const loc = escapeHtml(args.location);
   const time = escapeHtml(args.sunsetTime);
   const unsub = escapeHtml(args.unsubscribeUrl || "#");
   const changeLocation = escapeHtml(args.changeLocationUrl || "#");
-  const bg = BACKGROUND_IMAGE_URL;
-  // Strip curly quotes from quote text for a clean preheader
   const preheaderQuote = quoteText.replace(/[\u201c\u201d]/g, "").slice(0, 120);
-  const preheader = escapeHtml(`${loc} \u00B7 Sunset at ${time} \u2014 ${preheaderQuote}`);
+  const preheader = escapeHtml(`${args.location} · Sunset at ${args.sunsetTime} — ${preheaderQuote}`);
+  const sans = "'Figtree', 'Segoe UI', Helvetica, Arial, sans-serif";
+
+  // Keep the queued plain-text format compatible with both alert producers.
+  // Unknown metadata is retained instead of silently discarding information.
+  const details = metadata.split(/\s*·\s*|\n/).filter(Boolean).map((part) => {
+    if (part.startsWith("View at ")) return { label: "Head outside", value: part.slice(8) };
+    if (part.startsWith("Peak at ")) return { label: "Peak color", value: part.slice(8) };
+    if (part.startsWith("Quality ")) return { label: "Quality", value: part.slice(8) };
+    if (/^-?\d+(?:\.\d+)?°[FC]$/.test(part)) return { label: "Temperature", value: part };
+    return { label: "Conditions", value: part };
+  });
+  // Up to three columns per row keeps optional peak-time details readable on phones.
+  const detailRows: string[] = [];
+  for (let i = 0; i < details.length; i += 3) {
+    detailRows.push(`<tr>${details.slice(i, i + 3).map(({ label, value }) => `
+      <td width="33.33%" valign="top" style="padding: 16px 8px 0 0; overflow-wrap: anywhere;">
+        <p class="muted-text" style="margin: 0; font-family: ${sans}; font-size: 11px; line-height: 1.5; color: #806b59;">${escapeHtml(label)}</p>
+        <p class="secondary-text" style="margin: 6px 0 0; font-family: ${sans}; font-size: 13px; line-height: 1.5; color: #5c4030;">${escapeHtml(value)}</p>
+      </td>`).join("")}</tr>`);
+  }
 
   return `<!DOCTYPE html>
-<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:o="urn:schemas-microsoft-com:office:office">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="x-apple-disable-message-reformatting">
-  <meta name="color-scheme" content="light">
-  <meta name="supported-color-schemes" content="light">
-  <title>Look West \u2014 Sunset Alert</title>
-  <!--[if mso]>
-  <noscript>
-    <xml>
-      <o:OfficeDocumentSettings>
-        <o:PixelsPerInch>96</o:PixelsPerInch>
-      </o:OfficeDocumentSettings>
-    </xml>
-  </noscript>
-  <![endif]-->
+  <meta name="color-scheme" content="light dark">
+  <meta name="supported-color-schemes" content="light dark">
+  <title>Look West — Sunset Alert</title>
+  <!--[if mso]><noscript><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml></noscript><![endif]-->
   <style>
     @font-face {
-      font-family: 'Shadows Into Light';
-      font-style: normal;
-      font-weight: 400;
+      font-family: 'Shadows Into Light'; font-style: normal; font-weight: 400;
       src: url(https://fonts.gstatic.com/s/shadowsintolight/v19/UqyNK9UOIntux_czAvDQx_ZcHqZXBNQzdcD55TecYQ.woff2) format('woff2');
-    }
-    @font-face {
-      font-family: 'EB Garamond';
-      font-style: normal;
-      font-weight: 400;
-      src: url(https://fonts.gstatic.com/s/ebgaramond/v27/SlGDmQSNjdsmc35JDF1K5E55YMjF_7DPuGi-6_RUA4V-e6yHgQ.woff2) format('woff2');
-    }
-    @font-face {
-      font-family: 'EB Garamond';
-      font-style: italic;
-      font-weight: 400;
-      src: url(https://fonts.gstatic.com/s/ebgaramond/v27/SlGFmQSNjdsmc35JDF1K5GRwUjcdlttVFm-rI7e8QI96WamXgXFI.woff2) format('woff2');
     }
     body, table, td, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
     table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
-    img { -ms-interpolation-mode: bicubic; border: 0; height: auto; line-height: 100%; outline: none; text-decoration: none; }
-    body { margin: 0; padding: 0; width: 100% !important; height: 100% !important; }
-    .message-text { font-family: 'EB Garamond', Georgia, 'Times New Roman', serif !important; }
+    body { margin: 0; padding: 0; width: 100% !important; }
     @media (prefers-color-scheme: dark) {
-      .body-bg { background-color: #2a1e16 !important; }
-      .card-bg { background-color: #2a1e16 !important; }
-      .brand-text { color: #e8c4a0 !important; }
-      .message-text { color: #e8d8c8 !important; }
-      .attribution-text { color: #b8a898 !important; }
-      .meta-text { color: #c4967a !important; }
-      .footer-text { color: #7a6a5a !important; }
-      .divider { background-color: #3a2a1e !important; }
-      .pill-bg { background-color: #3a2a1e !important; }
-      .pill-text { color: #d4a880 !important; }
+      .body-bg { background-color: #211912 !important; }
+      .card-bg { background-color: #2a2019 !important; border-color: #49392c !important; }
+      .rule { border-color: #49392c !important; }
+      .primary-text, .message-text { color: #f0e2d4 !important; }
+      .brand-text, .secondary-text { color: #dec5af !important; }
+      .muted-text, .footer-text, .footer-text a { color: #bba591 !important; }
     }
     @media only screen and (max-width: 520px) {
-      .card-inner { padding-left: 22px !important; padding-right: 22px !important; }
-      .hero-img { height: 180px !important; }
-      .brand-text { font-size: 24px !important; }
-      .message-text { font-size: 15px !important; }
+      .outer { padding: 24px 16px !important; }
+      .card-inner { padding-left: 20px !important; padding-right: 20px !important; }
     }
   </style>
 </head>
-<body style="margin: 0; padding: 0; background-color: #faf5ef; font-family: Georgia, 'Times New Roman', serif; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;">
-
-  <div style="display: none; max-height: 0; overflow: hidden; font-size: 1px; line-height: 1px; color: #faf5ef;">
-    ${preheader}
-    ${"&#847;&zwnj;&nbsp;".repeat(80)}
+<body class="body-bg" style="margin: 0; padding: 0; background-color: #fdf8f4;">
+  <div style="display: none; max-height: 0; overflow: hidden; font-size: 1px; line-height: 1px; mso-hide: all;">
+    ${preheader}${"&#847;&zwnj;&nbsp;".repeat(80)}
   </div>
-
-  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" class="body-bg" style="background-color: #faf5ef; font-family: Georgia, 'Times New Roman', serif;">
-    <tr>
-      <td align="center" style="padding: 0;">
-        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width: 480px;">
-
-          <tr>
-            <td class="hero-img" style="height: 200px; background-image: url('${bg}'); background-size: cover; background-position: center 40%; background-color: #d4935c;" valign="bottom">
-              <!--[if gte mso 9]>
-              <v:rect xmlns:v="urn:schemas-microsoft-com:vml" fill="true" stroke="false" style="width:480px;height:200px;">
-                <v:fill type="tile" src="${bg}" color="#d4935c" />
-                <v:textbox inset="0,0,0,0">
-              <![endif]-->
-              <div style="height: 200px;"></div>
-              <!--[if gte mso 9]>
-                </v:textbox>
-              </v:rect>
-              <![endif]-->
+  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" class="body-bg" style="background-color: #fdf8f4;">
+    <tr><td class="outer" align="center" style="padding: 40px 24px;">
+      <!--[if mso]><table role="presentation" width="480" align="center"><tr><td><![endif]-->
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" class="card-bg" style="max-width: 480px; background-color: #fffcf8; border: 1px solid #e9ddd0; border-radius: 12px; border-spacing: 0;">
+        <tr><td class="card-inner rule" style="padding: 16px 28px; border-bottom: 1px solid #eee3d8;">
+          <p class="brand-text" style="margin: 0; font-family: 'Shadows Into Light', Georgia, 'Times New Roman', serif; font-size: 24px; line-height: 1.5; font-weight: 400; color: #5c4030;">Look West</p>
+        </td></tr>
+        <tr><td class="card-inner" style="padding: 24px 28px 0;">
+          <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr>
+            <td valign="middle" style="overflow-wrap: anywhere;">
+              <h1 class="primary-text" style="margin: 0; font-family: ${sans}; font-size: 15px; line-height: 1.4; font-weight: 600; color: #2c1810;">${loc}</h1>
+              <p class="secondary-text" style="margin: 4px 0 0; font-family: ${sans}; font-size: 13px; line-height: 1.5; color: #5c4030;">Sunset at ${time}</p>
             </td>
-          </tr>
-
-          <tr>
-            <td style="height: 3px; background: linear-gradient(90deg, #e8a87c 0%, #d4785c 35%, #c4967a 65%, #e8c4a0 100%); background-color: #d4785c;"></td>
-          </tr>
-
-          <tr>
-            <td class="card-bg" style="background-color: #faf5ef;">
-
-              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
-                <tr>
-                  <td class="card-inner" style="padding: 28px 34px 0;">
-                    <p class="brand-text" style="margin: 0 0 16px; font-family: 'Shadows Into Light', Georgia, 'Times New Roman', serif; font-size: 28px; font-weight: 400; color: #7a5636; letter-spacing: 0.04em;">Look West</p>
-                    <table role="presentation" cellpadding="0" cellspacing="0" border="0">
-                      <tr>
-                        <td class="pill-bg" style="background-color: #ede0d2; border-radius: 20px; padding: 6px 14px; vertical-align: middle;">
-                          <span class="pill-text" style="font-family: 'Figtree', 'Inter', 'Segoe UI', -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif; font-size: 12.5px; line-height: 1; color: #8b6244; white-space: nowrap;">&#128205; ${loc}</span>
-                        </td>
-                        <td style="width: 8px;"></td>
-                        <td class="pill-bg" style="background-color: #ede0d2; border-radius: 20px; padding: 6px 14px; vertical-align: middle;">
-                          <span class="pill-text" style="font-family: 'Figtree', 'Inter', 'Segoe UI', -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif; font-size: 12.5px; line-height: 1; color: #8b6244; white-space: nowrap;">&#127749; ${time}</span>
-                        </td>
-                      </tr>
-                    </table>
-                  </td>
-                </tr>
-              </table>
-
-              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
-                <tr>
-                  <td class="card-inner" style="padding: 24px 34px ${attribution ? "6px" : "28px"};">
-                    <p class="message-text" style="margin: 0; font-family: Georgia, 'Times New Roman', serif; font-size: 19px; line-height: 1.65; color: #3d2b1f; font-style: italic;">${quoteHtml}</p>
-                  </td>
-                </tr>
-              </table>${attribution ? `
-
-              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
-                <tr>
-                  <td class="card-inner" style="padding: 16px 34px 28px;">
-                    <p class="attribution-text" style="margin: 0; font-family: Georgia, 'Times New Roman', serif; font-size: 13.5px; line-height: 1.4; color: #8b7a6a; letter-spacing: 0.01em;">${attributionHtml}</p>
-                  </td>
-                </tr>
-              </table>` : ""}
-
-              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
-                <tr>
-                  <td class="card-inner" style="padding: 0 34px;">
-                    <div class="divider" style="height: 1px; background-color: #e6d5c3;"></div>
-                  </td>
-                </tr>
-              </table>
-
-              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
-                <tr>
-                  <td class="card-inner" style="padding: 14px 34px 14px;">
-                    <p class="meta-text" style="margin: 0; font-family: 'Figtree', 'Inter', 'Segoe UI', -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif; font-size: 11.5px; line-height: 1; color: #a89080; letter-spacing: 0.02em;">${metadataHtml}</p>
-                  </td>
-                </tr>
-              </table>
-
-              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
-                <tr>
-                  <td class="card-inner" style="padding: 0 34px;">
-                    <div class="divider" style="height: 1px; background-color: #e6d5c3;"></div>
-                  </td>
-                </tr>
-              </table>
-
-              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
-                <tr>
-                  <td class="card-inner" style="padding: 18px 34px 26px;">
-                    <p class="footer-text" style="margin: 0; font-family: 'Figtree', 'Inter', 'Segoe UI', -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif; font-size: 11.5px; color: #a89080; line-height: 1.65;">
-                      You signed up for sunset alerts at <a href="https://golookwest.com" style="color: #a89080; text-decoration: underline;">golookwest.com</a>.<br />
-                      <a href="https://buymeacoffee.com/sebastianbrookes" style="color: #a89080; text-decoration: underline;">Buy me a coffee</a> &middot;
-                      <a href="${changeLocation}" style="color: #a89080; text-decoration: underline;">Change location</a> &middot;
-                      <a href="${unsub}" style="color: #a89080; text-decoration: underline;">Unsubscribe</a>
-                    </p>
-                  </td>
-                </tr>
-              </table>
-
-            </td>
-          </tr>
-
-        </table>
-      </td>
-    </tr>
+            <td width="48" align="right" valign="middle"><img src="https://golookwest.com/email-sunset.png" width="36" height="36" alt="" style="display: block; border: 0; width: 36px; height: 36px;"></td>
+          </tr></table>
+        </td></tr>
+        <tr><td class="card-inner" style="padding: 28px;">
+          <p class="message-text" style="margin: 0; font-family: Georgia, 'Times New Roman', serif; font-size: 17px; line-height: 1.75; color: #3d2b1f; font-style: italic;">${quoteHtml}</p>
+          ${attribution ? `<p class="muted-text" style="margin: 14px 0 0; font-family: ${sans}; font-size: 12px; line-height: 1.6; color: #806b59;">${attributionHtml}</p>` : ""}
+        </td></tr>
+        ${details.length ? `<tr><td class="card-inner" style="padding: 0 28px 24px;">
+          <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" class="rule" style="table-layout: fixed; border-top: 1px solid #eee3d8;">${detailRows.join("")}</table>
+        </td></tr>` : ""}
+      </table>
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width: 480px;">
+        <tr><td align="center" style="padding: 22px 8px 0;">
+          <p class="footer-text" style="margin: 0; font-family: ${sans}; font-size: 11px; color: #806b59; line-height: 1.8;">
+            You signed up for sunset alerts at <a href="https://golookwest.com" style="color: #806b59; text-decoration: underline;">golookwest.com</a>.<br>
+            <a href="https://buymeacoffee.com/sebastianbrookes" style="color: #806b59; text-decoration: underline;">Buy me a coffee</a> &middot;
+            <a href="${changeLocation}" style="color: #806b59; text-decoration: underline;">Change location</a> &middot;
+            <a href="${unsub}" style="color: #806b59; text-decoration: underline;">Unsubscribe</a>
+          </p>
+        </td></tr>
+      </table>
+      <!--[if mso]></td></tr></table><![endif]-->
+    </td></tr>
   </table>
-
 </body>
 </html>`;
 }
