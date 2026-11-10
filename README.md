@@ -113,7 +113,8 @@ public/
   _redirects
   background.webp
   favicon.svg
-  og.png
+  apple-touch-icon.png
+  og.jpg
   web-preview.png
 
 scripts/
